@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
@@ -14,9 +14,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#fbfbf9",
+};
+
 export const metadata: Metadata = {
   title: "Temsy - Biến ảnh thành tem kỷ niệm",
   description: "Ứng dụng sưu tầm tem kỹ thuật số, biến mỗi khoảnh khắc thành một con tem lưu giữ.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Temsy",
+  },
 };
 
 import { AuthProvider } from "@/context/AuthContext";

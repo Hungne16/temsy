@@ -39,6 +39,8 @@ body {
   /* subtle pattern for background */
   background-image: radial-gradient(var(--color-cream-dark) 1px, transparent 1px);
   background-size: 24px 24px;
+  /* Mobile optimization */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Glassmorphism utility classes */
