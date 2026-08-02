@@ -108,10 +108,10 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
         {/* Stamp Display */}
         <div className="w-full md:w-1/2 flex justify-center">
           <div className="w-full max-w-sm">
-            <StampPreview 
-              imageUrl={stamp.imageUrl} 
-              style={stamp.style} 
-              metadata={isEditing ? editData : stamp.metadata} 
+            <img 
+              src={stamp.imageUrl} 
+              alt={stamp.metadata.title}
+              className="w-full h-auto drop-shadow-xl"
             />
           </div>
         </div>

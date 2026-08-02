@@ -74,7 +74,7 @@ export default function LoginPage() {
       <div className="w-full max-w-4xl h-[600px] bg-white rounded-3xl shadow-2xl relative overflow-hidden flex flex-col md:flex-row">
         
         {/* Mobile View Toggle (Visible only on small screens) */}
-        <div className="md:hidden flex bg-gray-100 m-4 rounded-xl p-1 relative z-10 shrink-0">
+        <div className="md:hidden flex bg-gray-100 m-4 rounded-xl p-1 relative z-50 shrink-0">
           <button 
             onClick={() => setIsLoginMode(true)}
             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isLoginMode ? "bg-white shadow-sm text-pastel-blue-dark" : "text-gray-500"}`}
