@@ -1,16 +1,18 @@
 "use client";
 
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
-import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X } from "lucide-react";
+import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { getUserStamps, deleteStamp, updateStampMetadata } from "@/lib/stampService";
 import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/userService";
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
   const [stampCount, setStampCount] = useState(0);
   const [stamps, setStamps] = useState<any[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -235,6 +237,14 @@ export default function ProfilePage() {
             <div className="flex gap-3">
               <button onClick={handleEditClick} className="px-6 py-3 bg-white border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-2">
                 Chỉnh sửa
+              </button>
+              <button
+                onClick={async () => { await logout(); router.push("/login"); }}
+                className="px-4 py-3 bg-white border-[3px] border-pencil text-marker-red shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-marker-red hover:text-white hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1 flex items-center gap-2"
+                title="Đăng xuất"
+              >
+                <LogOut size={20} />
+                <span className="hidden sm:inline">Đăng xuất</span>
               </button>
             </div>
           </div>
