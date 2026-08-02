@@ -30,6 +30,18 @@ const stampIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// Marker icon cho cụm tem (khi có nhiều tem ở cùng 1 vị trí)
+const createGroupIcon = (count: number) => new L.DivIcon({
+  html: `<div style="position:relative; width: 25px; height: 41px;">
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png" style="width: 100%; height: 100%;" />
+          <div style="position: absolute; top: -5px; right: -10px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">${count}</div>
+         </div>`,
+  className: 'custom-cluster-icon',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34]
+});
+
 function MapFlyTo({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
@@ -75,6 +87,17 @@ export default function MapComponent() {
     });
   }, [user]);
 
+  // Gom nhóm tem theo tọa độ
+  const groupedStamps = stamps.reduce((acc, stamp) => {
+    const lat = stamp.metadata?.coordinates?.lat;
+    const lng = stamp.metadata?.coordinates?.lng;
+    if (lat === undefined || lng === undefined) return acc;
+    const key = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(stamp);
+    return acc;
+  }, {} as Record<string, any[]>);
+
   return (
     <div className="relative w-full h-[calc(100vh-120px)] rounded-3xl overflow-hidden shadow-2xl z-0">
       {errorMsg && (
@@ -116,50 +139,84 @@ export default function MapComponent() {
           </>
         )}
 
-        {/* Ghim tất cả các tem */}
-        {stamps.map(stamp => (
-          <Marker 
-            key={stamp.id} 
-            position={[stamp.metadata.coordinates.lat, stamp.metadata.coordinates.lng]} 
-            icon={stampIcon}
-          >
-            <Popup className="custom-popup">
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setSelectedStamp(stamp);
-                }}
-                className="flex flex-col w-48 rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity block text-left"
-              >
-                <img 
-                  src={stamp.imageUrl} 
-                  alt={stamp.metadata.title} 
-                  className="w-full h-32 object-cover bg-gray-100" 
-                />
-                <div className="p-3 bg-white w-full">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-bold text-gray-900 text-sm leading-tight">{stamp.metadata.title}</h3>
-                    {stamp.isPublic === false ? (
-                      <span title="Riêng tư"><Lock size={12} className="text-gray-400 shrink-0" /></span>
-                    ) : (
-                      <span title="Công khai"><Globe size={12} className="text-pastel-blue shrink-0" /></span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mb-2">{stamp.metadata.date} • {stamp.metadata.location}</p>
-                  
-                  {stamp.metadata.story && (
-                    <div className="mt-2 text-xs italic text-gray-700 border-l-2 border-pastel-blue pl-2 py-1 bg-gray-50 rounded-r-md truncate">
-                      "{stamp.metadata.story}"
+        {/* Ghim tất cả các tem theo nhóm */}
+        {(Object.values(groupedStamps) as any[][]).map((group) => {
+          const stamp = group[0];
+          const isGroup = group.length > 1;
+          
+          return (
+            <Marker 
+              key={isGroup ? `group-${stamp.metadata.coordinates.lat}-${stamp.metadata.coordinates.lng}` : stamp.id} 
+              position={[stamp.metadata.coordinates.lat, stamp.metadata.coordinates.lng]} 
+              icon={isGroup ? createGroupIcon(group.length) : stampIcon}
+            >
+              <Popup className="custom-popup">
+                {isGroup ? (
+                  <div className="w-64 bg-white text-left p-3">
+                    <h3 className="font-bold text-gray-900 text-sm mb-3 text-center">{group.length} tem tại địa điểm này</h3>
+                    <div className="flex overflow-x-auto gap-3 pb-2 snap-x" style={{ scrollbarWidth: 'thin' }}>
+                      {group.map((s, idx) => (
+                        <button 
+                          key={s.id}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedStamp(s);
+                          }}
+                          className="shrink-0 w-28 flex flex-col rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-pastel-blue transition-all bg-gray-50 snap-start border"
+                        >
+                          <div className="h-20 w-full bg-gray-200 relative">
+                            <img src={s.imageUrl} className="w-full h-full object-cover" />
+                            <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 rounded-md">{idx + 1}</div>
+                          </div>
+                          <div className="p-2 w-full text-left">
+                            <div className="text-xs font-bold truncate text-gray-900">{s.metadata.title}</div>
+                            <div className="text-[10px] text-gray-500 truncate mt-0.5">{s.metadata.date}</div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                  )}
-                  
-                  <div className="mt-2 text-[10px] text-pastel-blue font-medium text-center w-full">Bấm để xem chi tiết</div>
-                </div>
-              </button>
-            </Popup>
-          </Marker>
-        ))}
+                    <div className="text-[10px] text-gray-400 text-center mt-1">Cuộn ngang để xem thêm</div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedStamp(stamp);
+                    }}
+                    className="flex flex-col w-48 rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity block text-left"
+                  >
+                    <img 
+                      src={stamp.imageUrl} 
+                      alt={stamp.metadata.title} 
+                      className="w-full h-32 object-cover bg-gray-100" 
+                    />
+                    <div className="p-3 bg-white w-full">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-bold text-gray-900 text-sm leading-tight">{stamp.metadata.title}</h3>
+                        {stamp.isPublic === false ? (
+                          <span title="Riêng tư"><Lock size={12} className="text-gray-400 shrink-0" /></span>
+                        ) : (
+                          <span title="Công khai"><Globe size={12} className="text-pastel-blue shrink-0" /></span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mb-2">{stamp.metadata.date} • {stamp.metadata.location}</p>
+                      
+                      {stamp.metadata.story && (
+                        <div className="mt-2 text-xs italic text-gray-700 border-l-2 border-pastel-blue pl-2 py-1 bg-gray-50 rounded-r-md truncate">
+                          "{stamp.metadata.story}"
+                        </div>
+                      )}
+                      
+                      <div className="mt-2 text-[10px] text-pastel-blue font-medium text-center w-full">Bấm để xem chi tiết</div>
+                    </div>
+                  </button>
+                )}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
       
       {/* Side Panel for Stamp Details */}

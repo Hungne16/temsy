@@ -98,6 +98,28 @@ export default function ProfilePage() {
     }
   };
 
+  const directBannerInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleDirectBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !profile) return;
+    
+    setIsSaving(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      try {
+        await updateUserProfile(user.uid, { bannerUrl: base64 });
+        setProfile({ ...profile, bannerUrl: base64 });
+      } catch (error) {
+        alert("Lỗi cập nhật ảnh bìa.");
+      } finally {
+        setIsSaving(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (loading || (user && !profile)) {
     return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
   }
@@ -120,10 +142,27 @@ export default function ProfilePage() {
     <div className="min-h-screen pb-10">
       {/* Cover Photo */}
       <div 
-        className="h-48 md:h-64 bg-pastel-blue-light w-full relative bg-cover bg-center"
+        className="h-48 md:h-64 bg-pastel-blue-light w-full relative bg-cover bg-center group"
         style={{ backgroundImage: profile.bannerUrl ? `url(${profile.bannerUrl})` : "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}
       >
         {!profile.bannerUrl && <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}></div>}
+        
+        {/* Quick action to change banner */}
+        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <button 
+            onClick={() => directBannerInputRef.current?.click()} 
+            disabled={isSaving}
+            className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-2 rounded-full text-white font-medium hover:bg-white/40 shadow-sm transition-colors"
+          >
+            {isSaving ? (
+              <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <Camera size={18} />
+            )}
+            Đổi ảnh bìa
+          </button>
+          <input type="file" accept="image/*" ref={directBannerInputRef} onChange={handleDirectBannerChange} className="hidden" />
+        </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6">
