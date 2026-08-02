@@ -123,7 +123,11 @@ export default function MapComponent() {
             icon={stampIcon}
           >
             <Popup className="custom-popup">
-              <div className="flex flex-col w-48 rounded-lg overflow-hidden">
+              <a 
+                href={`/stamp/${stamp.id}`}
+                className="flex flex-col w-48 rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity block"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
                 <img 
                   src={stamp.imageUrl} 
                   alt={stamp.metadata.title} 
@@ -141,12 +145,14 @@ export default function MapComponent() {
                   <p className="text-xs text-gray-500 mb-2">{stamp.metadata.date} • {stamp.metadata.location}</p>
                   
                   {stamp.metadata.story && (
-                    <div className="mt-2 text-xs italic text-gray-700 border-l-2 border-pastel-blue pl-2 py-1 bg-gray-50 rounded-r-md">
+                    <div className="mt-2 text-xs italic text-gray-700 border-l-2 border-pastel-blue pl-2 py-1 bg-gray-50 rounded-r-md truncate">
                       "{stamp.metadata.story}"
                     </div>
                   )}
+                  
+                  <div className="mt-2 text-[10px] text-pastel-blue font-medium text-center">Bấm để xem chi tiết</div>
                 </div>
-              </div>
+              </a>
             </Popup>
           </Marker>
         ))}
@@ -162,6 +168,29 @@ export default function MapComponent() {
         .leaflet-popup-content {
           margin: 0;
           width: 100% !important;
+        }
+        /* Custom font and close button */
+        .custom-popup {
+          font-family: var(--font-sans), Arial, sans-serif !important;
+        }
+        .leaflet-popup-close-button {
+          background: rgba(255, 255, 255, 0.8) !important;
+          border-radius: 50% !important;
+          width: 22px !important;
+          height: 22px !important;
+          line-height: 22px !important;
+          top: 8px !important;
+          right: 8px !important;
+          color: #333 !important;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          text-decoration: none !important;
+        }
+        .leaflet-popup-close-button:hover {
+          background: white !important;
+          color: black !important;
         }
       `}</style>
     </div>

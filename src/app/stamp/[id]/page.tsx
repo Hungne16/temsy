@@ -18,14 +18,19 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const [error, setError] = useState("");
   
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ title: "", location: "", date: "" });
+  const [editData, setEditData] = useState({ title: "", location: "", date: "", story: "" });
   const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
     getStampById(id)
       .then((data: any) => {
         setStamp(data);
-        setEditData(data.metadata);
+        setEditData({
+          title: data.metadata?.title || "",
+          location: data.metadata?.location || "",
+          date: data.metadata?.date || "",
+          story: data.metadata?.story || ""
+        });
         setLoading(false);
       })
       .catch((err) => {
@@ -48,8 +53,10 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const handleUpdate = async () => {
     setIsSaving(true);
     try {
-      await updateStampMetadata(id, editData);
-      setStamp({ ...stamp, metadata: editData });
+      // Giữ lại coordinates nếu có
+      const updatedMetadata = { ...stamp.metadata, ...editData };
+      await updateStampMetadata(id, updatedMetadata);
+      setStamp({ ...stamp, metadata: updatedMetadata });
       setIsEditing(false);
     } catch (err) {
       alert("Cập nhật thất bại. Vui lòng thử lại.");
@@ -81,10 +88,10 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen p-6 md:p-12 pb-32">
       <header className="mb-10 flex items-center justify-between">
-        <Link href="/collection" className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors">
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors">
           <ArrowLeft size={20} />
           <span className="font-medium">Quay lại</span>
-        </Link>
+        </button>
         
         {isOwner && !isEditing && (
           <div className="flex gap-2">
@@ -111,7 +118,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
             <img 
               src={stamp.imageUrl} 
               alt={stamp.metadata.title}
-              className="w-full h-auto drop-shadow-xl"
+              className="w-full h-auto drop-shadow-xl rounded-sm"
             />
           </div>
         </div>
@@ -131,22 +138,33 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                   className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground/70">Địa điểm</label>
-                <input 
-                  type="text" 
-                  value={editData.location}
-                  onChange={(e) => setEditData({...editData, location: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
-                />
+              <div className="flex gap-2">
+                <div className="space-y-1 flex-1">
+                  <label className="text-sm font-medium text-foreground/70">Địa điểm</label>
+                  <input 
+                    type="text" 
+                    value={editData.location}
+                    onChange={(e) => setEditData({...editData, location: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
+                  />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <label className="text-sm font-medium text-foreground/70">Ngày tháng</label>
+                  <input 
+                    type="text" 
+                    value={editData.date}
+                    onChange={(e) => setEditData({...editData, date: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
+                  />
+                </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground/70">Ngày tháng</label>
-                <input 
-                  type="text" 
-                  value={editData.date}
-                  onChange={(e) => setEditData({...editData, date: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
+                <label className="text-sm font-medium text-foreground/70">Câu chuyện</label>
+                <textarea 
+                  value={editData.story}
+                  onChange={(e) => setEditData({...editData, story: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50 min-h-[100px] resize-none"
+                  placeholder="Viết một câu chuyện về con tem này..."
                 />
               </div>
               
@@ -167,7 +185,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div>
                 <h1 className="text-4xl font-bold mb-2 uppercase tracking-tight">{stamp.metadata.title || "Vô danh"}</h1>
                 <div className="flex items-center gap-4 text-foreground/60 font-mono">
@@ -177,14 +195,28 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
               
-              <div className="pt-8 border-t border-black/10 flex items-center justify-between">
+              {stamp.metadata.story && (
+                <div className="p-4 bg-pastel-blue/10 rounded-2xl border border-pastel-blue/20">
+                  <p className="italic text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                    "{stamp.metadata.story}"
+                  </p>
+                </div>
+              )}
+              
+              <div className="pt-6 border-t border-black/10 flex items-center justify-between">
                 <div>
                   <div className="text-sm text-foreground/50 mb-1">Phong cách</div>
                   <div className="font-semibold uppercase tracking-wider">{stamp.style}</div>
                 </div>
                 <div>
+                  <div className="text-sm text-foreground/50 mb-1">Trạng thái</div>
+                  <div className="font-semibold">
+                    {stamp.isPublic === false ? "Riêng tư 🔒" : "Công khai 🌍"}
+                  </div>
+                </div>
+                <div>
                   <div className="text-sm text-foreground/50 mb-1">Lượt thích</div>
-                  <div className="font-semibold flex items-center gap-1 text-red-500">❤️ {stamp.likes}</div>
+                  <div className="font-semibold flex items-center gap-1 text-red-500">❤️ {stamp.likes || 0}</div>
                 </div>
               </div>
             </div>
