@@ -1,5 +1,6 @@
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
 
 export interface UserProfile {
   uid: string;
@@ -35,6 +36,14 @@ export async function updateUserProfile(uid: string, data: Partial<UserProfile>)
       await updateDoc(docRef, data);
     } else {
       await setDoc(docRef, { ...data, uid });
+    }
+
+    // Đồng bộ với Firebase Auth profile
+    if (auth.currentUser && (data.displayName || data.photoURL)) {
+      await updateProfile(auth.currentUser, {
+        displayName: data.displayName || auth.currentUser.displayName,
+        photoURL: data.photoURL || auth.currentUser.photoURL,
+      });
     }
   } catch (error) {
     console.error("Error updating user profile:", error);
