@@ -5,16 +5,19 @@ import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
 import { toJpeg, toPng } from "html-to-image";
-import { Download, Save, MapPin, Globe, Lock } from "lucide-react";
+import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight } from "lucide-react";
+import { FilterSelector } from "@/components/FilterSelector";
+import LocationPickerModal from "@/components/LocationPickerModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { StampMetadata } from "@/lib/stampService";
 
 export default function CreateStampPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"upload" | "crop" | "style">("upload");
+  const [step, setStep] = useState<"upload" | "crop" | "filter" | "style">("upload");
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [stampStyle, setStampStyle] = useState<StampStyle>("vintage");
   const [finalImage, setFinalImage] = useState<string | null>(null);
   
@@ -26,6 +29,8 @@ export default function CreateStampPage() {
     coordinates: undefined
   });
   const [isPublic, setIsPublic] = useState(true);
+  const [isAutoGPS, setIsAutoGPS] = useState(true);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -45,18 +50,17 @@ export default function CreateStampPage() {
     const today = new Date().toLocaleDateString("vi-VN");
     
     // Tự động lấy tọa độ GPS
-    if ("geolocation" in navigator) {
+    if (isAutoGPS && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setMetadata({
             title: "Kỷ niệm mới",
-            location: "Đang tải vị trí...", // Có thể dùng reverse geocoding sau
+            location: "Đang tải vị trí...",
             date: today,
             story: "",
             coordinates: { lat: pos.coords.latitude, lng: pos.coords.longitude }
           });
           
-          // Thử dùng API Reverse Geocoding miễn phí của Nominatim (OSM) để lấy tên địa điểm
           fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=14&addressdetails=1`)
             .then(res => res.json())
             .then(data => {
@@ -73,7 +77,7 @@ export default function CreateStampPage() {
           console.error("Lỗi định vị:", err);
           setMetadata({
             title: "Kỷ niệm mới",
-            location: "Việt Nam",
+            location: "Chưa rõ vị trí",
             date: today,
             story: ""
           });
@@ -83,13 +87,41 @@ export default function CreateStampPage() {
     } else {
       setMetadata({
         title: "Kỷ niệm mới",
-        location: "Việt Nam",
+        location: "",
         date: today,
         story: ""
       });
     }
     
+    setStep("filter");
+  };
+
+  const handleFilterSuccess = (filteredUrl: string) => {
+    setFilteredImage(filteredUrl);
     setStep("style");
+  };
+
+  const handleMapConfirm = (pos: { lat: number, lng: number }) => {
+    setMetadata(prev => ({
+      ...prev,
+      coordinates: pos,
+      location: "Đang tải vị trí..."
+    }));
+    setIsMapPickerOpen(false);
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}&zoom=14&addressdetails=1`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.address) {
+          const city = data.address.city || data.address.town || data.address.state || "Việt Nam";
+          setMetadata(prev => ({ ...prev, location: city }));
+        } else {
+          setMetadata(prev => ({ ...prev, location: "Vị trí đã chọn" }));
+        }
+      })
+      .catch(() => {
+        setMetadata(prev => ({ ...prev, location: "Vị trí đã chọn" }));
+      });
   };
 
   const handleDownload = useCallback(() => {
@@ -167,15 +199,29 @@ export default function CreateStampPage() {
         </div>
       )}
 
-      {step === "style" && croppedImage && (
-        <div className="w-full max-w-5xl pt-6 flex flex-col lg:flex-row gap-8 items-start">
+      {step === "filter" && croppedImage && (
+        <div className="w-full max-w-5xl pt-6">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold">Màu sắc thời gian</h2>
+            <p className="text-foreground/60 text-sm mt-1">Sử dụng bộ lọc CamanJS để tạo nước ảnh vintage hoài niệm.</p>
+          </div>
+          <FilterSelector
+            imageUrl={croppedImage}
+            onFilterSuccess={handleFilterSuccess}
+            onCancel={() => setStep("crop")}
+          />
+        </div>
+      )}
+
+      {step === "style" && filteredImage && (
+        <div className="w-full max-w-6xl pt-6 flex flex-col lg:flex-row gap-8 items-start">
           
           {/* Left: Preview */}
           <div className="flex-1 w-full flex items-center justify-center p-4 md:p-8 glass-card">
-            <div className="w-full max-w-sm">
+            <div className="w-full max-w-md">
               <StampPreview 
                 ref={stampRef}
-                imageUrl={croppedImage} 
+                imageUrl={filteredImage} 
                 style={stampStyle}
                 metadata={metadata}
               />
@@ -189,15 +235,15 @@ export default function CreateStampPage() {
               
               <div className="flex flex-col gap-3">
                 <label className="text-sm font-semibold">Phong cách Tem</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {(["vintage", "modern", "polaroid", "minimal"] as StampStyle[]).map((s) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {(["vintage", "modern", "polaroid", "minimal", "postage", "film", "wavy"] as StampStyle[]).map((s) => (
                     <button 
                       key={s}
                       onClick={() => setStampStyle(s)}
-                      className={`py-2 px-1 rounded-lg text-xs font-medium capitalize border transition-all ${
+                      className={`py-2 px-1 rounded-lg text-xs font-bold capitalize border transition-all ${
                         stampStyle === s 
-                          ? "border-pastel-blue bg-pastel-blue text-white" 
-                          : "border-white/40 bg-white/50 hover:bg-white"
+                          ? "border-pastel-blue bg-pastel-blue text-white shadow-md scale-105" 
+                          : "border-white/40 bg-white/50 hover:bg-white text-foreground/70"
                       }`}
                     >
                       {s}
@@ -207,7 +253,16 @@ export default function CreateStampPage() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold">Thông tin chung</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold">Thông tin chung</label>
+                  <button 
+                    onClick={() => setIsAutoGPS(!isAutoGPS)}
+                    className="flex items-center gap-1.5 text-xs font-medium text-pastel-blue-dark bg-pastel-blue/10 px-2 py-1 rounded-md"
+                  >
+                    {isAutoGPS ? <ToggleRight size={16} className="text-pastel-blue" /> : <ToggleLeft size={16} className="text-gray-400" />}
+                    Tự động lấy vị trí
+                  </button>
+                </div>
                 <input 
                   type="text" 
                   value={metadata.title}
@@ -217,15 +272,24 @@ export default function CreateStampPage() {
                   maxLength={30}
                 />
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
-                    <input 
-                      type="text" 
-                      value={metadata.location}
-                      onChange={(e) => setMetadata({...metadata, location: e.target.value})}
-                      className="w-full pl-9 pr-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
-                      placeholder="Địa điểm"
-                    />
+                  <div className="relative flex-1 flex">
+                    <div className="relative flex-1">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
+                      <input 
+                        type="text" 
+                        value={metadata.location}
+                        onChange={(e) => setMetadata({...metadata, location: e.target.value})}
+                        className="w-full pl-9 pr-4 py-2 rounded-xl rounded-r-none border border-white/40 border-r-0 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                        placeholder="Địa điểm"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setIsMapPickerOpen(true)}
+                      className="px-3 bg-white/50 border border-white/40 border-l-0 rounded-r-xl text-pastel-blue-dark hover:bg-white transition-colors"
+                      title="Chọn trên bản đồ"
+                    >
+                      <MapIcon size={16} />
+                    </button>
                   </div>
                   <input 
                     type="text" 
@@ -320,14 +384,21 @@ export default function CreateStampPage() {
             </div>
             
             <button 
-              onClick={() => setStep("crop")}
+              onClick={() => setStep("filter")}
               className="text-sm text-foreground/60 hover:text-foreground font-medium underline-offset-4 hover:underline text-center mt-2"
             >
-              Quay lại bước Cắt ảnh
+              Quay lại bước Bộ lọc ảnh
             </button>
           </div>
         </div>
       )}
+      
+      <LocationPickerModal 
+        isOpen={isMapPickerOpen}
+        onClose={() => setIsMapPickerOpen(false)}
+        onConfirm={handleMapConfirm}
+        initialPosition={metadata.coordinates}
+      />
     </div>
   );
 }

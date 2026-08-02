@@ -8,7 +8,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal";
+export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "film" | "wavy";
 
 interface StampPreviewProps {
   imageUrl: string;
@@ -24,8 +24,8 @@ interface StampPreviewProps {
 export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
   ({ imageUrl, style = "vintage", className, metadata }, ref) => {
     
-    // Tạo viền răng cưa (tem) chỉ ở cạnh viền, phần lõi giữ nguyên
-    const stampEdgeStyle = {
+    // Tạo viền răng cưa tiêu chuẩn
+    const defaultStampEdge = {
       WebkitMask: "radial-gradient(5px at 50% 100%, transparent 50%, #000 52%) repeat-x, radial-gradient(5px at 50% 0%, transparent 50%, #000 52%) repeat-x, radial-gradient(5px at 100% 50%, transparent 50%, #000 52%) repeat-y, radial-gradient(5px at 0% 50%, transparent 50%, #000 52%) repeat-y, linear-gradient(#000, #000)",
       WebkitMaskSize: "16px 8px, 16px 8px, 8px 16px, 8px 16px, calc(100% - 16px) calc(100% - 16px)",
       WebkitMaskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
@@ -36,6 +36,50 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
       maskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
     };
 
+    // Răng cưa nhỏ nhắn kiểu bưu chính
+    const postageEdge = {
+      WebkitMask: "radial-gradient(3px at 50% 100%, transparent 50%, #000 52%) repeat-x, radial-gradient(3px at 50% 0%, transparent 50%, #000 52%) repeat-x, radial-gradient(3px at 100% 50%, transparent 50%, #000 52%) repeat-y, radial-gradient(3px at 0% 50%, transparent 50%, #000 52%) repeat-y, linear-gradient(#000, #000)",
+      WebkitMaskSize: "10px 5px, 10px 5px, 5px 10px, 5px 10px, calc(100% - 10px) calc(100% - 10px)",
+      WebkitMaskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
+      WebkitMaskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
+      mask: "radial-gradient(3px at 50% 100%, transparent 50%, #000 52%) repeat-x, radial-gradient(3px at 50% 0%, transparent 50%, #000 52%) repeat-x, radial-gradient(3px at 100% 50%, transparent 50%, #000 52%) repeat-y, radial-gradient(3px at 0% 50%, transparent 50%, #000 52%) repeat-y, linear-gradient(#000, #000)",
+      maskSize: "10px 5px, 10px 5px, 5px 10px, 5px 10px, calc(100% - 10px) calc(100% - 10px)",
+      maskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
+      maskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
+    };
+
+    // Cuộn phim có lỗ 2 bên viền dọc
+    const filmEdge = {
+      WebkitMask: "linear-gradient(#000, #000), linear-gradient(to bottom, transparent 4px, #000 4px, #000 12px, transparent 12px) repeat-y, linear-gradient(to bottom, transparent 4px, #000 4px, #000 12px, transparent 12px) repeat-y",
+      WebkitMaskSize: "calc(100% - 24px) 100%, 8px 16px, 8px 16px",
+      WebkitMaskPosition: "center, 4px 0, calc(100% - 4px) 0",
+      WebkitMaskRepeat: "no-repeat, repeat-y, repeat-y",
+      WebkitMaskComposite: "source-out",
+      mask: "linear-gradient(#000, #000), linear-gradient(to bottom, transparent 4px, #000 4px, #000 12px, transparent 12px) repeat-y, linear-gradient(to bottom, transparent 4px, #000 4px, #000 12px, transparent 12px) repeat-y",
+      maskSize: "calc(100% - 24px) 100%, 8px 16px, 8px 16px",
+      maskPosition: "center, 4px 0, calc(100% - 4px) 0",
+      maskRepeat: "no-repeat, repeat-y, repeat-y",
+      maskComposite: "exclude",
+    };
+
+    // Lượn sóng
+    const wavyEdge = {
+      WebkitMask: "radial-gradient(6px at 50% 100%, #000 50%, transparent 52%) repeat-x, radial-gradient(6px at 50% 0%, #000 50%, transparent 52%) repeat-x, radial-gradient(6px at 100% 50%, #000 50%, transparent 52%) repeat-y, radial-gradient(6px at 0% 50%, #000 50%, transparent 52%) repeat-y, linear-gradient(#000, #000)",
+      WebkitMaskSize: "16px 8px, 16px 8px, 8px 16px, 8px 16px, calc(100% - 16px) calc(100% - 16px)",
+      WebkitMaskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
+      WebkitMaskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
+      mask: "radial-gradient(6px at 50% 100%, #000 50%, transparent 52%) repeat-x, radial-gradient(6px at 50% 0%, #000 50%, transparent 52%) repeat-x, radial-gradient(6px at 100% 50%, #000 50%, transparent 52%) repeat-y, radial-gradient(6px at 0% 50%, #000 50%, transparent 52%) repeat-y, linear-gradient(#000, #000)",
+      maskSize: "16px 8px, 16px 8px, 8px 16px, 8px 16px, calc(100% - 16px) calc(100% - 16px)",
+      maskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
+      maskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
+    };
+
+    let activeMask = undefined;
+    if (style === "vintage" || style === "modern") activeMask = defaultStampEdge;
+    if (style === "postage") activeMask = postageEdge;
+    if (style === "film") activeMask = filmEdge;
+    if (style === "wavy") activeMask = wavyEdge;
+
     return (
       <div 
         ref={ref}
@@ -45,9 +89,12 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
           style === "modern" && "bg-white text-black",
           style === "polaroid" && "bg-white p-4 pb-16",
           style === "minimal" && "bg-transparent p-0",
+          style === "postage" && "bg-white text-black p-3",
+          style === "film" && "bg-[#111] text-white p-6",
+          style === "wavy" && "bg-pastel-blue/10 text-pastel-blue-dark p-5",
           className
         )}
-        style={style !== "minimal" ? stampEdgeStyle : undefined}
+        style={activeMask}
       >
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/5">
           {imageUrl ? (
@@ -57,7 +104,9 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
               className={cn(
                 "w-full h-full object-cover",
                 style === "vintage" && "sepia-[.3] contrast-125",
-                style === "modern" && "saturate-150"
+                style === "modern" && "saturate-150",
+                style === "postage" && "brightness-110",
+                style === "film" && "contrast-125 saturate-50"
               )}
             />
           ) : (
@@ -76,7 +125,7 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
         {metadata && style !== "minimal" && (
           <div className={cn(
             "mt-3 flex flex-col",
-            style === "polaroid" ? "items-center" : "items-start"
+            style === "polaroid" || style === "film" ? "items-center" : "items-start"
           )}>
             <div className="font-bold text-lg tracking-tight uppercase">{metadata.title || "Untitled"}</div>
             <div className="text-xs font-mono opacity-70 mt-1 uppercase flex justify-between w-full">
@@ -86,8 +135,8 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
           </div>
         )}
         
-        {/* Value/Postage Mark for vintage/modern */}
-        {(style === "vintage" || style === "modern") && (
+        {/* Value/Postage Mark */}
+        {(style === "vintage" || style === "modern" || style === "postage") && (
           <div className="absolute top-6 right-6 font-mono text-2xl font-bold opacity-80 mix-blend-difference text-white drop-shadow-md">
             100
           </div>
