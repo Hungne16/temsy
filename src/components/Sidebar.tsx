@@ -68,12 +68,12 @@ export function Sidebar() {
             </div>
           </button>
         ) : (
-          <button onClick={signInWithGoogle} className="flex items-center gap-3 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors w-full text-left">
+          <Link href="/login" className="flex items-center gap-3 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors w-full text-left">
             <div className="w-8 h-8 rounded-full bg-cream-dark border border-white/40 shadow-sm flex items-center justify-center">
               <User size={16} />
             </div>
             <span>Đăng nhập</span>
-          </button>
+          </Link>
         )}
       </div>
     </aside>

@@ -3,6 +3,7 @@
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
 import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
+import Link from "next/link";
 
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
@@ -30,9 +31,9 @@ export default function ProfilePage() {
         <div className="glass-card p-10 max-w-md w-full">
           <h1 className="text-2xl font-bold mb-4">Hồ sơ cá nhân</h1>
           <p className="text-foreground/60 mb-8">Vui lòng đăng nhập để xem hồ sơ và bộ sưu tập của bạn.</p>
-          <button onClick={signInWithGoogle} className="w-full bg-pastel-blue text-white py-3 rounded-xl font-medium hover:bg-pastel-blue-dark transition-colors">
-            Đăng nhập bằng Google
-          </button>
+          <Link href="/login" className="w-full bg-pastel-blue text-white py-3 rounded-xl font-medium hover:bg-pastel-blue-dark transition-colors inline-block">
+            Đăng nhập ngay
+          </Link>
         </div>
       </div>
     );

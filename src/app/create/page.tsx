@@ -7,8 +7,10 @@ import { StampPreview, StampStyle } from "@/components/StampPreview";
 import { toPng } from "html-to-image";
 import { Download, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function CreateStampPage() {
+  const router = useRouter();
   const [step, setStep] = useState<"upload" | "crop" | "style">("upload");
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -58,7 +60,9 @@ export default function CreateStampPage() {
 
   const handleSaveToCollection = async () => {
     if (!user) {
-      alert("Bạn cần đăng nhập để lưu tem vào Bộ sưu tập!");
+      if (confirm("Bạn cần đăng nhập để lưu tem vào Bộ sưu tập đám mây. Chuyển đến trang Đăng nhập?")) {
+        router.push("/login");
+      }
       return;
     }
     
