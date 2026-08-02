@@ -77,7 +77,7 @@ export default function LoginPage() {
       </Link>
 
       {/* 3D Scene Container */}
-      <div className="w-full max-w-[1000px] h-auto min-h-[600px] md:h-[650px] [perspective:2000px] relative">
+      <div className="w-full max-w-[1000px] h-auto min-h-[550px] md:min-h-[600px] md:h-[650px] [perspective:2000px] relative mt-10 md:mt-0">
         
         {/* Flipper Card */}
         <div className={`w-full h-full relative transition-transform duration-1000 ease-in-out [transform-style:preserve-3d] ${isLoginMode ? "" : "[transform:rotateY(180deg)]"}`}>
@@ -100,8 +100,8 @@ export default function LoginPage() {
             </div>
 
             {/* Right Form Side */}
-            <div className="flex-1 p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
-              <div className="absolute top-8 right-8 text-sm font-medium text-gray-500">
+            <div className="flex-1 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
+              <div className="absolute top-4 right-4 md:top-8 md:right-8 text-xs md:text-sm font-medium text-gray-500">
                 Chưa có tài khoản?{" "}
                 <button 
                   onClick={() => {setIsLoginMode(false); setError("");}}
@@ -111,8 +111,8 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              <div className="max-w-sm w-full mx-auto mt-8 md:mt-0">
-                <h1 className="text-4xl font-bold mb-8 text-gray-900 tracking-tight">Sign in</h1>
+              <div className="max-w-sm w-full mx-auto mt-6 md:mt-0">
+                <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-gray-900 tracking-tight">Sign in</h1>
                 
                 {error && <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium text-center">{error}</div>}
 
@@ -186,8 +186,8 @@ export default function LoginPage() {
           <div className="absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)]">
             
             {/* Right Form Side (Actually rendered on the left visually after flip) */}
-            <div className="flex-1 p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
-              <div className="absolute top-8 left-8 text-sm font-medium text-gray-500">
+            <div className="flex-1 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
+              <div className="absolute top-4 left-4 md:top-8 md:left-8 text-xs md:text-sm font-medium text-gray-500">
                 Đã có tài khoản?{" "}
                 <button 
                   onClick={() => {setIsLoginMode(true); setError("");}}
@@ -197,8 +197,8 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              <div className="max-w-sm w-full mx-auto mt-8 md:mt-0">
-                <h1 className="text-4xl font-bold mb-8 text-gray-900 tracking-tight">Sign up</h1>
+              <div className="max-w-sm w-full mx-auto mt-6 md:mt-0">
+                <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-gray-900 tracking-tight">Sign up</h1>
                 
                 {error && <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium text-center">{error}</div>}
 

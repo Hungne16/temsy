@@ -51,4 +51,14 @@ body {
   .glass-card {
     @apply bg-[var(--color-surface)] backdrop-blur-md border border-white/20 shadow-sm rounded-3xl p-6 transition-all duration-300 hover:shadow-md hover:border-white/40;
   }
+  .filter-scrollbar::-webkit-scrollbar {
+    height: 6px;
+  }
+  .filter-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .filter-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 10px;
+  }
 }

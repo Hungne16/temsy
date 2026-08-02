@@ -5,21 +5,43 @@ import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
 import { toJpeg, toPng } from "html-to-image";
-import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight } from "lucide-react";
-import { FilterSelector } from "@/components/FilterSelector";
+import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight, Check } from "lucide-react";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { StampMetadata } from "@/lib/stampService";
 
+const CAMAN_FILTERS = [
+  { id: "normal", name: "Gốc" },
+  { id: "vintage", name: "Vintage" },
+  { id: "lomo", name: "Lomo" },
+  { id: "clarity", name: "Clarity" },
+  { id: "sinCity", name: "Sin City" },
+  { id: "sunrise", name: "Sunrise" },
+  { id: "crossProcess", name: "Cross Process" },
+  { id: "orangePeel", name: "Orange Peel" },
+  { id: "love", name: "Love" },
+  { id: "grungy", name: "Grungy" },
+  { id: "pinhole", name: "Pinhole" },
+  { id: "oldBoot", name: "Old Boot" },
+  { id: "glowingSun", name: "Glowing Sun" },
+  { id: "hazyDays", name: "Hazy Days" },
+  { id: "nostalgia", name: "Nostalgia" }
+];
+
 export default function CreateStampPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"upload" | "crop" | "filter" | "style">("upload");
+  const [step, setStep] = useState<"upload" | "crop" | "style">("upload");
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
-  const [filteredImage, setFilteredImage] = useState<string | null>(null);
   const [stampStyle, setStampStyle] = useState<StampStyle>("vintage");
-  const [finalImage, setFinalImage] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState("normal");
+  const [filteredImage, setFilteredImage] = useState<string | null>(null);
+  const [isProcessingFilter, setIsProcessingFilter] = useState(false);
+  const [camanLoaded, setCamanLoaded] = useState(false);
+  
+  const camanInstanceRef = useRef<any>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const [metadata, setMetadata] = useState<StampMetadata>({ 
     title: "", 
@@ -38,6 +60,85 @@ export default function CreateStampPage() {
   const stampRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
+
+  // Load CamanJS
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).Caman) {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js";
+      script.async = true;
+      script.onload = () => setCamanLoaded(true);
+      document.body.appendChild(script);
+      return () => {
+        document.body.removeChild(script);
+      };
+    } else {
+      setCamanLoaded(true);
+    }
+  }, []);
+
+  // Initialize Canvas when entering "style" step
+  useEffect(() => {
+    if (step === "style" && camanLoaded && canvasRef.current && croppedImage) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = croppedImage;
+      img.onload = () => {
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const Caman = (window as any).Caman;
+        Caman(canvas, function(this: any) {
+          camanInstanceRef.current = this;
+          this.reloadCanvasData();
+        });
+      };
+    }
+  }, [step, camanLoaded, croppedImage]);
+
+  const applyFilter = (filterId: string) => {
+    if (!camanInstanceRef.current || isProcessingFilter) return;
+    
+    setSelectedFilter(filterId);
+    setIsProcessingFilter(true);
+    
+    const caman = camanInstanceRef.current;
+    caman.revert(false);
+    
+    if (filterId === "normal") {
+      caman.render(() => {
+        if (canvasRef.current) {
+          setFilteredImage(canvasRef.current.toDataURL("image/jpeg", 0.9));
+        }
+        setIsProcessingFilter(false);
+      });
+      return;
+    }
+    
+    if (typeof caman[filterId] === "function") {
+      caman[filterId]();
+      caman.render(() => {
+        if (canvasRef.current) {
+          setFilteredImage(canvasRef.current.toDataURL("image/jpeg", 0.9));
+        }
+        setIsProcessingFilter(false);
+      });
+    } else {
+      setIsProcessingFilter(false);
+    }
+  };
   
   const handleImageSelected = (url: string) => {
     setOriginalImage(url);
@@ -93,11 +194,7 @@ export default function CreateStampPage() {
       });
     }
     
-    setStep("filter");
-  };
-
-  const handleFilterSuccess = (filteredUrl: string) => {
-    setFilteredImage(filteredUrl);
+    setFilteredImage(croppedUrl);
     setStep("style");
   };
 
@@ -199,29 +296,26 @@ export default function CreateStampPage() {
         </div>
       )}
 
-      {step === "filter" && croppedImage && (
-        <div className="w-full max-w-5xl pt-6">
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-bold">Màu sắc thời gian</h2>
-            <p className="text-foreground/60 text-sm mt-1">Sử dụng bộ lọc CamanJS để tạo nước ảnh vintage hoài niệm.</p>
-          </div>
-          <FilterSelector
-            imageUrl={croppedImage}
-            onFilterSuccess={handleFilterSuccess}
-            onCancel={() => setStep("crop")}
-          />
-        </div>
-      )}
-
-      {step === "style" && filteredImage && (
-        <div className="w-full max-w-6xl pt-6 flex flex-col lg:flex-row gap-8 items-start">
+      {step === "style" && croppedImage && (
+        <div className="w-full max-w-6xl pt-4 md:pt-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
           
+          {/* Hidden Canvas for CamanJS */}
+          <canvas ref={canvasRef} className="hidden"></canvas>
+
           {/* Left: Preview */}
-          <div className="flex-1 w-full flex items-center justify-center p-4 md:p-8 glass-card">
-            <div className="w-full max-w-md">
+          <div className="w-full lg:flex-1 flex flex-col items-center justify-center p-4 md:p-8 glass-card sticky top-4 z-10">
+            {isProcessingFilter && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl">
+                 <div className="px-4 py-2 bg-white rounded-full shadow-md font-medium text-pastel-blue-dark text-sm flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-pastel-blue-dark border-t-transparent rounded-full animate-spin"></div>
+                    Đang áp dụng...
+                  </div>
+              </div>
+            )}
+            <div className="w-full max-w-sm md:max-w-md">
               <StampPreview 
                 ref={stampRef}
-                imageUrl={filteredImage} 
+                imageUrl={filteredImage || croppedImage || ""} 
                 style={stampStyle}
                 metadata={metadata}
               />
@@ -252,6 +346,28 @@ export default function CreateStampPage() {
                 </div>
               </div>
 
+              {/* Filters */}
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold">Bộ lọc màu</label>
+                <div className="flex gap-2 overflow-x-auto pb-2 filter-scrollbar">
+                  {CAMAN_FILTERS.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => applyFilter(filter.id)}
+                      disabled={isProcessingFilter || !camanLoaded}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1 ${
+                        selectedFilter === filter.id
+                          ? "border-pastel-blue bg-pastel-blue text-white shadow-md"
+                          : "border-white/40 bg-white/50 hover:bg-white text-foreground/70"
+                      }`}
+                    >
+                      {filter.name}
+                      {selectedFilter === filter.id && <Check size={12} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold">Thông tin chung</label>
@@ -271,7 +387,7 @@ export default function CreateStampPage() {
                   placeholder="Tiêu đề (VD: Chiều thu Hà Nội)"
                   maxLength={30}
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1 flex">
                     <div className="relative flex-1">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
@@ -295,7 +411,7 @@ export default function CreateStampPage() {
                     type="text" 
                     value={metadata.date}
                     onChange={(e) => setMetadata({...metadata, date: e.target.value})}
-                    className="w-[120px] px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                    className="w-full sm:w-[120px] px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
                     placeholder="Ngày"
                   />
                 </div>
@@ -347,7 +463,7 @@ export default function CreateStampPage() {
 
             </div>
 
-            <div className="flex gap-3 mt-2">
+            <div className="flex flex-col sm:flex-row gap-3 mt-2">
               <button 
                 onClick={handleDownload}
                 disabled={isSaving}
@@ -384,10 +500,13 @@ export default function CreateStampPage() {
             </div>
             
             <button 
-              onClick={() => setStep("filter")}
-              className="text-sm text-foreground/60 hover:text-foreground font-medium underline-offset-4 hover:underline text-center mt-2"
+              onClick={() => {
+                setStep("crop");
+                setSelectedFilter("normal");
+              }}
+              className="text-sm text-foreground/60 hover:text-foreground font-medium underline-offset-4 hover:underline text-center mt-2 pb-8 lg:pb-0"
             >
-              Quay lại bước Bộ lọc ảnh
+              Quay lại bước Cắt ảnh
             </button>
           </div>
         </div>
