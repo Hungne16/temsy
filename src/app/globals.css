@@ -83,4 +83,25 @@ body {
   .shadow-pencil-hover {
     box-shadow: 2px 2px 0px 0px #2d2d2d;
   }
+
+  @keyframes stamp-down {
+    0% { transform: scale(3) rotate(-15deg); opacity: 0; }
+    50% { transform: scale(1.1) rotate(-10deg); opacity: 1; }
+    60% { transform: scale(0.95) rotate(-12deg); opacity: 1; }
+    100% { transform: scale(1) rotate(-12deg); opacity: 1; }
+  }
+  .animate-stamp {
+    animation: stamp-down 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes shake-stamp {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-2px, 2px) rotate(-1deg); }
+    40% { transform: translate(2px, -2px) rotate(1deg); }
+    60% { transform: translate(-2px, -2px) rotate(0deg); }
+    80% { transform: translate(2px, 2px) rotate(-1deg); }
+  }
+  .animate-shake-stamp {
+    animation: shake-stamp 0.3s ease-in-out;
+  }
 }

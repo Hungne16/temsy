@@ -22,6 +22,7 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
   const [ratio, setRatio] = useState(RATIOS[0]);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isStamping, setIsStamping] = useState(false);
 
   // drag state
   const dragging = useRef(false);
@@ -109,23 +110,30 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
     const img = imgRef.current;
     if (!img) return;
 
-    // Export at 2× for quality
-    const EX = 2;
-    const outW = FRAME_W * EX;
-    const outH = FRAME_H * EX;
+    setIsStamping(true);
+    
+    // Play sound if you have one, wait for animation
+    setTimeout(() => {
+      // Export at 2× for quality
+      const EX = 2;
+      const outW = FRAME_W * EX;
+      const outH = FRAME_H * EX;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = outW;
-    canvas.height = outH;
-    const ctx = canvas.getContext("2d")!;
+      const canvas = document.createElement("canvas");
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext("2d")!;
 
-    const drawW = img.naturalWidth * scale * EX;
-    const drawH = img.naturalHeight * scale * EX;
-    const x = (outW - drawW) / 2 + offset.x * EX;
-    const y = (outH - drawH) / 2 + offset.y * EX;
+      const drawW = img.naturalWidth * scale * EX;
+      const drawH = img.naturalHeight * scale * EX;
+      const x = (outW - drawW) / 2 + offset.x * EX;
+      const y = (outH - drawH) / 2 + offset.y * EX;
 
-    ctx.drawImage(img, x, y, drawW, drawH);
-    onCropSuccess(canvas.toDataURL("image/jpeg", 0.92));
+      ctx.drawImage(img, x, y, drawW, drawH);
+      onCropSuccess(canvas.toDataURL("image/jpeg", 0.92));
+      // Re-enable in case they go back
+      setIsStamping(false);
+    }, 600); // 600ms corresponds to the animation time
   }, [FRAME_W, FRAME_H, scale, offset, onCropSuccess]);
 
   const resetView = useCallback(() => {
@@ -146,7 +154,7 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
       </div>
 
       {/* ── Canvas preview ── */}
-      <div className="flex justify-center">
+      <div className={`flex justify-center ${isStamping ? "animate-shake-stamp pointer-events-none" : ""}`}>
         <div
           className="relative rounded-xl overflow-hidden border-[3px] border-pencil shadow-[4px_4px_0_0_#2d2d2d] cursor-grab active:cursor-grabbing"
           style={{ width: FRAME_W, height: FRAME_H, touchAction: "none" }}
@@ -163,10 +171,21 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
             style={{ display: "block", width: FRAME_W, height: FRAME_H }}
           />
           {/* Grid overlay */}
-          <div className="absolute inset-0 pointer-events-none" style={{
+          <div className={`absolute inset-0 pointer-events-none transition-opacity ${isStamping ? "opacity-0" : "opacity-100"}`} style={{
             backgroundImage: "linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)",
             backgroundSize: `${FRAME_W / 3}px ${FRAME_H / 3}px`,
           }} />
+
+          {/* Stamp Animation Overlay */}
+          {isStamping && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+              <div className="w-[120px] h-[120px] border-[5px] border-marker-red rounded-full flex flex-col items-center justify-center animate-stamp bg-white/20 backdrop-blur-[1px]">
+                <div className="w-[100px] h-[100px] border-[3px] border-marker-red border-dashed rounded-full flex items-center justify-center">
+                   <span className="text-marker-red font-kalam font-bold text-2xl tracking-widest uppercase rotate-[-5deg]">Temsy</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -232,9 +251,14 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
           </div>
           <button
             onClick={exportCrop}
-            className="flex items-center gap-2 px-6 py-2.5 font-bold font-patrick text-sm bg-marker-red text-white rounded-xl border-[3px] border-pencil shadow-[3px_3px_0_0_#2d2d2d] hover:shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-x-[1px] hover:-translate-y-[1px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all"
+            disabled={isStamping}
+            className={`flex items-center gap-2 px-6 py-2.5 font-bold font-patrick text-sm text-white rounded-xl border-[3px] border-pencil shadow-[3px_3px_0_0_#2d2d2d] transition-all ${
+              isStamping 
+                ? "bg-marker-red/70 shadow-none translate-x-[3px] translate-y-[3px]" 
+                : "bg-marker-red hover:shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-x-[1px] hover:-translate-y-[1px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px]"
+            }`}
           >
-            <Check size={16} /> Tiếp tục
+            <Check size={16} /> {isStamping ? "Đang xử lý..." : "Tiếp tục"}
           </button>
         </div>
       </div>
