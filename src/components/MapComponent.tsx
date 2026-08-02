@@ -4,11 +4,25 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { getMapStamps } from "@/lib/stampService";
+import { useAuth } from "@/context/AuthContext";
+import { Lock, Globe } from "lucide-react";
 
-// Fix Leaflet's default icon issue in React
-const customIcon = new L.Icon({
+// Marker gốc (Bạn đang ở đây)
+const userIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Marker cho các tem (Tùy chỉnh có màu khác hoặc thiết kế khác nếu rảnh, hiện tại dùng chung hoặc icon khác)
+const stampIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -19,18 +33,22 @@ const customIcon = new L.Icon({
 function MapFlyTo({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo(center, 15, { animate: true, duration: 1.5 });
+    map.flyTo(center, 13, { animate: true, duration: 1.5 });
   }, [center, map]);
   return null;
 }
 
 export default function MapComponent() {
+  const { user } = useAuth();
+  
   // Default to a central location (e.g., Ho Chi Minh City or Hanoi)
   const [position, setPosition] = useState<[number, number]>([10.762622, 106.660172]);
   const [hasLocation, setHasLocation] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [stamps, setStamps] = useState<any[]>([]);
 
   useEffect(() => {
+    // Lấy vị trí
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -47,8 +65,17 @@ export default function MapComponent() {
     }
   }, []);
 
+  useEffect(() => {
+    // Lấy danh sách tem để ghim lên bản đồ
+    getMapStamps(user?.uid).then((fetchedStamps) => {
+      // Chỉ giữ lại những tem có tọa độ
+      const validStamps = fetchedStamps.filter(s => s.metadata?.coordinates?.lat && s.metadata?.coordinates?.lng);
+      setStamps(validStamps);
+    });
+  }, [user]);
+
   return (
-    <div className="relative w-full h-[calc(100vh-120px)] rounded-3xl overflow-hidden shadow-2xl">
+    <div className="relative w-full h-[calc(100vh-120px)] rounded-3xl overflow-hidden shadow-2xl z-0">
       {errorMsg && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg whitespace-nowrap">
           {errorMsg}
@@ -68,24 +95,75 @@ export default function MapComponent() {
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
       >
+        {/* Bản đồ Google Maps Standard (Đường phố) - Xử lý chủ quyền VN tốt */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; Google Maps'
+          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
         />
+        
         {hasLocation && (
           <>
-            <Marker position={position} icon={customIcon}>
+            <Marker position={position} icon={userIcon}>
               <Popup>
                 <div className="text-center">
                   <p className="font-bold text-gray-800">Bạn đang ở đây</p>
-                  <p className="text-xs text-gray-500">Sẵn sàng để dán tem chưa?</p>
+                  <p className="text-xs text-gray-500">Hãy tạo tem để lưu kỷ niệm nào!</p>
                 </div>
               </Popup>
             </Marker>
             <MapFlyTo center={position} />
           </>
         )}
+
+        {/* Ghim tất cả các tem */}
+        {stamps.map(stamp => (
+          <Marker 
+            key={stamp.id} 
+            position={[stamp.metadata.coordinates.lat, stamp.metadata.coordinates.lng]} 
+            icon={stampIcon}
+          >
+            <Popup className="custom-popup">
+              <div className="flex flex-col w-48 rounded-lg overflow-hidden">
+                <img 
+                  src={stamp.imageUrl} 
+                  alt={stamp.metadata.title} 
+                  className="w-full h-32 object-cover bg-gray-100" 
+                />
+                <div className="p-3 bg-white">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-bold text-gray-900 text-sm leading-tight">{stamp.metadata.title}</h3>
+                    {stamp.isPublic === false ? (
+                      <span title="Riêng tư"><Lock size={12} className="text-gray-400 shrink-0" /></span>
+                    ) : (
+                      <span title="Công khai"><Globe size={12} className="text-pastel-blue shrink-0" /></span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2">{stamp.metadata.date} • {stamp.metadata.location}</p>
+                  
+                  {stamp.metadata.story && (
+                    <div className="mt-2 text-xs italic text-gray-700 border-l-2 border-pastel-blue pl-2 py-1 bg-gray-50 rounded-r-md">
+                      "{stamp.metadata.story}"
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
+      
+      <style jsx global>{`
+        /* Fix leaflet popup padding */
+        .leaflet-popup-content-wrapper {
+          padding: 0;
+          overflow: hidden;
+          border-radius: 12px;
+        }
+        .leaflet-popup-content {
+          margin: 0;
+          width: 100% !important;
+        }
+      `}</style>
     </div>
   );
 }

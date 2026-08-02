@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
 import { toJpeg, toPng } from "html-to-image";
-import { Download, Save } from "lucide-react";
+import { Download, Save, MapPin, Globe, Lock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { StampMetadata } from "@/lib/stampService";
 
 export default function CreateStampPage() {
   const router = useRouter();
@@ -16,7 +17,16 @@ export default function CreateStampPage() {
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [stampStyle, setStampStyle] = useState<StampStyle>("vintage");
   const [finalImage, setFinalImage] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState({ title: "", location: "", date: "" });
+  
+  const [metadata, setMetadata] = useState<StampMetadata>({ 
+    title: "", 
+    location: "", 
+    date: "",
+    story: "",
+    coordinates: undefined
+  });
+  const [isPublic, setIsPublic] = useState(true);
+  
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
@@ -33,11 +43,51 @@ export default function CreateStampPage() {
     setCroppedImage(croppedUrl);
     
     const today = new Date().toLocaleDateString("vi-VN");
-    setMetadata({
-      title: "Kỷ niệm mới",
-      location: "Việt Nam",
-      date: today
-    });
+    
+    // Tự động lấy tọa độ GPS
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setMetadata({
+            title: "Kỷ niệm mới",
+            location: "Đang tải vị trí...", // Có thể dùng reverse geocoding sau
+            date: today,
+            story: "",
+            coordinates: { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          });
+          
+          // Thử dùng API Reverse Geocoding miễn phí của Nominatim (OSM) để lấy tên địa điểm
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=14&addressdetails=1`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.address) {
+                const city = data.address.city || data.address.town || data.address.state || "Việt Nam";
+                setMetadata(prev => ({ ...prev, location: city }));
+              }
+            })
+            .catch(() => {
+              setMetadata(prev => ({ ...prev, location: "Việt Nam" }));
+            });
+        },
+        (err) => {
+          console.error("Lỗi định vị:", err);
+          setMetadata({
+            title: "Kỷ niệm mới",
+            location: "Việt Nam",
+            date: today,
+            story: ""
+          });
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      setMetadata({
+        title: "Kỷ niệm mới",
+        location: "Việt Nam",
+        date: today,
+        story: ""
+      });
+    }
     
     setStep("style");
   };
@@ -72,13 +122,10 @@ export default function CreateStampPage() {
     setIsSaving(true);
     
     try {
-      // Dùng html-to-image render ra file ảnh chất lượng cao
       const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 1.5, quality: 0.8 });
-      
-      // Import động hàm uploadStamp để giảm size ban đầu
       const { uploadStamp } = await import("@/lib/stampService");
       
-      await uploadStamp(dataUrl, stampStyle, metadata);
+      await uploadStamp(dataUrl, stampStyle, metadata, isPublic);
       
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
@@ -121,10 +168,10 @@ export default function CreateStampPage() {
       )}
 
       {step === "style" && croppedImage && (
-        <div className="w-full max-w-5xl pt-6 flex flex-col md:flex-row gap-8 items-start">
+        <div className="w-full max-w-5xl pt-6 flex flex-col lg:flex-row gap-8 items-start">
           
           {/* Left: Preview */}
-          <div className="flex-1 w-full flex items-center justify-center p-8 glass-card">
+          <div className="flex-1 w-full flex items-center justify-center p-4 md:p-8 glass-card">
             <div className="w-full max-w-sm">
               <StampPreview 
                 ref={stampRef}
@@ -136,18 +183,18 @@ export default function CreateStampPage() {
           </div>
 
           {/* Right: Controls */}
-          <div className="w-full md:w-[400px] flex flex-col gap-6">
+          <div className="w-full lg:w-[450px] flex flex-col gap-6">
             <div className="glass-card flex flex-col gap-5">
               <h3 className="font-bold text-xl">Tuỳ chỉnh</h3>
               
               <div className="flex flex-col gap-3">
                 <label className="text-sm font-semibold">Phong cách Tem</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {(["vintage", "modern", "polaroid", "minimal"] as StampStyle[]).map((s) => (
                     <button 
                       key={s}
                       onClick={() => setStampStyle(s)}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium capitalize border transition-all ${
+                      className={`py-2 px-1 rounded-lg text-xs font-medium capitalize border transition-all ${
                         stampStyle === s 
                           ? "border-pastel-blue bg-pastel-blue text-white" 
                           : "border-white/40 bg-white/50 hover:bg-white"
@@ -160,49 +207,98 @@ export default function CreateStampPage() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold">Thông tin (Metadata)</label>
+                <label className="text-sm font-semibold">Thông tin chung</label>
                 <input 
                   type="text" 
                   value={metadata.title}
                   onChange={(e) => setMetadata({...metadata, title: e.target.value})}
                   className="w-full px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
-                  placeholder="Tiêu đề"
+                  placeholder="Tiêu đề (VD: Chiều thu Hà Nội)"
+                  maxLength={30}
                 />
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={metadata.location}
-                    onChange={(e) => setMetadata({...metadata, location: e.target.value})}
-                    className="w-full px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
-                    placeholder="Địa điểm"
-                  />
+                  <div className="relative flex-1">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
+                    <input 
+                      type="text" 
+                      value={metadata.location}
+                      onChange={(e) => setMetadata({...metadata, location: e.target.value})}
+                      className="w-full pl-9 pr-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                      placeholder="Địa điểm"
+                    />
+                  </div>
                   <input 
                     type="text" 
                     value={metadata.date}
                     onChange={(e) => setMetadata({...metadata, date: e.target.value})}
-                    className="w-full px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                    className="w-[120px] px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
                     placeholder="Ngày"
                   />
                 </div>
               </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold flex items-center justify-between">
+                  <span>Câu chuyện của bạn</span>
+                  {metadata.coordinates && (
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <MapPin size={10} /> Đã ghim vị trí
+                    </span>
+                  )}
+                </label>
+                <textarea 
+                  value={metadata.story || ""}
+                  onChange={(e) => setMetadata({...metadata, story: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm resize-none h-24"
+                  placeholder="Viết vài dòng lưu giữ kỷ niệm đằng sau con tem này..."
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold">Quyền riêng tư</label>
+                <div className="flex gap-2 bg-white/40 p-1 rounded-xl">
+                  <button
+                    onClick={() => setIsPublic(true)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                      isPublic ? "bg-white shadow-sm" : "hover:bg-white/50 text-foreground/60"
+                    }`}
+                  >
+                    <Globe size={16} /> Công khai
+                  </button>
+                  <button
+                    onClick={() => setIsPublic(false)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                      !isPublic ? "bg-white shadow-sm" : "hover:bg-white/50 text-foreground/60"
+                    }`}
+                  >
+                    <Lock size={16} /> Riêng tư
+                  </button>
+                </div>
+                <p className="text-xs text-foreground/50 px-1">
+                  {isPublic 
+                    ? "Mọi người có thể xem tem này trên bản đồ và trang chủ." 
+                    : "Chỉ mình bạn thấy tem này trong Bộ sưu tập cá nhân."}
+                </p>
+              </div>
+
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-2">
               <button 
                 onClick={handleDownload}
                 disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-white border border-white/40 hover:bg-gray-50 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-white border border-white/40 hover:bg-gray-50 transition-colors shadow-sm"
               >
                 <Download size={20} />
-                Tải xuống
+                Tải về máy
               </button>
               <button 
                 onClick={handleSaveToCollection}
                 disabled={isSaving || isSaved}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium shadow-lg transition-all ${
                   isSaved 
-                    ? "bg-green-500 text-white" 
-                    : "bg-foreground text-background hover:bg-foreground/90"
+                    ? "bg-green-500 text-white shadow-green-500/20" 
+                    : "bg-foreground text-background hover:bg-foreground/90 hover:-translate-y-1"
                 }`}
               >
                 {isSaving ? (
@@ -212,12 +308,12 @@ export default function CreateStampPage() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    Đã lưu
+                    Đã ghim
                   </>
                 ) : (
                   <>
                     <Save size={20} />
-                    Lưu vào Album
+                    Ghim lên Bản đồ
                   </>
                 )}
               </button>
@@ -227,7 +323,7 @@ export default function CreateStampPage() {
               onClick={() => setStep("crop")}
               className="text-sm text-foreground/60 hover:text-foreground font-medium underline-offset-4 hover:underline text-center mt-2"
             >
-              Quay lại cắt ảnh
+              Quay lại bước Cắt ảnh
             </button>
           </div>
         </div>

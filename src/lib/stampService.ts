@@ -1,23 +1,31 @@
 import { db, auth } from "./firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, or } from "firebase/firestore";
 import { StampStyle } from "@/components/StampPreview";
+
+export interface StampMetadata {
+  title: string;
+  location: string;
+  date: string;
+  story?: string;
+  coordinates?: { lat: number; lng: number };
+}
 
 export const uploadStamp = async (
   dataUrl: string, 
   style: StampStyle, 
-  metadata: { title: string; location: string; date: string; }
+  metadata: StampMetadata,
+  isPublic: boolean = true
 ) => {
   if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để lưu tem!");
 
   const uid = auth.currentUser.uid;
 
-  // LƯU TRỰC TIẾP ẢNH BASE64 VÀO FIRESTORE (BỎ QUA FIREBASE STORAGE)
-  // Ảnh JPEG nén sẽ có dung lượng nhỏ, đủ để lưu vào document (limit 1MB)
   const stampDoc = {
     userId: uid,
-    imageUrl: dataUrl, // Dùng thẳng chuỗi Base64 làm nguồn ảnh
+    imageUrl: dataUrl,
     style,
     metadata,
+    isPublic,
     likes: 0,
     createdAt: serverTimestamp(),
   };
@@ -28,7 +36,6 @@ export const uploadStamp = async (
 
 export const getUserStamps = async (userId: string) => {
   try {
-    // Chỉ query where để tránh lỗi yêu cầu tạo Composite Index trên Firestore
     const q = query(
       collection(db, "stamps"), 
       where("userId", "==", userId)
@@ -37,7 +44,6 @@ export const getUserStamps = async (userId: string) => {
     const snapshot = await getDocs(q);
     const stamps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Sort bằng JavaScript client-side
     return stamps.sort((a: any, b: any) => {
       const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
       const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -45,6 +51,42 @@ export const getUserStamps = async (userId: string) => {
     });
   } catch (error) {
     console.error("Lỗi lấy danh sách tem:", error);
+    return [];
+  }
+};
+
+// Lấy tất cả tem public VÀ tem private của chính user đó (để hiển thị trên bản đồ)
+export const getMapStamps = async (currentUserId?: string) => {
+  try {
+    const stampsRef = collection(db, "stamps");
+    let snapshot;
+    
+    // Firestore có hỗ trợ OR queries, hoặc fetch all rồi lọc.
+    // Vì collection nhỏ, ta có thể dùng or() nếu có Firebase SDK mới, hoặc chỉ fetch where isPublic == true 
+    // và fetch riêng where userId == currentUserId rồi gộp lại để tránh lỗi missing index.
+    
+    // Cách an toàn ko cần composite index: 
+    const publicQuery = query(stampsRef, where("isPublic", "==", true));
+    const publicSnap = await getDocs(publicQuery);
+    let stamps = publicSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    
+    if (currentUserId) {
+      // Tìm tem của chính user nhưng isPublic == false (tem private)
+      const userPrivateQuery = query(stampsRef, where("userId", "==", currentUserId));
+      const userPrivateSnap = await getDocs(userPrivateQuery);
+      
+      userPrivateSnap.docs.forEach(doc => {
+        const data = doc.data();
+        // Thêm vào nếu nó là private và chưa có trong list
+        if (data.isPublic === false && !stamps.some(s => s.id === doc.id)) {
+          stamps.push({ id: doc.id, ...data });
+        }
+      });
+    }
+
+    return stamps;
+  } catch (error) {
+    console.error("Lỗi lấy danh sách tem cho bản đồ:", error);
     return [];
   }
 };
@@ -66,7 +108,7 @@ export const deleteStamp = async (id: string) => {
   await deleteDoc(docRef);
 };
 
-export const updateStampMetadata = async (id: string, metadata: { title: string; location: string; date: string }) => {
+export const updateStampMetadata = async (id: string, metadata: StampMetadata) => {
   const docRef = doc(db, "stamps", id);
   await updateDoc(docRef, { metadata });
 };
