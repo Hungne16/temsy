@@ -83,7 +83,7 @@ export default function LoginPage() {
         <div className={`w-full h-full relative transition-transform duration-1000 ease-in-out [transform-style:preserve-3d] ${isLoginMode ? "" : "[transform:rotateY(180deg)]"}`}>
           
           {/* ================= FRONT FACE (SIGN IN) ================= */}
-          <div className="absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden]">
+          <div className={`absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden] ${isLoginMode ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             
             {/* Left Image Side */}
             <div className="hidden md:block w-[45%] h-full bg-[#f4f3ed] relative p-8">
@@ -183,7 +183,7 @@ export default function LoginPage() {
           </div>
 
           {/* ================= BACK FACE (SIGN UP) ================= */}
-          <div className="absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <div className={`absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)] ${!isLoginMode ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             
             {/* Right Form Side (Actually rendered on the left visually after flip) */}
             <div className="flex-1 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
