@@ -8,6 +8,17 @@
   --color-pastel-blue-dark: #81aadd;
   --color-surface: rgba(255, 255, 255, 0.7);
   
+  /* Hand-Drawn Tokens */
+  --color-paper: #fdfbf7;
+  --color-pencil: #2d2d2d;
+  --color-muted-paper: #e5e0d8;
+  --color-marker-red: #ff4d4d;
+  --color-marker-blue: #2d5da1;
+  --color-postit: #fff9c4;
+
+  --font-kalam: var(--font-kalam);
+  --font-patrick: var(--font-patrick-hand);
+  
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
@@ -60,5 +71,19 @@ body {
   .filter-scrollbar::-webkit-scrollbar-thumb {
     background-color: rgba(0,0,0,0.1);
     border-radius: 10px;
+  }
+
+  /* Hand-drawn utilities */
+  .wobbly-border {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  }
+  .wobbly-border-md {
+    border-radius: 20px 255px 15px 225px / 255px 15px 225px 15px;
+  }
+  .shadow-pencil {
+    box-shadow: 4px 4px 0px 0px #2d2d2d;
+  }
+  .shadow-pencil-hover {
+    box-shadow: 2px 2px 0px 0px #2d2d2d;
   }
 }

@@ -8,7 +8,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "film" | "wavy";
+export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "film" | "wavy" | "template_1" | "template_2" | "template_3" | "template_4" | "template_5";
 
 interface StampPreviewProps {
   imageUrl: string;
@@ -84,7 +84,8 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
       <div 
         ref={ref}
         className={cn(
-          "relative bg-white shadow-xl flex flex-col p-4",
+          "relative bg-white flex flex-col drop-shadow-[4px_4px_0px_#2d2d2d]",
+          !style.startsWith("template_") && "p-4",
           style === "vintage" && "bg-[#f4ebd0] text-[#5c4a3d]",
           style === "modern" && "bg-white text-black",
           style === "polaroid" && "bg-white p-4 pb-16",
@@ -92,33 +93,53 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
           style === "postage" && "bg-white text-black p-3",
           style === "film" && "bg-[#111] text-white p-6",
           style === "wavy" && "bg-pastel-blue/10 text-pastel-blue-dark p-5",
+          style.startsWith("template_") && "bg-transparent drop-shadow-none p-0",
           className
         )}
-        style={activeMask}
+        style={!style.startsWith("template_") ? activeMask : undefined}
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/5">
+        <div className={cn(
+          "relative w-full overflow-hidden flex items-center justify-center",
+          style.startsWith("template_") ? "aspect-square" : "aspect-[3/4] bg-black/5"
+        )}>
           {imageUrl ? (
-            <img 
-              src={imageUrl} 
-              alt="Stamp" 
-              className={cn(
-                "w-full h-full object-cover",
-                style === "vintage" && "sepia-[.3] contrast-125",
-                style === "modern" && "saturate-150",
-                style === "postage" && "brightness-110",
-                style === "film" && "contrast-125 saturate-50"
-              )}
-            />
+            <div className={cn(
+              "absolute inset-0 flex items-center justify-center",
+              style.startsWith("template_") ? "p-[8%]" : ""
+            )}>
+              <img 
+                src={imageUrl} 
+                alt="Stamp" 
+                className={cn(
+                  "w-full h-full object-cover",
+                  style === "vintage" && "sepia-[.3] contrast-125",
+                  style === "modern" && "saturate-150",
+                  style === "postage" && "brightness-110",
+                  style === "film" && "contrast-125 saturate-50"
+                )}
+              />
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-foreground/30">
               Chưa có ảnh
             </div>
           )}
           
-          {/* Overlay Texture */}
-          <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-multiply" 
-               style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
-          </div>
+          {/* Custom Template Overlay */}
+          {style.startsWith("template_") && (
+            <img 
+              src={`/templates/${style}.png`} 
+              alt="Template" 
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-[4px_4px_0px_rgba(45,45,45,0.4)]" 
+            />
+          )}
+          
+          {/* Overlay Texture (only for non-template styles) */}
+          {!style.startsWith("template_") && (
+            <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-multiply" 
+                 style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
+            </div>
+          )}
         </div>
 
         {/* Metadata section */}

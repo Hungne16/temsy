@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Kalam, Patrick_Hand } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -15,6 +15,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const kalam = Kalam({
+  weight: ["300", "400", "700"],
+  variable: "--font-kalam",
+  subsets: ["latin"],
+});
+
+const patrickHand = Patrick_Hand({
+  weight: "400",
+  variable: "--font-patrick-hand",
+  subsets: ["latin"],
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -43,9 +54,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${patrickHand.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-background text-foreground">
+      <body className="min-h-full bg-background text-foreground font-patrick">
         <AuthProvider>
           <SplashScreen>
             <main className="w-full max-w-7xl mx-auto pb-32">

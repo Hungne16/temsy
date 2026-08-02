@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, User as UserIcon, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import Image from "next/image";
 
 export default function LoginPage() {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -16,8 +15,18 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signInWithGoogle, signInWithEmail, registerWithEmail, user } = useAuth();
+  const { signInWithGoogle, signInWithEmail, registerWithEmail, user, loading } = useAuth();
   const router = useRouter();
+
+  if (loading) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-paper gap-4">
+        {/* Stamp spinner */}
+        <div className="w-16 h-16 border-[4px] border-pencil border-t-marker-red rounded-full animate-spin" />
+        <p className="font-patrick text-lg text-pencil/60">Đang tải...</p>
+      </div>
+    );
+  }
 
   if (user) {
     router.push("/profile");
@@ -40,10 +49,14 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error(err);
-      if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+      ) {
         setError("Tài khoản hoặc mật khẩu không chính xác.");
       } else if (err.code === "auth/email-already-in-use") {
-        setError("Tài khoản (Email) này đã được sử dụng.");
+        setError("Email này đã được sử dụng.");
       } else if (err.code === "auth/weak-password") {
         setError("Mật khẩu phải có ít nhất 6 ký tự.");
       } else {
@@ -59,212 +72,202 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       router.push("/profile");
-    } catch (error) {
+    } catch {
       setError("Không thể đăng nhập bằng Google.");
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f2f1eb] p-4 font-sans relative overflow-hidden">
-      
-      {/* Background blobs for extra flavor */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#3b82f6]/10 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#ff6b6b]/10 rounded-full blur-3xl -z-10"></div>
+    <div className="min-h-[100dvh] bg-paper flex flex-col font-patrick overflow-x-hidden">
 
-      <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-foreground/60 hover:text-foreground z-50">
-        <ArrowLeft size={20} /> <span className="font-medium hidden md:inline">Về trang chủ</span>
-      </Link>
+      {/* ── Top decorative illustration band ── */}
+      <div className="relative w-full h-44 sm:h-56 bg-[#ff4d4d] flex-shrink-0 overflow-hidden">
+        {/* wavy bottom edge */}
+        <svg
+          className="absolute bottom-0 left-0 w-full"
+          viewBox="0 0 1440 60"
+          preserveAspectRatio="none"
+          fill="#fdfbf7"
+        >
+          <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" />
+        </svg>
 
-      {/* 3D Scene Container */}
-      <div className="w-full max-w-[1000px] h-auto min-h-[550px] md:min-h-[600px] md:h-[650px] [perspective:2000px] relative mt-10 md:mt-0">
-        
-        {/* Flipper Card */}
-        <div className={`w-full h-full relative transition-transform duration-1000 ease-in-out [transform-style:preserve-3d] ${isLoginMode ? "" : "[transform:rotateY(180deg)]"}`}>
-          
-          {/* ================= FRONT FACE (SIGN IN) ================= */}
-          <div className={`absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden] ${isLoginMode ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            
-            {/* Left Image Side */}
-            <div className="hidden md:block w-[45%] h-full bg-[#f4f3ed] relative p-8">
-              <Image 
-                src="/login-illustration.jpg" 
-                alt="Login Illustration" 
-                fill
-                style={{ objectFit: 'cover' }}
-                className="rounded-3xl"
-              />
-              <div className="absolute top-6 left-6">
-                 <img src="/logo.png" alt="Temsy Logo" className="w-12 h-12 object-contain drop-shadow-md hover:scale-105 transition-transform" />
-              </div>
-            </div>
+        {/* Illustrated faces pattern (CSS-only decorative circles to simulate the ref) */}
+        {[
+          { top: "10%", left: "8%", size: 52, rot: "-10deg" },
+          { top: "5%",  left: "28%", size: 40, rot: "6deg" },
+          { top: "20%", left: "52%", size: 60, rot: "-6deg" },
+          { top: "4%",  left: "72%", size: 44, rot: "12deg" },
+          { top: "25%", left: "85%", size: 50, rot: "-8deg" },
+          { top: "40%", left: "15%", size: 36, rot: "8deg" },
+          { top: "45%", left: "38%", size: 48, rot: "-4deg" },
+          { top: "38%", left: "62%", size: 38, rot: "10deg" },
+        ].map((c, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full border-[3px] border-white/60 bg-white/20"
+            style={{
+              top: c.top,
+              left: c.left,
+              width: c.size,
+              height: c.size,
+              transform: `rotate(${c.rot})`,
+            }}
+          />
+        ))}
 
-            {/* Right Form Side */}
-            <div className="flex-1 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
-              <div className="absolute top-4 right-4 md:top-8 md:right-8 text-xs md:text-sm font-medium text-gray-500">
-                Chưa có tài khoản?{" "}
-                <button 
-                  onClick={() => {setIsLoginMode(false); setError("");}}
-                  className="text-black font-bold hover:underline"
-                >
-                  Đăng ký
-                </button>
-              </div>
+        {/* Back button */}
+        <Link
+          href="/"
+          className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-white/30 border-2 border-white/60 text-white hover:bg-white/50 transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </Link>
+      </div>
 
-              <div className="max-w-sm w-full mx-auto mt-6 md:mt-0">
-                <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-gray-900 tracking-tight">Sign in</h1>
-                
-                {error && <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium text-center">{error}</div>}
+      {/* ── Main card ── */}
+      <div className="flex-1 flex flex-col items-center px-6 pb-10 -mt-6 relative z-10">
 
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-gray-400 mb-3">Đăng nhập nhanh (Open account)</p>
-                  <div className="flex gap-4">
-                    <button 
-                      onClick={handleGoogleSignIn}
-                      disabled={isLoading}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 15.01 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                      </svg>
-                      Google
-                    </button>
-                    <button 
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 font-semibold text-gray-700 hover:bg-gray-50 transition-colors opacity-50 cursor-not-allowed"
-                    >
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                        <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.26-.79 3.59-.76 2.47.06 4.14 1.25 5.05 3.01-4.04 2.22-3.27 7.07.6 8.54-.7 1.83-2.03 3.5-3.81 5.38zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.37-2.04 4.39-3.74 4.25z"/>
-                      </svg>
-                      Apple ID
-                    </button>
-                  </div>
-                </div>
-
-                <p className="text-xs font-bold text-gray-400 mb-4 mt-8">Hoặc đăng nhập bằng email</p>
-                
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50/80 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
-                      placeholder="Email address"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-12 pr-12 py-4 rounded-2xl bg-gray-50/80 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
-                      placeholder="Password"
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-
-                  <button disabled={isLoading} className="w-full bg-[#1e5af0] text-white py-4 rounded-2xl font-bold mt-4 hover:bg-[#1546c4] transition-all active:scale-[0.98] flex items-center justify-center">
-                    {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "Đăng Nhập"}
-                  </button>
-                </form>
-
-              </div>
-            </div>
-          </div>
-
-          {/* ================= BACK FACE (SIGN UP) ================= */}
-          <div className={`absolute inset-0 w-full h-full bg-white md:rounded-[2rem] rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)] ${!isLoginMode ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            
-            {/* Right Form Side (Actually rendered on the left visually after flip) */}
-            <div className="flex-1 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center h-full relative">
-              <div className="absolute top-4 left-4 md:top-8 md:left-8 text-xs md:text-sm font-medium text-gray-500">
-                Đã có tài khoản?{" "}
-                <button 
-                  onClick={() => {setIsLoginMode(true); setError("");}}
-                  className="text-black font-bold hover:underline"
-                >
-                  Đăng nhập
-                </button>
-              </div>
-
-              <div className="max-w-sm w-full mx-auto mt-6 md:mt-0">
-                <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-gray-900 tracking-tight">Sign up</h1>
-                
-                {error && <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium text-center">{error}</div>}
-
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  <div className="relative">
-                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50/80 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
-                      placeholder="Nickname"
-                    />
-                  </div>
-                  
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50/80 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
-                      placeholder="Email address"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-12 pr-12 py-4 rounded-2xl bg-gray-50/80 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
-                      placeholder="Password"
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-
-                  <button disabled={isLoading} className="w-full bg-[#1e5af0] text-white py-4 rounded-2xl font-bold mt-4 hover:bg-[#1546c4] transition-all active:scale-[0.98] flex items-center justify-center">
-                    {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "Đăng Ký"}
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Left Image Side (Rendered on the right after flip) */}
-            <div className="hidden md:block w-[45%] h-full bg-[#f4f3ed] relative p-8">
-              <Image 
-                src="/login-illustration.jpg" 
-                alt="Login Illustration" 
-                fill
-                style={{ objectFit: 'cover' }}
-                className="rounded-3xl"
-              />
-              <div className="absolute top-6 right-6">
-                 <img src="/logo.png" alt="Temsy Logo" className="w-12 h-12 object-contain drop-shadow-md hover:scale-105 transition-transform" />
-              </div>
-            </div>
-
+        {/* Stamp logo badge */}
+        <div className="w-20 h-20 bg-paper border-[3px] border-pencil shadow-[4px_4px_0px_0px_#2d2d2d] flex items-center justify-center mb-5 relative"
+          style={{ clipPath: "polygon(8px 0%,calc(100% - 8px) 0%,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0% calc(100% - 8px),0% 8px)" }}>
+          <img src="/logo.png" alt="Temsy" className="w-12 h-12 object-contain" />
+          {/* Wavy lines like a real stamp cancel */}
+          <div className="absolute bottom-2 left-0 right-0 flex flex-col gap-0.5 px-1 pointer-events-none">
+            <div className="h-px bg-pencil/20" />
+            <div className="h-px bg-pencil/15" />
           </div>
         </div>
+
+        {/* Title */}
+        <h1 className="font-kalam font-bold text-center mb-1">
+          <span className="text-3xl text-pencil">
+            {isLoginMode ? "Đăng " : "Tạo "}
+          </span>
+          <span className="text-3xl text-marker-red">
+            {isLoginMode ? "Nhập" : "Tài Khoản"}
+          </span>
+        </h1>
+        <p className="text-pencil/60 text-sm text-center mb-7">
+          {isLoginMode
+            ? "Chào mừng trở lại! Bộ sưu tập tem đang chờ bạn 📮"
+            : "Bắt đầu lưu giữ khoảnh khắc của bạn thành những con tem ❤️"}
+        </p>
+
+        {/* Error */}
+        {error && (
+          <div className="w-full max-w-sm mb-5 px-4 py-3 bg-marker-red/10 border-2 border-marker-red text-marker-red text-sm font-bold rounded-xl wobbly-border">
+            {error}
+          </div>
+        )}
+
+        {/* Google button */}
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+          className="w-full max-w-sm flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-pencil rounded-2xl shadow-[3px_3px_0px_0px_#2d2d2d] font-bold text-pencil text-base hover:translate-y-[-2px] hover:shadow-[3px_5px_0px_0px_#2d2d2d] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-50"
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 15.01 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+          </svg>
+          Tiếp tục với Google
+        </button>
+
+        {/* Divider */}
+        <div className="w-full max-w-sm flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-pencil/20" />
+          <span className="text-xs font-bold text-pencil/40 tracking-widest">HOẶC EMAIL</span>
+          <div className="flex-1 h-px bg-pencil/20" />
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-3">
+
+          {/* Name field — only for register */}
+          {!isLoginMode && (
+            <div className="relative">
+              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-pencil/40" size={18} />
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-pencil/30 rounded-2xl focus:outline-none focus:border-marker-red text-base font-patrick text-pencil placeholder-pencil/40 transition-colors"
+                placeholder="Tên hiển thị"
+              />
+            </div>
+          )}
+
+          {/* Email */}
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-pencil/40" size={18} />
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-pencil/30 rounded-2xl focus:outline-none focus:border-marker-red text-base font-patrick text-pencil placeholder-pencil/40 transition-colors"
+              placeholder="Email"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-pencil/40" size={18} />
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-11 pr-12 py-3.5 bg-white border-2 border-pencil/30 rounded-2xl focus:outline-none focus:border-marker-red text-base font-patrick text-pencil placeholder-pencil/40 transition-colors"
+              placeholder="Mật khẩu"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-pencil/40 hover:text-pencil transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+
+          {/* Primary CTA — Sign Up / Sign In */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-4 mt-2 bg-marker-red text-white font-bold text-lg rounded-2xl shadow-[4px_4px_0px_0px_#c01c1c] hover:translate-y-[-2px] hover:shadow-[4px_6px_0px_0px_#c01c1c] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-60 flex items-center justify-center"
+          >
+            {isLoading ? (
+              <div className="w-6 h-6 border-[3px] border-white/40 border-t-white rounded-full animate-spin" />
+            ) : isLoginMode ? (
+              "Đăng Nhập"
+            ) : (
+              "Đăng Ký"
+            )}
+          </button>
+
+          {/* Secondary CTA — toggle mode */}
+          <button
+            type="button"
+            onClick={() => { setIsLoginMode(!isLoginMode); setError(""); }}
+            className="w-full py-4 bg-transparent text-marker-red font-bold text-lg rounded-2xl border-2 border-marker-red hover:bg-marker-red/5 active:bg-marker-red/10 transition-colors"
+          >
+            {isLoginMode ? "Tạo Tài Khoản" : "Đã có tài khoản? Đăng Nhập"}
+          </button>
+        </form>
+
+        {/* Footer note */}
+        <p className="text-xs text-pencil/40 text-center mt-6 max-w-xs">
+          Bằng cách tiếp tục, bạn đồng ý với{" "}
+          <span className="text-marker-red underline cursor-pointer">Điều khoản dịch vụ</span>{" "}
+          và{" "}
+          <span className="text-marker-red underline cursor-pointer">Chính sách bảo mật</span>{" "}
+          của Temsy.
+        </p>
       </div>
     </div>
   );

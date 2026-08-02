@@ -23,10 +23,10 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-3xl mx-auto">
-      <div className="glass-card overflow-hidden">
+      <div className="bg-white border-[3px] border-pencil wobbly-border shadow-pencil p-2 overflow-hidden -rotate-1">
         <Cropper
           ref={cropperRef}
-          style={{ height: 400, width: "100%" }}
+          style={{ height: 400, width: "100%", borderRadius: "10px" }}
           zoomTo={0.5}
           initialAspectRatio={3 / 4}
           aspectRatio={aspectRatio}
@@ -42,23 +42,23 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
         />
       </div>
 
-      <div className="glass-card flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white border-[3px] border-pencil wobbly-border-md shadow-pencil p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4 rotate-1">
         <div className="flex gap-2">
           <button 
             onClick={() => setAspectRatio(1)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${aspectRatio === 1 ? "bg-pastel-blue text-white" : "bg-white/50 hover:bg-white"}`}
+            className={`px-4 py-2 font-bold font-patrick transition-all wobbly-border ${aspectRatio === 1 ? "border-2 border-pencil bg-marker-red text-white shadow-[2px_2px_0px_0px_#2d2d2d]" : "border-2 border-pencil bg-white text-pencil hover:bg-muted-paper"}`}
           >
             1:1 Vuông
           </button>
           <button 
             onClick={() => setAspectRatio(3 / 4)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${aspectRatio === 3/4 ? "bg-pastel-blue text-white" : "bg-white/50 hover:bg-white"}`}
+            className={`px-4 py-2 font-bold font-patrick transition-all wobbly-border ${aspectRatio === 3/4 ? "border-2 border-pencil bg-marker-red text-white shadow-[2px_2px_0px_0px_#2d2d2d]" : "border-2 border-pencil bg-white text-pencil hover:bg-muted-paper"}`}
           >
             3:4 Dọc
           </button>
           <button 
             onClick={() => setAspectRatio(4 / 3)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${aspectRatio === 4/3 ? "bg-pastel-blue text-white" : "bg-white/50 hover:bg-white"}`}
+            className={`px-4 py-2 font-bold font-patrick transition-all wobbly-border ${aspectRatio === 4/3 ? "border-2 border-pencil bg-marker-red text-white shadow-[2px_2px_0px_0px_#2d2d2d]" : "border-2 border-pencil bg-white text-pencil hover:bg-muted-paper"}`}
           >
             4:3 Ngang
           </button>
@@ -67,13 +67,13 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
         <div className="flex gap-3">
           <button 
             onClick={onCancel}
-            className="px-6 py-2 rounded-xl font-medium text-foreground/70 hover:bg-white/50 transition-colors"
+            className="px-6 py-2 font-bold text-lg font-patrick text-pencil transition-all hover:bg-muted-paper/50 underline decoration-wavy underline-offset-4"
           >
             Hủy
           </button>
           <button 
             onClick={getCropData}
-            className="px-6 py-2 rounded-xl font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+            className="px-6 py-2 font-bold text-lg font-patrick transition-all border-[3px] border-pencil bg-white wobbly-border shadow-pencil hover:bg-marker-blue hover:text-white hover:shadow-pencil-hover hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
           >
             Tiếp tục
           </button>

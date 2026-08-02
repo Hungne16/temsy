@@ -29,6 +29,20 @@ const CAMAN_FILTERS = [
   { id: "nostalgia", name: "Nostalgia" }
 ];
 
+const STAMP_STYLES: { id: StampStyle; name: string; type: "css" | "image" }[] = [
+  { id: "vintage", name: "Cổ điển", type: "css" },
+  { id: "modern", name: "Hiện đại", type: "css" },
+  { id: "polaroid", name: "Polaroid", type: "css" },
+  { id: "postage", name: "Bưu chính", type: "css" },
+  { id: "film", name: "Phim ảnh", type: "css" },
+  { id: "wavy", name: "Lượn sóng", type: "css" },
+  { id: "template_1", name: "Khung 1", type: "image" },
+  { id: "template_2", name: "Khung 2", type: "image" },
+  { id: "template_3", name: "Khung 3", type: "image" },
+  { id: "template_4", name: "Khung 4", type: "image" },
+  { id: "template_5", name: "Khung 5", type: "image" }
+];
+
 export default function CreateStampPage() {
   const router = useRouter();
   const [step, setStep] = useState<"upload" | "crop" | "style">("upload");
@@ -284,23 +298,27 @@ export default function CreateStampPage() {
   };
 
   return (
-    <div className="p-6 md:p-10 min-h-screen flex flex-col items-center">
+    <div className="p-6 md:p-10 min-h-screen flex flex-col items-center bg-paper text-pencil relative overflow-hidden">
+      {/* Texture background */}
+      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: "radial-gradient(var(--color-muted-paper) 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
       
       {step === "upload" && (
-        <div className="w-full max-w-2xl text-center pt-10">
-          <h1 className="text-3xl font-bold mb-4">Tạo Tem Mới</h1>
-          <p className="text-foreground/60 mb-8">
+        <div className="w-full max-w-2xl text-center pt-10 relative z-10">
+          <h1 className="text-5xl md:text-6xl font-kalam font-bold mb-4 -rotate-1 inline-block">Tạo Tem Mới</h1>
+          <p className="text-pencil/70 mb-8 text-lg md:text-xl font-patrick">
             Kéo thả hoặc tải ảnh lên để bắt đầu biến khoảnh khắc của bạn thành một con tem.
           </p>
-          <Uploader onImageSelected={handleImageSelected} />
+          <div className="rotate-1">
+            <Uploader onImageSelected={handleImageSelected} />
+          </div>
         </div>
       )}
 
       {step === "crop" && originalImage && (
-        <div className="w-full max-w-3xl pt-6">
+        <div className="w-full max-w-3xl pt-6 relative z-10">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold">Cắt ảnh</h2>
-            <p className="text-foreground/60 text-sm mt-1">Chọn khung hình đẹp nhất cho con tem của bạn.</p>
+            <h2 className="text-4xl md:text-5xl font-kalam font-bold rotate-1 inline-block">Cắt ảnh</h2>
+            <p className="text-pencil/70 text-lg mt-1 font-patrick">Chọn khung hình đẹp nhất cho con tem của bạn.</p>
           </div>
           <StampEditor 
             imageUrl={originalImage} 
@@ -314,13 +332,13 @@ export default function CreateStampPage() {
       )}
 
       {step === "style" && croppedImage && (
-        <div className="w-full max-w-6xl pt-4 md:pt-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+        <div className="w-full max-w-6xl pt-4 md:pt-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative z-10">
           
           {/* Hidden Canvas for CamanJS */}
           <canvas ref={canvasRef} className="hidden"></canvas>
 
           {/* Left: Preview */}
-          <div className="w-full lg:flex-1 flex flex-col items-center justify-center p-4 md:p-8 glass-card sticky top-4 z-10">
+          <div className="w-full lg:flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-white border-[3px] border-pencil wobbly-border shadow-pencil sticky top-4 z-10 -rotate-1">
             {isProcessingFilter && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl">
                  <div className="px-4 py-2 bg-white rounded-full shadow-md font-medium text-pastel-blue-dark text-sm flex items-center gap-2">
@@ -341,23 +359,43 @@ export default function CreateStampPage() {
 
           {/* Right: Controls */}
           <div className="w-full lg:w-[450px] flex flex-col gap-6">
-            <div className="glass-card flex flex-col gap-5">
-              <h3 className="font-bold text-xl">Tuỳ chỉnh</h3>
+            <div className="flex flex-col gap-5 bg-white border-[3px] border-pencil wobbly-border-md shadow-pencil p-6 md:p-8 rotate-1">
+              {/* Tape decoration */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-3 w-20 h-6 bg-black/10 -rotate-2" style={{ clipPath: "polygon(0 0%, 100% 10%, 95% 100%, 5% 90%)" }}></div>
+              
+              <h3 className="font-kalam font-bold text-3xl">Tuỳ chỉnh</h3>
               
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold">Phong cách Tem</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["vintage", "modern", "polaroid", "minimal", "postage", "film", "wavy"] as StampStyle[]).map((s) => (
+                <label className="text-lg font-bold font-patrick">Phong cách & Khung tem</label>
+                <div className="flex gap-3 overflow-x-auto pb-4 filter-scrollbar snap-x">
+                  {STAMP_STYLES.map((styleObj) => (
                     <button 
-                      key={s}
-                      onClick={() => setStampStyle(s)}
-                      className={`py-2 px-1 rounded-lg text-xs font-bold capitalize border transition-all ${
-                        stampStyle === s 
-                          ? "border-pastel-blue bg-pastel-blue text-white shadow-md scale-105" 
-                          : "border-white/40 bg-white/50 hover:bg-white text-foreground/70"
+                      key={styleObj.id}
+                      onClick={() => setStampStyle(styleObj.id)}
+                      className={`relative flex-shrink-0 w-[90px] h-[110px] flex flex-col items-center justify-center gap-2 rounded-xl transition-all font-patrick snap-start border-2 ${
+                        stampStyle === styleObj.id 
+                          ? "border-marker-red bg-marker-red/5 shadow-[4px_4px_0px_0px_var(--color-marker-red)] -translate-y-1" 
+                          : "border-pencil bg-white hover:bg-muted-paper hover:-translate-y-1 shadow-[2px_2px_0px_0px_#2d2d2d] wobbly-border"
                       }`}
                     >
-                      {s}
+                      <div className="w-14 h-14 relative flex items-center justify-center bg-muted-paper/50 overflow-hidden border border-pencil/20 rounded-md">
+                        {styleObj.type === "image" ? (
+                          <img src={`/templates/${styleObj.id}.png`} alt={styleObj.name} className="w-full h-full object-contain p-1" />
+                        ) : (
+                          <div className="w-10 h-10 bg-white border-2 border-pencil/50 flex items-center justify-center">
+                            <span className="text-sm font-bold text-pencil/50">{styleObj.name.substring(0, 2)}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className={`text-xs sm:text-sm font-bold ${stampStyle === styleObj.id ? "text-marker-red" : "text-pencil"}`}>
+                        {styleObj.name}
+                      </span>
+                      
+                      {stampStyle === styleObj.id && (
+                        <div className="absolute -top-2 -right-2 bg-marker-red text-white rounded-full p-0.5 shadow-sm border-2 border-white">
+                          <Check size={14} />
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -365,17 +403,17 @@ export default function CreateStampPage() {
 
               {/* Filters */}
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold">Bộ lọc màu</label>
+                <label className="text-lg font-bold font-patrick">Bộ lọc màu</label>
                 <div className="flex gap-2 overflow-x-auto pb-2 filter-scrollbar">
                   {CAMAN_FILTERS.map((filter) => (
                     <button
                       key={filter.id}
                       onClick={() => applyFilter(filter.id)}
                       disabled={isProcessingFilter || !camanLoaded}
-                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1 ${
+                      className={`flex-shrink-0 px-3 py-1.5 text-sm font-bold transition-all border-2 whitespace-nowrap flex items-center gap-1 font-patrick wobbly-border ${
                         selectedFilter === filter.id
-                          ? "border-pastel-blue bg-pastel-blue text-white shadow-md"
-                          : "border-white/40 bg-white/50 hover:bg-white text-foreground/70"
+                          ? "border-pencil bg-marker-red text-white shadow-[2px_2px_0px_0px_#2d2d2d] translate-x-[1px] translate-y-[1px]"
+                          : "border-pencil bg-white text-pencil hover:bg-muted-paper"
                       }`}
                     >
                       {filter.name}
@@ -387,91 +425,93 @@ export default function CreateStampPage() {
 
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold">Thông tin chung</label>
+                  <label className="text-lg font-bold font-patrick">Thông tin chung</label>
                   <button 
                     onClick={() => setIsAutoGPS(!isAutoGPS)}
-                    className="flex items-center gap-1.5 text-xs font-medium text-pastel-blue-dark bg-pastel-blue/10 px-2 py-1 rounded-md"
+                    className="flex items-center gap-1.5 text-sm font-bold text-pencil bg-muted-paper/50 px-2 py-1 border-2 border-pencil wobbly-border hover:bg-muted-paper transition-colors"
                   >
-                    {isAutoGPS ? <ToggleRight size={16} className="text-pastel-blue" /> : <ToggleLeft size={16} className="text-gray-400" />}
-                    Tự động lấy vị trí
+                    {isAutoGPS ? <ToggleRight size={16} className="text-marker-red" /> : <ToggleLeft size={16} className="text-pencil/50" />}
+                    Tự động vị trí
                   </button>
                 </div>
                 <input 
                   type="text" 
                   value={metadata.title}
                   onChange={(e) => setMetadata({...metadata, title: e.target.value})}
-                  className="w-full px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                  className="w-full px-4 py-2 border-[3px] border-pencil bg-white wobbly-border focus:outline-none focus:ring-2 focus:ring-marker-blue/20 focus:border-marker-blue text-lg font-patrick placeholder-pencil/40"
                   placeholder="Tiêu đề (VD: Chiều thu Hà Nội)"
                   maxLength={30}
                 />
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1 flex">
                     <div className="relative flex-1">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-pencil/50" size={18} />
                       <input 
                         type="text" 
                         value={metadata.location}
                         onChange={(e) => setMetadata({...metadata, location: e.target.value, coordinates: undefined})}
-                        className="w-full pl-9 pr-4 py-2 rounded-xl rounded-r-none border border-white/40 border-r-0 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                        className="w-full pl-9 pr-4 py-2 border-[3px] border-pencil border-r-0 bg-white focus:outline-none focus:ring-2 focus:ring-marker-blue/20 text-lg font-patrick placeholder-pencil/40"
+                        style={{ borderRadius: "15px 0 0 255px / 255px 0 0 15px" }}
                         placeholder="Địa điểm"
                       />
                     </div>
                     <button
                       onClick={() => setIsMapPickerOpen(true)}
-                      className="px-3 bg-white/50 border border-white/40 border-l-0 rounded-r-xl text-pastel-blue-dark hover:bg-white transition-colors"
+                      className="px-3 bg-muted-paper/50 border-[3px] border-pencil border-l-0 text-pencil hover:bg-muted-paper transition-colors"
+                      style={{ borderRadius: "0 255px 15px 0 / 0 15px 255px 0" }}
                       title="Chọn trên bản đồ"
                     >
-                      <MapIcon size={16} />
+                      <MapIcon size={18} />
                     </button>
                   </div>
                   <input 
                     type="text" 
                     value={metadata.date}
                     onChange={(e) => setMetadata({...metadata, date: e.target.value})}
-                    className="w-full sm:w-[120px] px-4 py-2 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
+                    className="w-full sm:w-[120px] px-4 py-2 border-[3px] border-pencil bg-white wobbly-border focus:outline-none focus:ring-2 focus:ring-marker-blue/20 text-lg font-patrick placeholder-pencil/40"
                     placeholder="Ngày"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold flex items-center justify-between">
+                <label className="text-lg font-bold font-patrick flex items-center justify-between">
                   <span>Câu chuyện của bạn</span>
                   {metadata.coordinates && (
-                    <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <MapPin size={10} /> Đã ghim vị trí
+                    <span className="text-xs font-bold text-white bg-marker-red px-2 py-0.5 wobbly-border flex items-center gap-1 rotate-2 shadow-[2px_2px_0px_0px_#2d2d2d]">
+                      <MapPin size={10} /> Đã ghim
                     </span>
                   )}
                 </label>
                 <textarea 
                   value={metadata.story || ""}
                   onChange={(e) => setMetadata({...metadata, story: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-white/40 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm resize-none h-24"
+                  className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border focus:outline-none focus:ring-2 focus:ring-marker-blue/20 text-lg font-patrick placeholder-pencil/40 resize-none h-24"
                   placeholder="Viết vài dòng lưu giữ kỷ niệm đằng sau con tem này..."
                 />
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold">Quyền riêng tư</label>
-                <div className="flex gap-2 bg-white/40 p-1 rounded-xl">
+                <label className="text-lg font-bold font-patrick">Quyền riêng tư</label>
+                <div className="flex gap-2 bg-muted-paper/30 p-1 wobbly-border border-2 border-pencil border-dashed">
                   <button
                     onClick={() => setIsPublic(true)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isPublic ? "bg-white shadow-sm" : "hover:bg-white/50 text-foreground/60"
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 font-bold font-patrick transition-all wobbly-border ${
+                      isPublic ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
                     }`}
                   >
                     <Globe size={16} /> Công khai
                   </button>
                   <button
                     onClick={() => setIsPublic(false)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
-                      !isPublic ? "bg-white shadow-sm" : "hover:bg-white/50 text-foreground/60"
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 font-bold font-patrick transition-all wobbly-border ${
+                      !isPublic ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
                     }`}
                   >
                     <Lock size={16} /> Riêng tư
                   </button>
                 </div>
-                <p className="text-xs text-foreground/50 px-1">
+                <p className="text-sm text-pencil/60 px-1 font-patrick">
                   {isPublic 
                     ? "Mọi người có thể xem tem này trên bản đồ và trang chủ." 
                     : "Chỉ mình bạn thấy tem này trong Bộ sưu tập cá nhân."}
@@ -480,36 +520,34 @@ export default function CreateStampPage() {
 
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
+            <div className="flex flex-col sm:flex-row gap-4 mt-2">
               <button 
                 onClick={handleDownload}
                 disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-white border border-white/40 hover:bg-gray-50 transition-colors shadow-sm"
+                className="flex-1 flex items-center justify-center gap-2 py-3 border-[3px] border-pencil bg-muted-paper wobbly-border shadow-pencil font-bold text-xl font-patrick hover:bg-marker-blue hover:text-white hover:shadow-pencil-hover hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 disabled:opacity-50"
               >
-                <Download size={20} />
+                <Download size={22} />
                 Tải về máy
               </button>
               <button 
                 onClick={handleSaveToCollection}
                 disabled={isSaving || isSaved}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium shadow-lg transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 border-[3px] border-pencil wobbly-border shadow-pencil font-bold text-xl font-patrick transition-all rotate-1 disabled:opacity-50 ${
                   isSaved 
-                    ? "bg-green-500 text-white shadow-green-500/20" 
-                    : "bg-foreground text-background hover:bg-foreground/90 hover:-translate-y-1"
+                    ? "bg-green-400 text-pencil" 
+                    : "bg-white text-pencil hover:bg-marker-red hover:text-white hover:shadow-pencil-hover hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
                 }`}
               >
                 {isSaving ? (
-                  <div className="w-5 h-5 border-2 border-background border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-pencil border-t-transparent rounded-full animate-spin"></div>
                 ) : isSaved ? (
                   <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
+                    <Check size={22} />
                     Đã ghim
                   </>
                 ) : (
                   <>
-                    <Save size={20} />
+                    <Save size={22} />
                     Ghim lên Bản đồ
                   </>
                 )}
@@ -521,7 +559,7 @@ export default function CreateStampPage() {
                 setStep("crop");
                 setSelectedFilter("normal");
               }}
-              className="text-sm text-foreground/60 hover:text-foreground font-medium underline-offset-4 hover:underline text-center mt-2 pb-8 lg:pb-0"
+              className="text-lg font-patrick text-pencil/60 hover:text-marker-red font-bold underline decoration-wavy underline-offset-4 text-center mt-4 pb-8 lg:pb-0 transition-colors"
             >
               Quay lại bước Cắt ảnh
             </button>

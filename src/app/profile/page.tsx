@@ -6,7 +6,7 @@ import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useRef } from "react";
-import { getUserStamps } from "@/lib/stampService";
+import { getUserStamps, deleteStamp, updateStampMetadata } from "@/lib/stampService";
 import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/userService";
 
 export default function ProfilePage() {
@@ -26,6 +26,12 @@ export default function ProfilePage() {
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  
+  // Stamp Edit State
+  const [editingStamp, setEditingStamp] = useState<any>(null);
+  const [editStampTitle, setEditStampTitle] = useState("");
+  const [editStampLocation, setEditStampLocation] = useState("");
+  const [editStampStory, setEditStampStory] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -120,17 +126,60 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleDeleteStamp = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa tem này không?")) return;
+    try {
+      await deleteStamp(id);
+      setStamps(stamps.filter(s => s.id !== id));
+      setStampCount(prev => prev - 1);
+    } catch (error) {
+      alert("Lỗi khi xóa tem.");
+    }
+  };
+
+  const handleEditStampClick = (id: string) => {
+    const stamp = stamps.find(s => s.id === id);
+    if (stamp) {
+      setEditingStamp(stamp);
+      setEditStampTitle(stamp.metadata.title || "");
+      setEditStampLocation(stamp.metadata.location || "");
+      setEditStampStory(stamp.metadata.story || "");
+    }
+  };
+
+  const handleSaveStamp = async () => {
+    if (!editingStamp) return;
+    setIsSaving(true);
+    try {
+      const updatedMetadata = {
+        ...editingStamp.metadata,
+        title: editStampTitle,
+        location: editStampLocation,
+        story: editStampStory
+      };
+      await updateStampMetadata(editingStamp.id, updatedMetadata);
+      
+      setStamps(stamps.map(s => s.id === editingStamp.id ? { ...s, metadata: updatedMetadata } : s));
+      setEditingStamp(null);
+    } catch (error) {
+      alert("Lỗi cập nhật tem.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading || (user && !profile)) {
     return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
   }
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div className="glass-card p-10 max-w-md w-full">
-          <h1 className="text-2xl font-bold mb-4">Hồ sơ cá nhân</h1>
-          <p className="text-foreground/60 mb-8">Vui lòng đăng nhập để xem hồ sơ và bộ sưu tập của bạn.</p>
-          <Link href="/login" className="w-full bg-pastel-blue text-white py-3 rounded-xl font-medium hover:bg-pastel-blue-dark transition-colors inline-block">
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-paper relative">
+        <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: "radial-gradient(var(--color-muted-paper) 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
+        <div className="bg-white border-[3px] border-pencil wobbly-border-md shadow-pencil p-10 max-w-md w-full relative z-10 rotate-1">
+          <h1 className="text-4xl font-kalam font-bold mb-4 text-pencil">Hồ sơ cá nhân</h1>
+          <p className="text-pencil/70 mb-8 font-patrick text-lg">Vui lòng đăng nhập để xem hồ sơ và bộ sưu tập của bạn.</p>
+          <Link href="/login" className="w-full bg-postit text-pencil py-3 border-[3px] border-pencil wobbly-border shadow-pencil font-bold font-patrick text-xl hover:bg-marker-blue hover:text-white hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all inline-block -rotate-2">
             Đăng nhập ngay
           </Link>
         </div>
@@ -139,23 +188,24 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen pb-10">
+    <div className="min-h-screen pb-10 bg-paper relative font-sans">
+      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: "radial-gradient(var(--color-muted-paper) 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
       {/* Cover Photo */}
       <div 
-        className="h-48 md:h-64 bg-pastel-blue-light w-full relative bg-cover bg-center group"
+        className="h-48 md:h-64 bg-muted-paper w-full relative bg-cover bg-center border-b-[3px] border-pencil"
         style={{ backgroundImage: profile.bannerUrl ? `url(${profile.bannerUrl})` : "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}
       >
         {!profile.bannerUrl && <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}></div>}
         
         {/* Quick action to change banner */}
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute bottom-4 right-4 z-20">
           <button 
             onClick={() => directBannerInputRef.current?.click()} 
             disabled={isSaving}
-            className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-2 rounded-full text-white font-medium hover:bg-white/40 shadow-sm transition-colors"
+            className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-2 border-pencil px-4 py-2 wobbly-border text-pencil font-bold font-patrick hover:bg-white shadow-[2px_2px_0px_0px_#2d2d2d] transition-all rotate-2 active:rotate-0"
           >
             {isSaving ? (
-              <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-pencil border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <Camera size={18} />
             )}
@@ -165,25 +215,25 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-6 relative z-10">
         {/* Profile Info Header */}
-        <div className="relative -mt-16 md:-mt-20 flex flex-col md:flex-row gap-6 md:items-end mb-8">
-          <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background overflow-hidden bg-cream shadow-xl z-10 flex-shrink-0">
+        <div className="relative -mt-16 md:-mt-20 flex flex-col md:flex-row gap-6 md:items-end mb-10">
+          <div className="w-32 h-32 md:w-40 md:h-40 border-[4px] border-pencil overflow-hidden bg-white shadow-pencil z-10 flex-shrink-0 wobbly-border -rotate-2">
             <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full object-cover" />
           </div>
           
           <div className="flex-1 flex flex-col md:flex-row justify-between md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">{profile.displayName}</h1>
-              <p className="text-foreground/80 mt-1">{profile.bio}</p>
-              <div className="flex gap-4 mt-2 text-sm text-foreground/60">
-                <span className="flex items-center gap-1"><MapPin size={14} /> {profile.location}</span>
-                <span className="flex items-center gap-1"><Calendar size={14} /> Thành viên Temsy</span>
+            <div className="bg-white/80 backdrop-blur-md border-[3px] border-pencil p-4 wobbly-border shadow-pencil rotate-1">
+              <h1 className="text-4xl font-kalam font-bold text-pencil">{profile.displayName}</h1>
+              <p className="text-pencil/80 mt-1 font-patrick text-lg">{profile.bio}</p>
+              <div className="flex gap-4 mt-2 text-sm text-pencil/70 font-patrick font-bold">
+                <span className="flex items-center gap-1"><MapPin size={16} /> {profile.location}</span>
+                <span className="flex items-center gap-1"><Calendar size={16} /> Thành viên Temsy</span>
               </div>
             </div>
             
             <div className="flex gap-3">
-              <button onClick={handleEditClick} className="px-6 py-2 bg-foreground text-background rounded-xl font-medium hover:bg-foreground/90 transition-colors">
+              <button onClick={handleEditClick} className="px-6 py-3 bg-white border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-2">
                 Chỉnh sửa
               </button>
             </div>
@@ -192,81 +242,87 @@ export default function ProfilePage() {
 
         {/* Stats & Achievements */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <div className="glass-card p-4 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-bold text-pastel-blue-dark">{stampCount}</span>
-            <span className="text-sm font-medium text-foreground/60 flex items-center gap-1 mt-1"><ImageIcon size={14} /> Tem đã tạo</span>
+          <div className="bg-white border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil rotate-1">
+            <span className="text-4xl font-bold font-kalam text-marker-blue">{stampCount}</span>
+            <span className="text-sm font-bold font-patrick text-pencil/70 flex items-center gap-1 mt-1"><ImageIcon size={16} /> Tem đã tạo</span>
           </div>
-          <div className="glass-card p-4 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-bold text-pastel-blue-dark">0</span>
-            <span className="text-sm font-medium text-foreground/60 flex items-center gap-1 mt-1"><ImageIcon size={14} /> Album</span>
+          <div className="bg-white border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil -rotate-1">
+            <span className="text-4xl font-bold font-kalam text-marker-blue">0</span>
+            <span className="text-sm font-bold font-patrick text-pencil/70 flex items-center gap-1 mt-1"><ImageIcon size={16} /> Album</span>
           </div>
-          <div className="glass-card p-4 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-bold text-pastel-blue-dark">0</span>
-            <span className="text-sm font-medium text-foreground/60 flex items-center gap-1 mt-1"><Heart size={14} /> Lượt thích</span>
+          <div className="bg-white border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil rotate-2">
+            <span className="text-4xl font-bold font-kalam text-marker-blue">0</span>
+            <span className="text-sm font-bold font-patrick text-pencil/70 flex items-center gap-1 mt-1"><Heart size={16} /> Lượt thích</span>
           </div>
-          <div className="glass-card p-4 flex flex-col items-center justify-center text-center bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200">
-            <div className="text-yellow-600 mb-1"><Award size={28} /></div>
-            <span className="text-sm font-bold text-yellow-700 dark:text-yellow-500">Người sưu tầm</span>
+          <div className="bg-postit border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil -rotate-2">
+            <div className="text-pencil mb-1"><Award size={32} /></div>
+            <span className="text-lg font-bold font-patrick text-pencil">Người sưu tầm</span>
           </div>
         </div>
 
         {/* Badges & Gamification */}
-        <div className="mb-10">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Award className="text-pastel-blue-dark" /> Huy hiệu & Thành tựu
+        <div className="mb-12">
+          <h2 className="text-3xl font-kalam font-bold mb-6 flex items-center gap-2 text-pencil rotate-1">
+            <Award className="text-marker-red" /> Huy hiệu & Thành tựu
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="glass-card p-4 flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center text-white shadow-lg shrink-0">
-                <Award size={24} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-1">
+              <div className="w-14 h-14 border-[3px] border-pencil bg-marker-red flex items-center justify-center text-white wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] shrink-0 rotate-3">
+                <Award size={28} />
               </div>
               <div>
-                <h3 className="font-bold">Người Mới Bắt Đầu</h3>
-                <p className="text-sm text-foreground/60 mt-1">Tạo con tem đầu tiên của bạn.</p>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Người Mới Bắt Đầu</h3>
+                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Tạo con tem đầu tiên của bạn.</p>
                 {stampCount >= 1 ? (
-                  <div className="mt-2 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-md inline-block">Đã mở khóa</div>
+                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
                 ) : (
-                  <div className="mt-2 text-xs font-medium text-foreground/40 bg-black/5 px-2 py-1 rounded-md inline-block">Chưa mở khóa</div>
+                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">Chưa mở khóa</div>
                 )}
               </div>
             </div>
 
-            <div className={`glass-card p-4 flex items-start gap-4 transition-opacity ${stampCount >= 5 ? 'opacity-100' : 'opacity-70'}`}>
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center text-white shadow-lg shrink-0">
-                <MapPin size={24} />
+            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil rotate-2 transition-opacity ${stampCount >= 5 ? 'opacity-100' : 'opacity-70'}`}>
+              <div className="w-14 h-14 border-[3px] border-pencil bg-marker-blue flex items-center justify-center text-white wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] shrink-0 -rotate-3">
+                <MapPin size={28} />
               </div>
               <div>
-                <h3 className="font-bold">Nhà Thám Hiểm</h3>
-                <p className="text-sm text-foreground/60 mt-1">Tạo tem ở 5 địa điểm khác nhau.</p>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Nhà Thám Hiểm</h3>
+                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Tạo tem ở 5 địa điểm khác.</p>
                 {stampCount >= 5 ? (
-                  <div className="mt-2 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-md inline-block">Đã mở khóa</div>
+                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
                 ) : (
-                  <div className="mt-2 text-xs font-medium text-foreground/40 bg-black/5 px-2 py-1 rounded-md inline-block">{Math.min(stampCount, 5)} / 5</div>
+                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 5)} / 5</div>
                 )}
               </div>
             </div>
 
-            <div className="glass-card p-4 flex items-start gap-4 opacity-70 hover:opacity-100 transition-opacity">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center text-white shadow-lg shrink-0">
-                <Heart size={24} />
+            <div className="bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-2 opacity-70 hover:opacity-100 transition-opacity">
+              <div className="w-14 h-14 border-[3px] border-pencil bg-postit flex items-center justify-center text-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] shrink-0 rotate-6">
+                <Heart size={28} />
               </div>
               <div>
-                <h3 className="font-bold">Người Truyền Cảm Hứng</h3>
-                <p className="text-sm text-foreground/60 mt-1">Nhận được 100 lượt thích.</p>
-                <div className="mt-2 text-xs font-medium text-foreground/40 bg-black/5 px-2 py-1 rounded-md inline-block">0 / 100</div>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Truyền Cảm Hứng</h3>
+                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Nhận được 100 lượt thích.</p>
+                <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">0 / 100</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* User's Stamps */}
-        <h2 className="text-xl font-bold mb-4">Tem gần đây</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stamps.slice(0, 4).map((stamp) => (
-            <StampCard key={stamp.id} stamp={stamp} />
+        <h2 className="text-3xl font-kalam font-bold mb-6 text-pencil -rotate-1">Tem gần đây</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {stamps.map((stamp) => (
+            <StampCard 
+              key={stamp.id} 
+              stamp={stamp} 
+              showOptions={true}
+              onDelete={handleDeleteStamp}
+              onEdit={handleEditStampClick}
+            />
           ))}
           {stamps.length === 0 && (
-            <div className="col-span-4 p-8 text-center text-foreground/50 glass-card">
+            <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white rotate-1">
               Bạn chưa có tem nào. Hãy tạo con tem đầu tiên nhé!
             </div>
           )}
@@ -275,26 +331,26 @@ export default function ProfilePage() {
 
       {/* Edit Profile Modal */}
       {isEditing && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-xl font-bold">Chỉnh sửa hồ sơ</h2>
-              <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
-                <X size={20} />
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-md w-full max-w-2xl overflow-hidden shadow-pencil flex flex-col max-h-[90vh] rotate-1">
+            <div className="p-6 border-b-[3px] border-pencil border-dashed flex items-center justify-between bg-white/50">
+              <h2 className="text-3xl font-kalam font-bold text-pencil">Chỉnh sửa hồ sơ</h2>
+              <button onClick={() => setIsEditing(false)} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-muted-paper wobbly-border transition-all">
+                <X size={24} className="text-pencil" />
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-white/30">
               {/* Banner Edit */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ảnh bìa (Banner)</label>
+              <div className="space-y-3">
+                <label className="text-lg font-bold font-patrick text-pencil">Ảnh bìa (Banner)</label>
                 <div 
-                  className="h-32 rounded-xl bg-cover bg-center border-2 border-dashed border-gray-300 relative group overflow-hidden"
+                  className="h-32 wobbly-border bg-cover bg-center border-[3px] border-dashed border-pencil relative group overflow-hidden bg-muted-paper"
                   style={{ backgroundImage: editBannerUrl ? `url(${editBannerUrl})` : "none" }}
                 >
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => bannerInputRef.current?.click()} className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-medium hover:bg-white/30">
-                      <Camera size={16} /> Thay đổi
+                  <div className="absolute inset-0 bg-pencil/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => bannerInputRef.current?.click()} className="flex items-center gap-2 bg-white border-[3px] border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] text-pencil text-lg font-bold font-patrick hover:bg-muted-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all">
+                      <Camera size={20} /> Thay đổi
                     </button>
                     <input type="file" accept="image/*" ref={bannerInputRef} onChange={(e) => handleFileChange(e, 'banner')} className="hidden" />
                   </div>
@@ -302,13 +358,13 @@ export default function ProfilePage() {
               </div>
 
               {/* Avatar Edit */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ảnh đại diện (Avatar)</label>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-pastel-blue">
+              <div className="space-y-3">
+                <label className="text-lg font-bold font-patrick text-pencil">Ảnh đại diện (Avatar)</label>
+                <div className="flex items-center gap-6">
+                  <div className="w-24 h-24 overflow-hidden border-[3px] border-pencil wobbly-border bg-white shadow-pencil -rotate-2">
                     <img src={editAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   </div>
-                  <button onClick={() => avatarInputRef.current?.click()} className="px-4 py-2 rounded-xl border font-medium hover:bg-gray-50 dark:hover:bg-zinc-800">
+                  <button onClick={() => avatarInputRef.current?.click()} className="px-6 py-2 border-[3px] border-pencil bg-white wobbly-border shadow-pencil font-bold font-patrick text-lg text-pencil hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1">
                     Tải ảnh lên
                   </button>
                   <input type="file" accept="image/*" ref={avatarInputRef} onChange={(e) => handleFileChange(e, 'avatar')} className="hidden" />
@@ -316,45 +372,110 @@ export default function ProfilePage() {
               </div>
 
               {/* Text Fields */}
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Tên hiển thị</label>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil">Tên hiển thị</label>
                   <input 
                     type="text" 
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border bg-transparent focus:ring-2 focus:ring-pastel-blue outline-none"
+                    className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Vị trí (Location)</label>
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil">Vị trí (Location)</label>
                   <input 
                     type="text" 
                     value={editLocation}
                     onChange={(e) => setEditLocation(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border bg-transparent focus:ring-2 focus:ring-pastel-blue outline-none"
+                    className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Tiểu sử (Bio)</label>
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil">Tiểu sử (Bio)</label>
                   <textarea 
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-2 rounded-xl border bg-transparent focus:ring-2 focus:ring-pastel-blue outline-none resize-none"
+                    className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d] resize-none"
                   />
                 </div>
               </div>
             </div>
             
-            <div className="p-4 border-t flex justify-end gap-3 bg-gray-50 dark:bg-zinc-900/50">
-              <button onClick={() => setIsEditing(false)} className="px-6 py-2 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+            <div className="p-6 border-t-[3px] border-pencil border-dashed flex justify-end gap-4 bg-white/50">
+              <button onClick={() => setIsEditing(false)} className="px-6 py-3 border-[3px] border-pencil bg-white wobbly-border shadow-pencil font-bold font-patrick text-lg text-pencil hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1">
                 Hủy
               </button>
               <button 
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="px-6 py-2 bg-pastel-blue text-white rounded-xl font-medium hover:bg-pastel-blue-dark transition-colors flex items-center gap-2"
+                className="px-6 py-3 border-[3px] border-pencil bg-postit wobbly-border shadow-pencil font-bold font-patrick text-lg text-pencil hover:bg-marker-blue hover:text-white hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1 flex items-center gap-2"
+              >
+                {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Stamp Modal */}
+      {editingStamp && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-md w-full max-w-lg overflow-hidden shadow-pencil flex flex-col max-h-[90vh] -rotate-1">
+            <div className="p-6 border-b-[3px] border-pencil border-dashed flex items-center justify-between bg-white/50">
+              <h2 className="text-3xl font-kalam font-bold text-pencil">Chỉnh sửa Tem</h2>
+              <button onClick={() => setEditingStamp(null)} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-muted-paper wobbly-border transition-all">
+                <X size={24} className="text-pencil" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-white/30">
+              <div className="flex justify-center mb-6">
+                <div className="w-32 bg-white border-[3px] border-pencil p-2 wobbly-border shadow-pencil rotate-2">
+                  <img src={editingStamp.imageUrl} alt="Stamp" className="w-full h-auto drop-shadow-sm" />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil">Tên tem</label>
+                  <input 
+                    type="text" 
+                    value={editStampTitle}
+                    onChange={(e) => setEditStampTitle(e.target.value)}
+                    className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil">Địa điểm</label>
+                  <input 
+                    type="text" 
+                    value={editStampLocation}
+                    onChange={(e) => setEditStampLocation(e.target.value)}
+                    className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil">Câu chuyện</label>
+                  <textarea 
+                    value={editStampStory}
+                    onChange={(e) => setEditStampStory(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d] resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t-[3px] border-pencil border-dashed flex justify-end gap-4 bg-white/50">
+              <button onClick={() => setEditingStamp(null)} className="px-6 py-3 border-[3px] border-pencil bg-white wobbly-border shadow-pencil font-bold font-patrick text-lg text-pencil hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1">
+                Hủy
+              </button>
+              <button 
+                onClick={handleSaveStamp}
+                disabled={isSaving}
+                className="px-6 py-3 border-[3px] border-pencil bg-marker-blue wobbly-border shadow-pencil font-bold font-patrick text-lg text-white hover:bg-marker-blue/90 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2"
               >
                 {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
