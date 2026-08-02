@@ -1,6 +1,5 @@
-import { db, storage, auth } from "./firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where, orderBy } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { db, auth } from "./firebase";
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
 import { StampStyle } from "@/components/StampPreview";
 
 export const uploadStamp = async (

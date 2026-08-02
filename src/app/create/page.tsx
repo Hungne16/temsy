@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
-import { toJpeg } from "html-to-image";
+import { toJpeg, toPng } from "html-to-image";
 import { Download, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
