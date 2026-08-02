@@ -24,14 +24,16 @@ interface StampPreviewProps {
 export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
   ({ imageUrl, style = "vintage", className, metadata }, ref) => {
     
-    // CSS trick for postage stamp edge using radial-gradient mask
+    // Tạo viền răng cưa (tem) chỉ ở cạnh viền, phần lõi giữ nguyên
     const stampEdgeStyle = {
-      maskImage: "radial-gradient(circle at 12px 12px, transparent 12px, black 13px)",
-      maskSize: "24px 24px",
-      maskPosition: "-12px -12px",
-      WebkitMaskImage: "radial-gradient(circle at 6px 6px, transparent 4px, black 4.5px)",
-      WebkitMaskSize: "16px 16px",
-      WebkitMaskPosition: "-4px -4px",
+      WebkitMask: "radial-gradient(5px at 50% 100%, transparent 50%, #000 52%) repeat-x, radial-gradient(5px at 50% 0%, transparent 50%, #000 52%) repeat-x, radial-gradient(5px at 100% 50%, transparent 50%, #000 52%) repeat-y, radial-gradient(5px at 0% 50%, transparent 50%, #000 52%) repeat-y, linear-gradient(#000, #000)",
+      WebkitMaskSize: "16px 8px, 16px 8px, 8px 16px, 8px 16px, calc(100% - 16px) calc(100% - 16px)",
+      WebkitMaskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
+      WebkitMaskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
+      mask: "radial-gradient(5px at 50% 100%, transparent 50%, #000 52%) repeat-x, radial-gradient(5px at 50% 0%, transparent 50%, #000 52%) repeat-x, radial-gradient(5px at 100% 50%, transparent 50%, #000 52%) repeat-y, radial-gradient(5px at 0% 50%, transparent 50%, #000 52%) repeat-y, linear-gradient(#000, #000)",
+      maskSize: "16px 8px, 16px 8px, 8px 16px, 8px 16px, calc(100% - 16px) calc(100% - 16px)",
+      maskPosition: "0 100%, 0 0, 100% 0, 0 0, center",
+      maskRepeat: "repeat-x, repeat-x, repeat-y, repeat-y, no-repeat",
     };
 
     return (

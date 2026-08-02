@@ -48,3 +48,25 @@ export const getUserStamps = async (userId: string) => {
     return [];
   }
 };
+
+import { doc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
+
+export const getStampById = async (id: string) => {
+  const docRef = doc(db, "stamps", id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() };
+  } else {
+    throw new Error("Không tìm thấy tem!");
+  }
+};
+
+export const deleteStamp = async (id: string) => {
+  const docRef = doc(db, "stamps", id);
+  await deleteDoc(docRef);
+};
+
+export const updateStampMetadata = async (id: string, metadata: { title: string; location: string; date: string }) => {
+  const docRef = doc(db, "stamps", id);
+  await updateDoc(docRef, { metadata });
+};

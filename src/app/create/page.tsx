@@ -15,8 +15,10 @@ export default function CreateStampPage() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [stampStyle, setStampStyle] = useState<StampStyle>("vintage");
+  const [finalImage, setFinalImage] = useState<string | null>(null);
   const [metadata, setMetadata] = useState({ title: "", location: "", date: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   
   const stampRef = useRef<HTMLDivElement>(null);
 
@@ -77,10 +79,12 @@ export default function CreateStampPage() {
       const { uploadStamp } = await import("@/lib/stampService");
       
       await uploadStamp(dataUrl, stampStyle, metadata);
-      alert("Đã lưu thành công vào Bộ sưu tập trên đám mây!");
-    } catch (error: any) {
+      
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (error) {
       console.error(error);
-      alert("Có lỗi xảy ra: " + error.message);
+      alert("Có lỗi xảy ra khi lưu tem!");
     } finally {
       setIsSaving(false);
     }
@@ -194,10 +198,28 @@ export default function CreateStampPage() {
               </button>
               <button 
                 onClick={handleSaveToCollection}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                disabled={isSaving || isSaved}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
+                  isSaved 
+                    ? "bg-green-500 text-white" 
+                    : "bg-foreground text-background hover:bg-foreground/90"
+                }`}
               >
-                <Save size={20} />
-                Lưu vào Album
+                {isSaving ? (
+                  <div className="w-5 h-5 border-2 border-background border-t-transparent rounded-full animate-spin"></div>
+                ) : isSaved ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Đã lưu
+                  </>
+                ) : (
+                  <>
+                    <Save size={20} />
+                    Lưu vào Album
+                  </>
+                )}
               </button>
             </div>
             
