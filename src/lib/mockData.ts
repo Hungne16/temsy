@@ -11,7 +11,7 @@ export interface Stamp {
     camera?: string;
   };
   albumId?: string;
-  likes: parseInt;
+  likes: number;
 }
 
 export const MOCK_STAMPS: Stamp[] = [
