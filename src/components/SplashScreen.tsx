@@ -31,10 +31,11 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="relative flex flex-col items-center"
             >
-              {/* App Logo/Icon representation */}
-              <div className="w-24 h-24 bg-pastel-blue rounded-3xl rotate-12 flex items-center justify-center shadow-xl mb-6">
-                <span className="text-white text-5xl font-bold -rotate-12">T</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="Temsy Logo" 
+                className="w-32 h-32 object-contain drop-shadow-2xl mb-2 rotate-[-5deg] hover:rotate-0 transition-transform duration-500" 
+              />
               <motion.h1 
                 className="text-3xl font-bold tracking-widest text-foreground"
                 initial={{ y: 10, opacity: 0 }}

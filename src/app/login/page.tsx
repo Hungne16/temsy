@@ -95,8 +95,7 @@ export default function LoginPage() {
                 className="rounded-3xl"
               />
               <div className="absolute top-6 left-6">
-                 {/* App Logo */}
-                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
+                 <img src="/logo.png" alt="Temsy Logo" className="w-12 h-12 object-contain drop-shadow-md hover:scale-105 transition-transform" />
               </div>
             </div>
 
@@ -260,8 +259,7 @@ export default function LoginPage() {
                 className="rounded-3xl"
               />
               <div className="absolute top-6 right-6">
-                 {/* App Logo */}
-                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
+                 <img src="/logo.png" alt="Temsy Logo" className="w-12 h-12 object-contain drop-shadow-md hover:scale-105 transition-transform" />
               </div>
             </div>
 
