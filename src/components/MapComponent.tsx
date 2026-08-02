@@ -46,6 +46,7 @@ export default function MapComponent() {
   const [hasLocation, setHasLocation] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [stamps, setStamps] = useState<any[]>([]);
+  const [selectedStamp, setSelectedStamp] = useState<any>(null);
 
   useEffect(() => {
     // Lấy vị trí
@@ -123,17 +124,20 @@ export default function MapComponent() {
             icon={stampIcon}
           >
             <Popup className="custom-popup">
-              <a 
-                href={`/stamp/${stamp.id}`}
-                className="flex flex-col w-48 rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity block"
-                style={{ textDecoration: 'none', color: 'inherit' }}
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedStamp(stamp);
+                }}
+                className="flex flex-col w-48 rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity block text-left"
               >
                 <img 
                   src={stamp.imageUrl} 
                   alt={stamp.metadata.title} 
                   className="w-full h-32 object-cover bg-gray-100" 
                 />
-                <div className="p-3 bg-white">
+                <div className="p-3 bg-white w-full">
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="font-bold text-gray-900 text-sm leading-tight">{stamp.metadata.title}</h3>
                     {stamp.isPublic === false ? (
@@ -150,13 +154,62 @@ export default function MapComponent() {
                     </div>
                   )}
                   
-                  <div className="mt-2 text-[10px] text-pastel-blue font-medium text-center">Bấm để xem chi tiết</div>
+                  <div className="mt-2 text-[10px] text-pastel-blue font-medium text-center w-full">Bấm để xem chi tiết</div>
                 </div>
-              </a>
+              </button>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
+      
+      {/* Side Panel for Stamp Details */}
+      {selectedStamp && (
+        <div className="absolute top-0 right-0 h-full w-full sm:w-80 md:w-96 bg-white shadow-2xl z-[2000] flex flex-col animate-in slide-in-from-right duration-300">
+          <div className="p-4 flex items-center justify-between border-b">
+            <h2 className="font-bold text-lg">Chi tiết tem</h2>
+            <button 
+              onClick={() => setSelectedStamp(null)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <img 
+              src={selectedStamp.imageUrl} 
+              alt={selectedStamp.metadata.title}
+              className="w-full h-auto rounded-xl drop-shadow-md"
+            />
+            
+            <div>
+              <div className="flex items-start justify-between">
+                <h1 className="text-2xl font-bold uppercase tracking-tight">{selectedStamp.metadata.title}</h1>
+                <div className="text-red-500 font-medium text-sm">❤️ {selectedStamp.likes || 0}</div>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">{selectedStamp.metadata.date} • {selectedStamp.metadata.location}</p>
+            </div>
+            
+            {selectedStamp.metadata.story && (
+              <div className="bg-pastel-blue/10 p-4 rounded-xl border border-pastel-blue/20">
+                <h4 className="text-xs font-bold text-pastel-blue-dark mb-1 uppercase">Câu chuyện</h4>
+                <p className="italic text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                  "{selectedStamp.metadata.story}"
+                </p>
+              </div>
+            )}
+            
+            <div className="pt-4 mt-4 border-t border-gray-100 flex gap-2">
+              <a 
+                href={`/stamp/${selectedStamp.id}`} 
+                className="flex-1 py-2 bg-gray-50 hover:bg-gray-100 text-center rounded-lg text-sm font-medium transition-colors border"
+              >
+                Tới trang chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
       
       <style jsx global>{`
         /* Fix leaflet popup padding */
