@@ -23,6 +23,7 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isStamping, setIsStamping] = useState(false);
+  const [isCut, setIsCut] = useState(false);
 
   // drag state
   const dragging = useRef(false);
@@ -112,7 +113,9 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
 
     setIsStamping(true);
     
-    // Play sound if you have one, wait for animation
+    // Thời điểm khuôn chạm vào ảnh (30% của 0.8s)
+    setTimeout(() => setIsCut(true), 240);
+    
     setTimeout(() => {
       // Export at 2× for quality
       const EX = 2;
@@ -131,9 +134,11 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
 
       ctx.drawImage(img, x, y, drawW, drawH);
       onCropSuccess(canvas.toDataURL("image/jpeg", 0.92));
-      // Re-enable in case they go back
+      
+      // Phục hồi lại trạng thái
       setIsStamping(false);
-    }, 600); // 600ms corresponds to the animation time
+      setIsCut(false);
+    }, 800); // 800ms corresponds to the animation time
   }, [FRAME_W, FRAME_H, scale, offset, onCropSuccess]);
 
   const resetView = useCallback(() => {
@@ -156,8 +161,17 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
       {/* ── Canvas preview ── */}
       <div className={`flex justify-center ${isStamping ? "animate-shake-stamp pointer-events-none" : ""}`}>
         <div
-          className="relative rounded-xl overflow-hidden border-[3px] border-pencil shadow-[4px_4px_0_0_#2d2d2d] cursor-grab active:cursor-grabbing"
-          style={{ width: FRAME_W, height: FRAME_H, touchAction: "none" }}
+          className="relative rounded-xl overflow-hidden shadow-[4px_4px_0_0_#2d2d2d] cursor-grab active:cursor-grabbing transition-all duration-75 bg-pencil"
+          style={{ 
+            width: FRAME_W, height: FRAME_H, touchAction: "none",
+            border: isCut ? "none" : "3px solid #2d2d2d",
+            maskImage: isCut ? "radial-gradient(circle, transparent 4px, black 5px)" : "none",
+            maskSize: "16px 16px",
+            maskPosition: "-8px -8px",
+            WebkitMaskImage: isCut ? "radial-gradient(circle, transparent 4px, black 5px)" : "none",
+            WebkitMaskSize: "16px 16px",
+            WebkitMaskPosition: "-8px -8px",
+          }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -176,13 +190,19 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
             backgroundSize: `${FRAME_W / 3}px ${FRAME_H / 3}px`,
           }} />
 
-          {/* Stamp Animation Overlay */}
+          {/* Stamp Machine Animation Overlay (Máy dập khuôn) */}
           {isStamping && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-              <div className="w-[120px] h-[120px] border-[5px] border-marker-red rounded-full flex flex-col items-center justify-center animate-stamp bg-white/20 backdrop-blur-[1px]">
-                <div className="w-[100px] h-[100px] border-[3px] border-marker-red border-dashed rounded-full flex items-center justify-center">
-                   <span className="text-marker-red font-kalam font-bold text-2xl tracking-widest uppercase rotate-[-5deg]">Temsy</span>
-                </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50 overflow-visible">
+              <div 
+                className="animate-stamp-cut"
+                style={{
+                  width: FRAME_W,
+                  height: FRAME_H,
+                  border: "8px solid #2d2d2d", // Khuôn kim loại màu đậm
+                  borderRadius: "10px",
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.5)",
+                }}
+              >
               </div>
             </div>
           )}
