@@ -155,7 +155,7 @@ export default function MapComponent() {
   }, []);
 
   return (
-    <div className="relative w-full h-[calc(100vh-120px)] rounded-3xl overflow-hidden shadow-2xl z-0">
+    <div className="relative w-full rounded-2xl overflow-hidden shadow-xl z-0" style={{ height: "calc(100dvh - 80px)" }}>
 
       {/* Status toasts */}
       {errorMsg && (
