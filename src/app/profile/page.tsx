@@ -177,7 +177,8 @@ export default function ProfilePage() {
   if (!user || !profile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-paper relative">
-        <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: "radial-gradient(var(--color-muted-paper) 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
+
+
         <div className="bg-white border-[3px] border-pencil wobbly-border-md shadow-pencil p-10 max-w-md w-full relative z-10 rotate-1">
           <h1 className="text-4xl font-kalam font-bold mb-4 text-pencil">Hồ sơ cá nhân</h1>
           <p className="text-pencil/70 mb-8 font-patrick text-lg">Vui lòng đăng nhập để xem hồ sơ và bộ sưu tập của bạn.</p>
@@ -191,8 +192,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen pb-10 bg-paper relative font-sans">
-      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: "radial-gradient(var(--color-muted-paper) 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
       {/* Cover Photo */}
+
       <div 
         className="h-48 md:h-64 bg-muted-paper w-full relative bg-cover bg-center border-b-[3px] border-pencil"
         style={{ backgroundImage: profile.bannerUrl ? `url(${profile.bannerUrl})` : "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}

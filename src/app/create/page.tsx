@@ -300,7 +300,7 @@ export default function CreateStampPage() {
   return (
     <div className="p-6 md:p-10 min-h-screen flex flex-col items-center bg-paper text-pencil relative overflow-hidden">
       {/* Texture background */}
-      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: "radial-gradient(var(--color-muted-paper) 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
+
       
       {step === "upload" && (
         <div className="w-full max-w-2xl text-center pt-10 relative z-10">
