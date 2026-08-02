@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
-import { MobileNav } from "@/components/MobileNav";
+import { AuthProvider } from "@/context/AuthContext";
+import { SplashScreen } from "@/components/SplashScreen";
+import { FloatingDock } from "@/components/FloatingDock";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,8 +35,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { AuthProvider } from "@/context/AuthContext";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,13 +45,14 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-background text-foreground flex flex-col md:flex-row">
+      <body className="min-h-full bg-background text-foreground">
         <AuthProvider>
-          <Sidebar />
-          <main className="flex-1 w-full max-w-7xl mx-auto pb-20 md:pb-0">
-            {children}
-          </main>
-          <MobileNav />
+          <SplashScreen>
+            <main className="w-full max-w-7xl mx-auto pb-32">
+              {children}
+            </main>
+            <FloatingDock />
+          </SplashScreen>
         </AuthProvider>
       </body>
     </html>
