@@ -251,10 +251,27 @@ export default function CreateStampPage() {
     setIsSaving(true);
     
     try {
+      let finalMetadata = { ...metadata };
+      // Nếu có location text mà chưa có toạ độ, thử dùng Nominatim để lấy toạ độ
+      if (!finalMetadata.coordinates && finalMetadata.location && finalMetadata.location !== "Đang tải vị trí..." && finalMetadata.location !== "Chưa rõ vị trí") {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalMetadata.location)}&limit=1`);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            finalMetadata.coordinates = {
+              lat: parseFloat(data[0].lat),
+              lng: parseFloat(data[0].lon)
+            };
+          }
+        } catch (e) {
+          console.error("Lỗi tự động tìm toạ độ:", e);
+        }
+      }
+
       const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 1.5, quality: 0.8 });
       const { uploadStamp } = await import("@/lib/stampService");
       
-      await uploadStamp(dataUrl, stampStyle, metadata, isPublic);
+      await uploadStamp(dataUrl, stampStyle, finalMetadata, isPublic);
       
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
@@ -394,7 +411,7 @@ export default function CreateStampPage() {
                       <input 
                         type="text" 
                         value={metadata.location}
-                        onChange={(e) => setMetadata({...metadata, location: e.target.value})}
+                        onChange={(e) => setMetadata({...metadata, location: e.target.value, coordinates: undefined})}
                         className="w-full pl-9 pr-4 py-2 rounded-xl rounded-r-none border border-white/40 border-r-0 bg-white/50 focus:outline-none focus:border-pastel-blue text-sm"
                         placeholder="Địa điểm"
                       />
