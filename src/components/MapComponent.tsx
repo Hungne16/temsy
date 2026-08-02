@@ -102,15 +102,39 @@ export default function MapComponent() {
     });
   }, [user]);
 
-  // Group stamps by rounded coordinates (within ~100m)
-  const groupedStamps: Record<string, any[]> = stamps.reduce((acc, stamp) => {
+  // ── Distance-based clustering (Haversine, radius ~300m) ─────────────────
+  // Gom mọi tem (kể cả của nhiều người) trong vòng 300m vào 1 cụm
+  const clusterRadius = 300; // metres
+
+  function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number) {
+    const R = 6371000;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  const clusters: { lat: number; lng: number; stamps: any[] }[] = [];
+  for (const stamp of stamps) {
     const lat = stamp.metadata.coordinates.lat;
     const lng = stamp.metadata.coordinates.lng;
-    const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(stamp);
-    return acc;
-  }, {} as Record<string, any[]>);
+    const existing = clusters.find(
+      (c) => haversineMetres(c.lat, c.lng, lat, lng) <= clusterRadius
+    );
+    if (existing) {
+      existing.stamps.push(stamp);
+      // Cập nhật tâm cụm = trung bình toạ độ để không bị lệch
+      existing.lat = existing.stamps.reduce((s, st) => s + st.metadata.coordinates.lat, 0) / existing.stamps.length;
+      existing.lng = existing.stamps.reduce((s, st) => s + st.metadata.coordinates.lng, 0) / existing.stamps.length;
+    } else {
+      clusters.push({ lat, lng, stamps: [stamp] });
+    }
+  }
+
 
   const closeAll = useCallback(() => {
     setAlbumGroup(null);
@@ -158,21 +182,18 @@ export default function MapComponent() {
           </>
         )}
 
-        {/* Stamp group markers */}
-        {(Object.values(groupedStamps) as any[][]).map((group) => {
-          const first = group[0];
-          const pos: [number, number] = [
-            first.metadata.coordinates.lat,
-            first.metadata.coordinates.lng,
-          ];
-          const icon = createStampIcon(first.imageUrl, group.length);
+        {/* Stamp cluster markers */}
+        {clusters.map((cluster) => {
+          const first = cluster.stamps[0];
+          const pos: [number, number] = [cluster.lat, cluster.lng];
+          const icon = createStampIcon(first.imageUrl, cluster.stamps.length);
 
           return (
             <Marker
-              key={`${pos[0]}-${pos[1]}`}
+              key={`${cluster.lat.toFixed(6)}-${cluster.lng.toFixed(6)}`}
               position={pos}
               icon={icon}
-              eventHandlers={{ click: () => openAlbum(group) }}
+              eventHandlers={{ click: () => openAlbum(cluster.stamps) }}
             />
           );
         })}
