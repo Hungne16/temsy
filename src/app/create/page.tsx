@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
-import { toPng } from "html-to-image";
+import { toJpeg } from "html-to-image";
 import { Download, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -71,7 +71,7 @@ export default function CreateStampPage() {
     
     try {
       // Dùng html-to-image render ra file ảnh chất lượng cao
-      const dataUrl = await toPng(stampRef.current, { cacheBust: true, pixelRatio: 3 });
+      const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 1.5, quality: 0.8 });
       
       // Import động hàm uploadStamp để giảm size ban đầu
       const { uploadStamp } = await import("@/lib/stampService");

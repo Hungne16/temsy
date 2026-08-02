@@ -11,17 +11,12 @@ export const uploadStamp = async (
   if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để lưu tem!");
 
   const uid = auth.currentUser.uid;
-  const fileName = `stamps/${uid}/${Date.now()}.png`;
-  const storageRef = ref(storage, fileName);
 
-  // Upload image to Firebase Storage
-  await uploadString(storageRef, dataUrl, 'data_url');
-  const imageUrl = await getDownloadURL(storageRef);
-
-  // Save metadata to Firestore
+  // LƯU TRỰC TIẾP ẢNH BASE64 VÀO FIRESTORE (BỎ QUA FIREBASE STORAGE)
+  // Ảnh JPEG nén sẽ có dung lượng nhỏ, đủ để lưu vào document (limit 1MB)
   const stampDoc = {
     userId: uid,
-    imageUrl,
+    imageUrl: dataUrl, // Dùng thẳng chuỗi Base64 làm nguồn ảnh
     style,
     metadata,
     likes: 0,
