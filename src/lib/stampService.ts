@@ -33,12 +33,24 @@ export const uploadStamp = async (
 };
 
 export const getUserStamps = async (userId: string) => {
-  const q = query(
-    collection(db, "stamps"), 
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc")
-  );
-  
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    // Chỉ query where để tránh lỗi yêu cầu tạo Composite Index trên Firestore
+    const q = query(
+      collection(db, "stamps"), 
+      where("userId", "==", userId)
+    );
+    
+    const snapshot = await getDocs(q);
+    const stamps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Sort bằng JavaScript client-side
+    return stamps.sort((a: any, b: any) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch (error) {
+    console.error("Lỗi lấy danh sách tem:", error);
+    return [];
+  }
 };
