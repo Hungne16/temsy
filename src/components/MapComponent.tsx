@@ -169,9 +169,9 @@ export default function MapComponent() {
                             <img src={s.imageUrl} className="w-full h-full object-cover" />
                             <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 rounded-md">{idx + 1}</div>
                           </div>
-                          <div className="p-2 w-full text-left">
-                            <div className="text-xs font-bold truncate text-gray-900">{s.metadata.title}</div>
-                            <div className="text-[10px] text-gray-500 truncate mt-0.5">{s.metadata.date}</div>
+                          <div className="p-2 w-full text-left bg-white">
+                            <div className="text-xs font-bold truncate text-foreground">{s.metadata.title}</div>
+                            <div className="text-[10px] font-medium text-pastel-blue-dark truncate mt-0.5">{s.metadata.date}</div>
                           </div>
                         </button>
                       ))}
@@ -194,17 +194,19 @@ export default function MapComponent() {
                     />
                     <div className="p-3 bg-white w-full">
                       <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-bold text-gray-900 text-sm leading-tight">{stamp.metadata.title}</h3>
+                        <h3 className="font-bold text-foreground text-sm leading-tight">{stamp.metadata.title}</h3>
                         {stamp.isPublic === false ? (
                           <span title="Riêng tư"><Lock size={12} className="text-gray-400 shrink-0" /></span>
                         ) : (
                           <span title="Công khai"><Globe size={12} className="text-pastel-blue shrink-0" /></span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mb-2">{stamp.metadata.date} • {stamp.metadata.location}</p>
+                      <p className="text-xs font-medium text-pastel-blue-dark mb-2 flex items-center gap-1">
+                        {stamp.metadata.date} • {stamp.metadata.location}
+                      </p>
                       
                       {stamp.metadata.story && (
-                        <div className="mt-2 text-xs italic text-gray-700 border-l-2 border-pastel-blue pl-2 py-1 bg-gray-50 rounded-r-md truncate">
+                        <div className="mt-2 text-xs italic font-medium text-foreground/80 border-l-2 border-pastel-blue pl-2 py-1.5 pr-2 bg-pastel-blue/5 rounded-r-md truncate">
                           "{stamp.metadata.story}"
                         </div>
                       )}
@@ -241,10 +243,10 @@ export default function MapComponent() {
             
             <div>
               <div className="flex items-start justify-between">
-                <h1 className="text-2xl font-bold uppercase tracking-tight">{selectedStamp.metadata.title}</h1>
-                <div className="text-red-500 font-medium text-sm">❤️ {selectedStamp.likes || 0}</div>
+                <h1 className="text-2xl font-black uppercase tracking-tight text-foreground">{selectedStamp.metadata.title}</h1>
+                <div className="bg-red-50 px-3 py-1 rounded-full text-red-500 font-bold text-sm">❤️ {selectedStamp.likes || 0}</div>
               </div>
-              <p className="text-sm text-gray-500 mt-1">{selectedStamp.metadata.date} • {selectedStamp.metadata.location}</p>
+              <p className="text-sm font-medium text-pastel-blue-dark mt-2">{selectedStamp.metadata.date} • {selectedStamp.metadata.location}</p>
             </div>
             
             {selectedStamp.metadata.story && (

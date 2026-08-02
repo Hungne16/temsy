@@ -32,17 +32,20 @@ export function StampCard({ stamp, isSelectionMode, isSelected, onToggleSelect }
       <div className="flex flex-col px-1">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="font-semibold text-foreground/90 line-clamp-1">{stamp.metadata.title}</h3>
-            <p className="text-xs text-foreground/50">{stamp.metadata.location}</p>
+            <h3 className="font-bold text-foreground text-base line-clamp-1">{stamp.metadata.title}</h3>
+            <p className="text-xs font-medium text-pastel-blue-dark mt-0.5 flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              {stamp.metadata.location}
+            </p>
           </div>
-          <div className="flex items-center gap-1 text-xs text-foreground/50 font-medium shrink-0">
-            <Heart size={14} className="group-hover:fill-red-500 group-hover:text-red-500 transition-colors" />
+          <div className="flex items-center gap-1 text-sm text-red-500 font-bold shrink-0 bg-red-50 px-2 py-1 rounded-full">
+            <Heart size={14} className="fill-red-500" />
             {stamp.likes || 0}
           </div>
         </div>
         
         {stamp.metadata.story && (
-          <p className="text-xs text-foreground/70 mt-2 line-clamp-2 italic border-l-2 border-pastel-blue pl-2">
+          <p className="text-xs font-medium text-foreground/80 mt-3 line-clamp-2 italic border-l-2 border-pastel-blue pl-2 bg-pastel-blue/5 py-1.5 pr-2 rounded-r-md">
             "{stamp.metadata.story}"
           </p>
         )}

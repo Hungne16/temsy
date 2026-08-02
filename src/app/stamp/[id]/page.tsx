@@ -187,21 +187,26 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
           ) : (
             <div className="space-y-6">
               <div>
-                <h1 className="text-4xl font-bold mb-2 uppercase tracking-tight">{stamp.metadata.title || "Vô danh"}</h1>
-                <div className="flex items-center gap-4 text-foreground/60 font-mono">
-                  <span>{stamp.metadata.location}</span>
+                <h1 className="text-4xl font-black mb-3 uppercase tracking-tight text-foreground">{stamp.metadata.title || "Vô danh"}</h1>
+                <div className="flex items-center gap-4 text-pastel-blue-dark font-semibold text-sm bg-pastel-blue/10 inline-flex px-4 py-2 rounded-xl">
+                  <span className="flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {stamp.metadata.location}
+                  </span>
                   <span>•</span>
-                  <span>{stamp.metadata.date}</span>
+                  <span className="flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    {stamp.metadata.date}
+                  </span>
                 </div>
               </div>
               
-              {stamp.metadata.story && (
-                <div className="p-4 bg-pastel-blue/10 rounded-2xl border border-pastel-blue/20">
-                  <p className="italic text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                <div className="p-5 bg-pastel-blue/5 rounded-2xl border border-pastel-blue/20 relative">
+                  <div className="absolute -top-3 left-6 bg-white px-2 text-xs font-bold text-pastel-blue-dark uppercase tracking-wider">Câu chuyện của bạn</div>
+                  <p className="italic text-foreground/90 font-medium leading-relaxed whitespace-pre-wrap mt-2">
                     "{stamp.metadata.story}"
                   </p>
                 </div>
-              )}
               
               <div className="pt-6 border-t border-black/10 flex items-center justify-between">
                 <div>
