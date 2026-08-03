@@ -686,9 +686,11 @@ export default function CreateStampPage() {
                   </button>
                 )}
                 <p className="text-sm text-pencil/60 px-1 font-patrick">
-                  {isPublic 
+                  {privacy === "public" 
                     ? "Mọi người có thể xem tem này trên bản đồ và trang chủ." 
-                    : "Chỉ mình bạn thấy tem này trong Bộ sưu tập cá nhân."}
+                    : privacy === "friend"
+                      ? "Chỉ bạn bè mới có thể xem tem này trên bản đồ và trang chủ."
+                      : "Chỉ mình bạn thấy tem này trong Bộ sưu tập cá nhân."}
                 </p>
               </div>
 
