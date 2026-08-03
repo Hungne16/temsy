@@ -354,7 +354,7 @@ export default function ProfilePage() {
           </div>
           <div className="bg-postit border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil -rotate-2">
             <div className="text-pencil mb-1"><Award size={32} /></div>
-            <span className="text-lg font-bold font-patrick text-pencil">Người sưu tầm</span>
+            <span className="text-lg font-bold font-patrick text-pencil">{profile.title || "Tân binh"}</span>
           </div>
         </div>
 
