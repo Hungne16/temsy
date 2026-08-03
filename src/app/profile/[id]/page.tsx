@@ -26,6 +26,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   const [albums, setAlbums] = useState<Album[]>([]);
   const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view'>('stamps');
   const [viewingAlbum, setViewingAlbum] = useState<Album | null>(null);
+
+  // Badges Modal
+  const [isBadgesModalOpen, setIsBadgesModalOpen] = useState(false);
   
   useEffect(() => {
     if (userId) {
@@ -137,8 +140,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
               <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full object-cover" />
             </div>
             {/* Badge overlay */}
-            <div className="absolute -top-4 -left-4 w-12 h-12 md:w-16 md:h-16 z-20 hover:scale-110 transition-transform duration-300 rotate-3">
-              <img src={`/badges/${stampCount >= 50 ? 'legend' : stampCount >= 25 ? 'voyager' : stampCount >= 10 ? 'adventurer' : stampCount >= 5 ? 'traveler' : 'explorer'}.png`} alt="Badge" className="w-full h-full object-contain drop-shadow-md" />
+            <div className="absolute -top-6 -left-6 md:-top-8 md:-left-8 w-20 h-32 md:w-24 md:h-40 z-20 hover:scale-110 transition-transform duration-300 rotate-3 cursor-pointer" onClick={() => setIsBadgesModalOpen(true)}>
+              <img src={`/badges/${stampCount >= 50 ? 'legend' : stampCount >= 25 ? 'voyager' : stampCount >= 10 ? 'adventurer' : stampCount >= 5 ? 'traveler' : 'explorer'}.png`} alt="Badge" className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]" />
             </div>
           </div>
           
@@ -203,82 +206,33 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
 
         {/* Badges & Gamification */}
         <div className="mb-12">
-          <h2 className="text-3xl font-kalam font-bold mb-6 flex items-center gap-2 text-pencil rotate-1">
-            <Award className="text-marker-red" /> Huy hiệu & Thành tựu
-          </h2>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+            <h2 className="text-3xl font-kalam font-bold flex items-center gap-2 text-pencil rotate-1">
+              <Award className="text-marker-red" /> Huy hiệu của {profile.displayName}
+            </h2>
+            <button 
+              onClick={() => setIsBadgesModalOpen(true)}
+              className="px-4 py-2 border-[3px] border-pencil bg-white wobbly-border shadow-pencil font-bold font-patrick text-pencil hover:bg-muted-paper hover:-translate-y-1 transition-all -rotate-1 text-sm md:text-base self-start"
+            >
+              Xem tất cả huy hiệu
+            </button>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Explorer */}
-            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-1 transition-opacity ${stampCount >= 1 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
-              <div className="w-16 h-16 shrink-0 relative rotate-2">
-                <img src="/badges/explorer.png" alt="Explorer" className="w-full h-full object-contain drop-shadow-md" />
+            <div className="bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-1">
+              <div className="w-20 h-32 shrink-0 relative rotate-2">
+                <img src={`/badges/${stampCount >= 50 ? 'legend' : stampCount >= 25 ? 'voyager' : stampCount >= 10 ? 'adventurer' : stampCount >= 5 ? 'traveler' : 'explorer'}.png`} alt="Current Badge" className="w-full h-full object-contain drop-shadow-md" />
               </div>
-              <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Tân binh</h3>
-                {stampCount >= 1 ? (
-                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
-                ) : (
-                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">Chưa mở khóa</div>
-                )}
-              </div>
-            </div>
-
-            {/* Traveler */}
-            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil rotate-2 transition-opacity ${stampCount >= 5 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
-              <div className="w-16 h-16 shrink-0 relative -rotate-3">
-                <img src="/badges/traveler.png" alt="Traveler" className="w-full h-full object-contain drop-shadow-md" />
-              </div>
-              <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Nhà Thám Hiểm</h3>
-                {stampCount >= 5 ? (
-                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
-                ) : (
-                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 5)} / 5 tem</div>
-                )}
-              </div>
-            </div>
-
-            {/* Adventurer */}
-            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-2 transition-opacity ${stampCount >= 10 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
-              <div className="w-16 h-16 shrink-0 relative rotate-3">
-                <img src="/badges/adventurer.png" alt="Adventurer" className="w-full h-full object-contain drop-shadow-md" />
-              </div>
-              <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Kẻ Mạo Hiểm</h3>
-                {stampCount >= 10 ? (
-                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
-                ) : (
-                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 10)} / 10 tem</div>
-                )}
-              </div>
-            </div>
-
-            {/* Voyager */}
-            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil rotate-1 transition-opacity ${stampCount >= 25 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
-              <div className="w-16 h-16 shrink-0 relative -rotate-2">
-                <img src="/badges/voyager.png" alt="Voyager" className="w-full h-full object-contain drop-shadow-md" />
-              </div>
-              <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Nhà Lữ Hành</h3>
-                {stampCount >= 25 ? (
-                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
-                ) : (
-                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 25)} / 25 tem</div>
-                )}
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-3 transition-opacity ${stampCount >= 50 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
-              <div className="w-16 h-16 shrink-0 relative rotate-1">
-                <img src="/badges/legend.png" alt="Legend" className="w-full h-full object-contain drop-shadow-md" />
-              </div>
-              <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Huyền Thoại</h3>
-                {stampCount >= 50 ? (
-                  <div className="mt-2 text-sm font-bold font-patrick text-marker-red bg-red-50 px-2 py-1 border-2 border-marker-red wobbly-border inline-block rotate-2">Đã mở khóa</div>
-                ) : (
-                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 50)} / 50 tem</div>
-                )}
+              <div className="self-center">
+                <h3 className="font-bold font-patrick text-2xl text-pencil mb-2">
+                  {stampCount >= 50 ? 'Huyền Thoại' : stampCount >= 25 ? 'Nhà Lữ Hành' : stampCount >= 10 ? 'Kẻ Mạo Hiểm' : stampCount >= 5 ? 'Nhà Thám Hiểm' : 'Tân binh'}
+                </h3>
+                <p className="text-pencil/70 font-patrick font-bold text-lg mb-3">
+                  {stampCount >= 50 ? 'Đạt được 50 con tem công khai.' : stampCount >= 25 ? 'Đạt được 25 con tem công khai.' : stampCount >= 10 ? 'Đạt được 10 con tem công khai.' : stampCount >= 5 ? 'Tạo tem ở 5 địa điểm khác.' : 'Tạo con tem đầu tiên của bạn.'}
+                </p>
+                <div className="text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-3 py-1.5 border-2 border-marker-blue wobbly-border inline-block -rotate-2">
+                  Đã mở khóa
+                </div>
               </div>
             </div>
           </div>
@@ -373,6 +327,106 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
           </>
         )}
       </div>
+      {/* Badges Modal */}
+      {isBadgesModalOpen && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-lg w-full max-w-4xl shadow-pencil flex flex-col p-6 max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6 sticky top-0 bg-paper z-10 pb-4 border-b-4 border-pencil">
+              <h2 className="text-3xl font-kalam font-bold text-pencil flex items-center gap-3">
+                <Award className="text-marker-red" size={32} />
+                Tiến trình Huy hiệu
+              </h2>
+              <button onClick={() => setIsBadgesModalOpen(false)} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-white wobbly-border transition-all">
+                <X size={28} className="text-pencil" />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto pr-2 pb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Explorer */}
+                <div className={`bg-white border-[3px] border-pencil p-4 flex items-center gap-6 wobbly-border shadow-pencil transition-all ${stampCount >= 1 ? 'opacity-100 rotate-1' : 'opacity-70 grayscale -rotate-1'}`}>
+                  <div className="w-24 h-40 shrink-0 relative">
+                    <img src="/badges/explorer.png" alt="Explorer" className="w-full h-full object-contain drop-shadow-md" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-patrick text-2xl text-pencil mb-2">Tân binh</h3>
+                    <p className="text-pencil/70 font-patrick font-bold mb-3">Tạo con tem đầu tiên của bạn.</p>
+                    {stampCount >= 1 ? (
+                      <div className="text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-3 py-1.5 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
+                    ) : (
+                      <div className="text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-3 py-1.5 border-2 border-pencil/30 wobbly-border inline-block">Chưa mở khóa</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Traveler */}
+                <div className={`bg-white border-[3px] border-pencil p-4 flex items-center gap-6 wobbly-border shadow-pencil transition-all ${stampCount >= 5 ? 'opacity-100 -rotate-1' : 'opacity-70 grayscale rotate-1'}`}>
+                  <div className="w-24 h-40 shrink-0 relative">
+                    <img src="/badges/traveler.png" alt="Traveler" className="w-full h-full object-contain drop-shadow-md" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-patrick text-2xl text-pencil mb-2">Nhà Thám Hiểm</h3>
+                    <p className="text-pencil/70 font-patrick font-bold mb-3">Tạo tem ở 5 địa điểm khác.</p>
+                    {stampCount >= 5 ? (
+                      <div className="text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-3 py-1.5 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
+                    ) : (
+                      <div className="text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-3 py-1.5 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 5)} / 5 tem</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Adventurer */}
+                <div className={`bg-white border-[3px] border-pencil p-4 flex items-center gap-6 wobbly-border shadow-pencil transition-all ${stampCount >= 10 ? 'opacity-100 rotate-1' : 'opacity-70 grayscale -rotate-1'}`}>
+                  <div className="w-24 h-40 shrink-0 relative">
+                    <img src="/badges/adventurer.png" alt="Adventurer" className="w-full h-full object-contain drop-shadow-md" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-patrick text-2xl text-pencil mb-2">Kẻ Mạo Hiểm</h3>
+                    <p className="text-pencil/70 font-patrick font-bold mb-3">Đạt được 10 con tem công khai.</p>
+                    {stampCount >= 10 ? (
+                      <div className="text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-3 py-1.5 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
+                    ) : (
+                      <div className="text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-3 py-1.5 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 10)} / 10 tem</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Voyager */}
+                <div className={`bg-white border-[3px] border-pencil p-4 flex items-center gap-6 wobbly-border shadow-pencil transition-all ${stampCount >= 25 ? 'opacity-100 -rotate-1' : 'opacity-70 grayscale rotate-1'}`}>
+                  <div className="w-24 h-40 shrink-0 relative">
+                    <img src="/badges/voyager.png" alt="Voyager" className="w-full h-full object-contain drop-shadow-md" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-patrick text-2xl text-pencil mb-2">Nhà Lữ Hành</h3>
+                    <p className="text-pencil/70 font-patrick font-bold mb-3">Đạt được 25 con tem công khai.</p>
+                    {stampCount >= 25 ? (
+                      <div className="text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-3 py-1.5 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
+                    ) : (
+                      <div className="text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-3 py-1.5 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 25)} / 25 tem</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className={`bg-white border-[3px] border-pencil p-4 flex items-center gap-6 wobbly-border shadow-pencil md:col-span-2 transition-all ${stampCount >= 50 ? 'opacity-100 rotate-1' : 'opacity-70 grayscale -rotate-1'}`}>
+                  <div className="w-32 h-48 shrink-0 relative">
+                    <img src="/badges/legend.png" alt="Legend" className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-patrick text-3xl text-pencil mb-2">Huyền Thoại</h3>
+                    <p className="text-pencil/70 font-patrick font-bold text-xl mb-4">Đạt được 50 con tem công khai.</p>
+                    {stampCount >= 50 ? (
+                      <div className="text-lg font-bold font-patrick text-marker-red bg-red-50 px-4 py-2 border-2 border-marker-red wobbly-border inline-block rotate-2 shadow-sm">Đã mở khóa</div>
+                    ) : (
+                      <div className="text-lg font-bold font-patrick text-pencil/50 bg-muted-paper px-4 py-2 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 50)} / 50 tem</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
