@@ -7,6 +7,7 @@ import { getStampById, deleteStamp, updateStampMetadata, getComments, addComment
 import { createReport } from "@/lib/reportService";
 import { sendMessage } from "@/lib/chatService";
 import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle, Flag, Reply } from "lucide-react";
+import AvatarWithBadge from "@/components/AvatarWithBadge";
 import Link from "next/link";
 
 export default function StampDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -221,7 +222,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
         <div className="flex flex-col lg:flex-row gap-12 items-start">
           {/* Stamp Display */}
           <div className="w-full lg:w-1/2 flex justify-center sticky top-12">
-            <div className="w-full max-w-xl bg-white border-[4px] border-pencil p-4 md:p-6 wobbly-border-md shadow-pencil rotate-1 relative">
+            <div className="w-full max-w-4xl bg-white border-[4px] border-pencil p-4 md:p-6 wobbly-border-md shadow-pencil rotate-1 relative">
               {stamp.metadata?.isSecret && !isOwner ? (
                 <div className="w-full aspect-[4/3] bg-muted-paper/50 flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-pencil/20">
                   <Lock size={64} className="text-pencil/40 mb-4" />
@@ -407,7 +408,12 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                   {/* New Comment Input */}
                   {user ? (
                     <form onSubmit={handleAddComment} className="mb-8 flex gap-3">
-                      <img src={userProfile?.photoURL || user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} alt="User" className="w-10 h-10 rounded-full border-2 border-pencil object-cover flex-shrink-0" />
+                      <AvatarWithBadge 
+                        avatarUrl={userProfile?.photoURL || user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} 
+                        name={userProfile?.displayName || user.displayName || "User"}
+                        size="sm"
+                        stampCount={(userProfile as any)?.stampCount}
+                      />
                       <div className="relative flex-1">
                         <input
                           type="text"
@@ -440,7 +446,14 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                       return (
                         <div key={comment.id} className="flex gap-3">
                           <Link href={`/profile/${comment.userId}`} className="flex-shrink-0 group">
-                            <img src={comment.userAvatar} alt={comment.userName} className="w-10 h-10 rounded-full border-2 border-pencil object-cover group-hover:scale-110 transition-transform" />
+                            <div className="group-hover:scale-110 transition-transform">
+                              <AvatarWithBadge 
+                                avatarUrl={comment.userAvatar} 
+                                name={comment.userName}
+                                size="sm"
+                                stampCount={comment.userStampCount}
+                              />
+                            </div>
                           </Link>
                           <div>
                             <div className="bg-postit/30 border-2 border-pencil p-3 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] inline-block">

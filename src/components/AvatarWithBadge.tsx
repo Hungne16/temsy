@@ -17,6 +17,7 @@ interface AvatarWithBadgeProps {
   avatarUrl?: string;
   name?: string;
   title?: string;
+  stampCount?: number;
   size?: "sm" | "md" | "lg" | "xl";
   isLocked?: boolean;
 }
@@ -24,11 +25,22 @@ interface AvatarWithBadgeProps {
 export default function AvatarWithBadge({
   avatarUrl,
   name,
-  title = "Tân binh",
+  title,
+  stampCount,
   size = "md",
   isLocked = false
 }: AvatarWithBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
+
+  // Compute title if stampCount is provided
+  let computedTitle = title || "Tân binh";
+  if (stampCount !== undefined) {
+    if (stampCount >= 50) computedTitle = "Huyền thoại";
+    else if (stampCount >= 25) computedTitle = "Nhà lữ hành";
+    else if (stampCount >= 10) computedTitle = "Chuyên gia";
+    else if (stampCount >= 5) computedTitle = "Người gỡ rối";
+    else computedTitle = "Tân binh";
+  }
 
   // Map size prop to Tailwind classes for avatar container
   const sizeClasses = {
@@ -39,14 +51,15 @@ export default function AvatarWithBadge({
   };
 
   // Map size prop to badge size
+  // Increased sizes slightly to make the badges stand out more as requested
   const badgeSizeClasses = {
-    sm: "w-6 h-10 -top-2 -left-2",
-    md: "w-10 h-16 -top-3 -left-3",
-    lg: "w-14 h-24 -top-4 -left-4",
-    xl: "w-20 h-32 -top-6 -left-6",
+    sm: "w-8 h-12 -top-2 -left-2",
+    md: "w-12 h-20 -top-3 -left-3",
+    lg: "w-16 h-28 -top-4 -left-4",
+    xl: "w-24 h-40 -top-8 -left-8",
   };
 
-  const badgeImg = BADGE_IMAGES[title] || BADGE_IMAGES["default"];
+  const badgeImg = BADGE_IMAGES[computedTitle] || BADGE_IMAGES["default"];
 
   return (
     <div className="relative inline-block"
@@ -69,7 +82,7 @@ export default function AvatarWithBadge({
         >
           <div className={`relative w-full h-full drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] ${isLocked ? 'grayscale opacity-70' : ''}`}>
             {/* Using a placeholder for now, ideally next/image */}
-            <img src={badgeImg} alt={title} className="w-full h-full object-contain" />
+            <img src={badgeImg} alt={computedTitle} className="w-full h-full object-contain" />
             
             {/* Lock Overlay */}
             {isLocked && (

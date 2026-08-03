@@ -5,6 +5,9 @@ import { getAllUsers, updateUserTitle, deleteUserProfile, createNewUser } from "
 import { createPersonalNotification } from "@/lib/notificationService";
 import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check } from "lucide-react";
 import Link from "next/link";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import AvatarWithBadge from "@/components/AvatarWithBadge";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -32,23 +35,21 @@ export default function AdminUsersPage() {
     setTimeout(() => setCopiedUid(null), 2000);
   };
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllUsers();
-      // Sort by join date descending
+  useEffect(() => {
+    setLoading(true);
+    const usersRef = collection(db, "users");
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       data.sort((a: any, b: any) => new Date(b.joinDate || 0).getTime() - new Date(a.joinDate || 0).getTime());
       setUsers(data);
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi tải danh sách người dùng");
-    } finally {
       setLoading(false);
-    }
-  };
+    }, (error) => {
+      console.error(error);
+      alert("Lỗi tải danh sách người dùng");
+      setLoading(false);
+    });
 
-  useEffect(() => {
-    fetchUsers();
+    return () => unsubscribe();
   }, []);
 
   const handleEditTitle = async (uid: string) => {
@@ -97,7 +98,7 @@ export default function AdminUsersPage() {
       alert("Tạo người dùng thành công!");
       setShowAddModal(false);
       setAddForm({ email: "", password: "", name: "", role: "user" });
-      fetchUsers();
+      // onSnapshot sẽ tự động cập nhật danh sách
     } catch (err: any) {
       console.error(err);
       alert("Lỗi tạo người dùng: " + err.message);
@@ -167,8 +168,13 @@ export default function AdminUsersPage() {
                   <tr key={user.id} className="border-b-2 border-dashed border-pencil/10 hover:bg-yellow-50/50 transition-colors">
                     <td className="p-4 cursor-pointer hover:bg-yellow-100/30" onClick={() => setViewingUser(user)}>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full border-2 border-pencil overflow-hidden bg-muted-paper shrink-0 flex items-center justify-center font-kalam font-bold">
-                          {user.photoURL || user.avatar ? <img src={user.photoURL || user.avatar} className="w-full h-full object-cover" /> : (user.displayName || user.name)?.charAt(0) || "U"}
+                        <div className="shrink-0 flex items-center justify-center font-kalam font-bold">
+                          <AvatarWithBadge 
+                            avatarUrl={user.photoURL || user.avatar || ""} 
+                            name={user.displayName || user.name || "U"}
+                            stampCount={user.stampCount}
+                            size="sm"
+                          />
                         </div>
                         <div>
                           <div className="font-bold text-pencil text-lg">{user.displayName || user.name}</div>
@@ -348,7 +354,12 @@ export default function AdminUsersPage() {
             <div className="flex flex-col items-center text-center font-patrick">
               <div className="w-24 h-24 rounded-full border-[3px] border-pencil overflow-hidden bg-muted-paper mb-4 shadow-sm">
                 {viewingUser.photoURL || viewingUser.avatar ? (
-                  <img src={viewingUser.photoURL || viewingUser.avatar} className="w-full h-full object-cover" />
+                  <AvatarWithBadge 
+                    avatarUrl={viewingUser.photoURL || viewingUser.avatar || ""} 
+                    name={viewingUser.displayName || viewingUser.name || "U"}
+                    stampCount={viewingUser.stampCount}
+                    size="lg"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center font-kalam font-bold text-4xl">
                     {(viewingUser.displayName || viewingUser.name)?.charAt(0) || "U"}

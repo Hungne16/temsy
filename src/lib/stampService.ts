@@ -157,6 +157,7 @@ export interface CommentData {
   userId: string;
   userName: string;
   userAvatar: string;
+  userStampCount?: number;
   text: string;
   createdAt: any;
 }
@@ -169,8 +170,9 @@ export const getComments = async (stampId: string): Promise<CommentData[]> => {
     const snapshot = await getDocs(q);
     const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommentData[];
     
-    // Fetch latest user profiles to ensure up-to-date avatars
+    // Fetch latest user profiles and their stamp count to ensure up-to-date avatars and badges
     const { getUserProfile } = await import("./userService");
+    const { getUserStamps } = await import("./stampService"); // To count stamps for the badge
     await Promise.all(comments.map(async (comment) => {
       if (comment.userId) {
         try {
@@ -179,6 +181,8 @@ export const getComments = async (stampId: string): Promise<CommentData[]> => {
             comment.userName = profile.displayName;
             comment.userAvatar = profile.photoURL;
           }
+          const userStamps = await getUserStamps(comment.userId);
+          comment.userStampCount = userStamps.length;
         } catch (err) {}
       }
     }));
@@ -202,13 +206,17 @@ export const addComment = async (stampId: string, text: string) => {
   let userName = auth.currentUser.displayName || "Người dùng ẩn danh";
   let userAvatar = auth.currentUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop";
 
+  let userStampCount = 0;
   try {
     const { getUserProfile } = await import("./userService");
+    const { getUserStamps } = await import("./stampService");
     const profile = await getUserProfile(uid);
     if (profile) {
       userName = profile.displayName;
       userAvatar = profile.photoURL;
     }
+    const userStamps = await getUserStamps(uid);
+    userStampCount = userStamps.length;
   } catch (err) {
     console.error("Lỗi lấy thông tin user:", err);
   }
@@ -217,6 +225,7 @@ export const addComment = async (stampId: string, text: string) => {
     userId: uid,
     userName,
     userAvatar,
+    userStampCount,
     text,
     createdAt: serverTimestamp(),
   };
