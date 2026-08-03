@@ -407,7 +407,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                   {/* New Comment Input */}
                   {user ? (
                     <form onSubmit={handleAddComment} className="mb-8 flex gap-3">
-                      <img src={userProfile?.avatar || user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} alt="User" className="w-10 h-10 rounded-full border-2 border-pencil object-cover flex-shrink-0" />
+                      <img src={userProfile?.photoURL || user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} alt="User" className="w-10 h-10 rounded-full border-2 border-pencil object-cover flex-shrink-0" />
                       <div className="relative flex-1">
                         <input
                           type="text"

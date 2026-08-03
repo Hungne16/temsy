@@ -203,12 +203,11 @@ export const addComment = async (stampId: string, text: string) => {
   let userAvatar = auth.currentUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop";
 
   try {
-    const userDocRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userDocRef);
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-      if (userData.name) userName = userData.name;
-      if (userData.avatar) userAvatar = userData.avatar;
+    const { getUserProfile } = await import("./userService");
+    const profile = await getUserProfile(uid);
+    if (profile) {
+      userName = profile.displayName;
+      userAvatar = profile.photoURL;
     }
   } catch (err) {
     console.error("Lỗi lấy thông tin user:", err);
