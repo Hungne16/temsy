@@ -4,7 +4,8 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getStampById, deleteStamp, updateStampMetadata, getComments, addComment, CommentData } from "@/lib/stampService";
-import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle } from "lucide-react";
+import { createReport } from "@/lib/reportService";
+import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle, Flag } from "lucide-react";
 import Link from "next/link";
 
 export default function StampDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -108,6 +109,22 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleReport = async () => {
+    if (!user) {
+      alert("Vui lòng đăng nhập để báo cáo tem này.");
+      return;
+    }
+    const reason = window.prompt("Vui lòng nhập lý do báo cáo (ví dụ: Nội dung phản cảm, Spam, Vi phạm bản quyền...):");
+    if (!reason || reason.trim() === "") return;
+
+    try {
+      await createReport(id, user.uid, reason.trim(), stamp.metadata?.title, stamp.imageUrl);
+      alert("Cảm ơn bạn đã báo cáo. Quản trị viên sẽ xem xét tem này.");
+    } catch (err) {
+      alert("Lỗi khi gửi báo cáo. Vui lòng thử lại.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper">
@@ -156,6 +173,14 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                 <Trash2 size={18} /> Xóa
               </button>
             </div>
+          )}
+          {!isOwner && user && !stamp.metadata?.isSecret && (
+            <button 
+              onClick={handleReport}
+              className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-red-50 transition-all rotate-1 font-bold font-patrick text-lg text-marker-red"
+            >
+              <Flag size={18} /> Báo cáo
+            </button>
           )}
         </header>
 

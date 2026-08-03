@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { ShieldAlert, Users, LayoutDashboard, LogOut, Image as ImageIcon, BookOpen } from "lucide-react";
+import { ShieldAlert, Users, LayoutDashboard, LogOut, Image as ImageIcon, BookOpen, Flag } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -95,6 +95,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }`}
           >
             <BookOpen size={20} /> Quản lý Album
+          </Link>
+          <Link 
+            href="/admin/reports" 
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold ${
+              pathname === "/admin/reports"
+                ? "border-pencil bg-muted-paper wobbly-border shadow-[2px_2px_0_0_#2d2d2d] text-pencil" 
+                : "border-transparent hover:border-pencil hover:bg-muted-paper text-pencil/80 hover:text-pencil"
+            }`}
+          >
+            <Flag size={20} /> Quản lý Báo cáo
           </Link>
         </nav>
         
