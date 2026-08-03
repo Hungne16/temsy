@@ -117,3 +117,50 @@ export const updateStampMetadata = async (id: string, metadata: StampMetadata) =
   const docRef = doc(db, "stamps", id);
   await updateDoc(docRef, { metadata });
 };
+
+// ── Comments ─────────────────────────────────────────────────────────────────
+
+export interface CommentData {
+  id?: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  text: string;
+  createdAt: any;
+}
+
+export const getComments = async (stampId: string) => {
+  try {
+    const commentsRef = collection(db, "stamps", stampId, "comments");
+    // Sort by createdAt descending
+    const q = query(commentsRef);
+    const snapshot = await getDocs(q);
+    const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Client-side sort if no index
+    return comments.sort((a: any, b: any) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch (error) {
+    console.error("Lỗi lấy bình luận:", error);
+    return [];
+  }
+};
+
+export const addComment = async (stampId: string, text: string) => {
+  if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để bình luận!");
+  
+  const comment: CommentData = {
+    userId: auth.currentUser.uid,
+    userName: auth.currentUser.displayName || "Người dùng ẩn danh",
+    userAvatar: auth.currentUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+    text,
+    createdAt: serverTimestamp(),
+  };
+
+  const commentsRef = collection(db, "stamps", stampId, "comments");
+  const docRef = await addDoc(commentsRef, comment);
+  return { id: docRef.id, ...comment, createdAt: { toMillis: () => Date.now() } };
+};

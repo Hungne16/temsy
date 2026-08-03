@@ -3,8 +3,8 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getStampById, deleteStamp, updateStampMetadata } from "@/lib/stampService";
-import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock } from "lucide-react";
+import { getStampById, deleteStamp, updateStampMetadata, getComments, addComment, CommentData } from "@/lib/stampService";
+import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function StampDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +21,10 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const [isSaving, setIsSaving] = useState(false);
   const [userAlbums, setUserAlbums] = useState<any[]>([]);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
+
+  const [comments, setComments] = useState<CommentData[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   
   useEffect(() => {
     getStampById(id)
@@ -38,6 +42,8 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
         setError(err.message || "Không thể tải tem này.");
         setLoading(false);
       });
+
+    getComments(id).then(setComments);
   }, [id]);
 
   useEffect(() => {
@@ -53,6 +59,22 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
       });
     }
   }, [user?.uid, id]);
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !user) return;
+    
+    setIsSubmittingComment(true);
+    try {
+      const added = await addComment(id, newComment.trim());
+      setComments([added, ...comments]);
+      setNewComment("");
+    } catch (err: any) {
+      alert(err.message || "Không thể gửi bình luận");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm("Bạn có chắc chắn muốn xóa tem này vĩnh viễn?")) return;
@@ -298,6 +320,70 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                   </div>
                 </div>
+                
+                {/* Comments Section */}
+                <div className="pt-8 mt-8 border-t-[3px] border-pencil border-dashed">
+                  <h3 className="text-2xl font-bold font-kalam text-pencil flex items-center gap-2 mb-6">
+                    <MessageCircle className="text-marker-blue" />
+                    Bình luận ({comments.length})
+                  </h3>
+                  
+                  {/* New Comment Input */}
+                  {user ? (
+                    <form onSubmit={handleAddComment} className="mb-8 flex gap-3">
+                      <img src={user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} alt="User" className="w-10 h-10 rounded-full border-2 border-pencil object-cover flex-shrink-0" />
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="Viết bình luận..."
+                          className="w-full px-4 py-2 pr-12 border-2 border-pencil bg-white wobbly-border text-lg font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50"
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={isSubmittingComment || !newComment.trim()}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-marker-blue disabled:opacity-50 hover:scale-110 transition-transform"
+                        >
+                          <Send size={20} />
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="mb-8 p-4 bg-muted-paper/50 border-2 border-dashed border-pencil/20 rounded-xl text-center">
+                      <p className="text-lg font-patrick text-pencil/60">
+                        Vui lòng <Link href="/login" className="text-marker-blue font-bold hover:underline">đăng nhập</Link> để bình luận
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Comments List */}
+                  <div className="space-y-6">
+                    {comments.map((comment) => {
+                      const dateStr = comment.createdAt?.toMillis ? new Date(comment.createdAt.toMillis()).toLocaleDateString('vi-VN') : "Vừa xong";
+                      return (
+                        <div key={comment.id} className="flex gap-3">
+                          <img src={comment.userAvatar} alt={comment.userName} className="w-10 h-10 rounded-full border-2 border-pencil object-cover flex-shrink-0" />
+                          <div>
+                            <div className="bg-postit/30 border-2 border-pencil p-3 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] inline-block">
+                              <div className="flex items-baseline gap-2 mb-1">
+                                <span className="font-bold font-kalam text-lg text-pencil">{comment.userName}</span>
+                                <span className="text-xs font-patrick text-pencil/50">{dateStr}</span>
+                              </div>
+                              <p className="font-patrick text-lg text-pencil whitespace-pre-wrap leading-tight">{comment.text}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {comments.length === 0 && (
+                      <p className="text-center font-patrick text-lg text-pencil/50 italic py-4">
+                        Chưa có bình luận nào. Hãy là người đầu tiên!
+                      </p>
+                    )}
+                  </div>
+                </div>
+
               </div>
             )}
           </div>
