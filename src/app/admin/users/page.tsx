@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(search.toLowerCase()) || 
+    (u.displayName || u.name)?.toLowerCase().includes(search.toLowerCase()) || 
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
     u.title?.toLowerCase().includes(search.toLowerCase())
   );
@@ -164,10 +164,10 @@ export default function AdminUsersPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full border-2 border-pencil overflow-hidden bg-muted-paper shrink-0 flex items-center justify-center font-kalam font-bold">
-                          {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.charAt(0) || "U"}
+                          {user.photoURL || user.avatar ? <img src={user.photoURL || user.avatar} className="w-full h-full object-cover" /> : (user.displayName || user.name)?.charAt(0) || "U"}
                         </div>
                         <div>
-                          <div className="font-bold text-pencil text-lg">{user.name}</div>
+                          <div className="font-bold text-pencil text-lg">{user.displayName || user.name}</div>
                           <div className="text-sm text-pencil/60 flex items-center gap-1">
                             {user.email}
                           </div>
@@ -233,14 +233,14 @@ export default function AdminUsersPage() {
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
                         <button 
-                          onClick={() => handleSendNotification(user.id, user.name)}
+                          onClick={() => handleSendNotification(user.id, user.displayName || user.name)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-marker-blue hover:bg-blue-50 hover:border-marker-blue/20 transition-all"
                           title="Gửi thông báo"
                         >
                           <Bell size={18} />
                         </button>
                         <button 
-                          onClick={() => handleDelete(user.id, user.name)}
+                          onClick={() => handleDelete(user.id, user.displayName || user.name)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-marker-red hover:bg-red-50 hover:border-marker-red/20 transition-all"
                           title="Xóa người dùng"
                         >
