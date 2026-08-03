@@ -40,10 +40,20 @@ export async function updateUserProfile(uid: string, data: Partial<UserProfile>)
 
     // Đồng bộ với Firebase Auth profile
     if (auth.currentUser && (data.displayName || data.photoURL)) {
-      await updateProfile(auth.currentUser, {
-        displayName: data.displayName || auth.currentUser.displayName,
-        photoURL: data.photoURL || auth.currentUser.photoURL,
-      });
+      const authUpdates: any = {};
+      
+      if (data.displayName) {
+        authUpdates.displayName = data.displayName;
+      }
+      
+      // Firebase Auth photoURL has a strict length limit and will reject large base64 strings
+      if (data.photoURL && !data.photoURL.startsWith("data:image/")) {
+        authUpdates.photoURL = data.photoURL;
+      }
+
+      if (Object.keys(authUpdates).length > 0) {
+        await updateProfile(auth.currentUser, authUpdates);
+      }
     }
   } catch (error) {
     console.error("Error updating user profile:", error);
