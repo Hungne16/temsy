@@ -19,9 +19,13 @@ export const uploadStamp = async (
   if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để lưu tem!");
 
   const uid = auth.currentUser.uid;
+  const userName = auth.currentUser.displayName || "Người dùng ẩn danh";
+  const userAvatar = auth.currentUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop";
 
   const stampDoc = {
     userId: uid,
+    userName,
+    userAvatar,
     imageUrl: dataUrl,
     style,
     metadata,

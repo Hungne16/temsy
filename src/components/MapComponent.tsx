@@ -146,8 +146,32 @@ export default function MapComponent() {
     setAlbumGroup(group);
   }, []);
 
+  const [authorProfile, setAuthorProfile] = useState<any>(null);
+
   const openDetail = useCallback((stamp: any) => {
     setDetailStamp(stamp);
+    setAuthorProfile(null);
+    if (stamp.userId) {
+      import("@/lib/userService").then(({ getUserProfile }) => {
+        getUserProfile(stamp.userId).then(profile => {
+          if (profile) {
+            setAuthorProfile(profile);
+          } else if (stamp.userName) {
+            setAuthorProfile({
+              uid: stamp.userId,
+              displayName: stamp.userName,
+              photoURL: stamp.userAvatar
+            });
+          } else {
+            setAuthorProfile({
+              uid: stamp.userId,
+              displayName: "Người dùng ẩn danh",
+              photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"
+            });
+          }
+        });
+      });
+    }
   }, []);
 
   const backToAlbum = useCallback(() => {
@@ -319,6 +343,18 @@ export default function MapComponent() {
                   </span>
                 )}
               </div>
+
+              {/* Author info */}
+              {authorProfile && (
+                <Link href={`/profile/${authorProfile.uid}`} className="flex items-center gap-2 mt-1 group">
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-pencil group-hover:border-marker-blue transition-colors">
+                    <img src={authorProfile.photoURL} alt={authorProfile.displayName} className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-patrick font-bold text-pencil/80 group-hover:text-marker-blue transition-colors">
+                    {authorProfile.displayName}
+                  </span>
+                </Link>
+              )}
 
               {/* Meta */}
               <div className="flex flex-col gap-1.5">
