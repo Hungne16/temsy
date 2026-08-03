@@ -9,6 +9,8 @@ export interface UserProfile {
   bio?: string;
   bannerUrl?: string;
   location?: string;
+  role?: string;
+  title?: string;
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
