@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, PlusCircle, Bookmark, User as UserIcon } from "lucide-react";
+import { Home, Compass, PlusCircle, Bookmark, User as UserIcon, Shield } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function FloatingDock() {
   const pathname = usePathname();
+  const { userProfile } = useAuth();
 
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
@@ -14,6 +16,10 @@ export function FloatingDock() {
     { href: "/collection", icon: Bookmark, label: "Bộ Sưu Tập" },
     { href: "/profile", icon: UserIcon, label: "Profile" },
   ];
+
+  if (userProfile?.role === "admin") {
+    navItems.push({ href: "/admin", icon: Shield, label: "Admin" });
+  }
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4">

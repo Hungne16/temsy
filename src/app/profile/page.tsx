@@ -1,7 +1,7 @@
 "use client";
 
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
-import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft } from "lucide-react";
+import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft, ShieldAlert } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -13,7 +13,7 @@ import { compressImage } from "@/lib/imageUtils";
 import { getUserAlbums, createAlbum, deleteAlbum, updateAlbum, addStampToAlbum, removeStampFromAlbum, Album } from "@/lib/albumService";
 
 export default function ProfilePage() {
-  const { user, loading, logout } = useAuth();
+  const { user, userProfile, loading, logout } = useAuth();
   const router = useRouter();
   const [stampCount, setStampCount] = useState(0);
   const [stamps, setStamps] = useState<any[]>([]);
@@ -313,7 +313,16 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex flex-wrap justify-end gap-3">
+              {userProfile?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="px-6 py-3 bg-marker-red border-[3px] border-pencil text-white shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-red-600 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1 flex items-center gap-2"
+                >
+                  <ShieldAlert size={20} />
+                  <span>Admin</span>
+                </Link>
+              )}
               <button onClick={handleEditClick} className="px-6 py-3 bg-white border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-2">
                 Chỉnh sửa
               </button>
