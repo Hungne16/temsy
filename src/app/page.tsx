@@ -23,10 +23,12 @@ export default function Home() {
   }, [user]);
 
   const filteredStamps = stamps.filter(stamp => {
+    // Không hiển thị tem ẩn trên feed Khám phá
+    if (stamp.metadata?.isSecret === true) return false;
+
     if (filterType === "all") return true;
-    if (filterType === "public") return stamp.isPublic !== false && !stamp.metadata?.isSecret;
+    if (filterType === "public") return stamp.isPublic !== false;
     if (filterType === "private") return stamp.isPublic === false;
-    if (filterType === "secret") return stamp.metadata?.isSecret === true;
     return true;
   });
 
@@ -87,7 +89,6 @@ export default function Home() {
               <button onClick={() => setFilterType("all")} className={`w-full text-left px-4 py-3 text-sm hover:bg-muted-paper transition-colors ${filterType === "all" ? "font-bold bg-muted-paper/50" : ""}`}>Tất cả tem</button>
               <button onClick={() => setFilterType("public")} className={`w-full text-left px-4 py-3 text-sm hover:bg-muted-paper transition-colors ${filterType === "public" ? "font-bold bg-muted-paper/50" : ""}`}>Tem công khai</button>
               <button onClick={() => setFilterType("private")} className={`w-full text-left px-4 py-3 text-sm hover:bg-muted-paper transition-colors ${filterType === "private" ? "font-bold bg-muted-paper/50" : ""}`}>Tem riêng tư</button>
-              <button onClick={() => setFilterType("secret")} className={`w-full text-left px-4 py-3 text-sm hover:bg-muted-paper transition-colors text-marker-red ${filterType === "secret" ? "font-bold bg-muted-paper/50" : ""}`}>Tem Ẩn (Định vị)</button>
             </div>
           </div>
         </div>
