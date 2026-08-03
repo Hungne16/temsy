@@ -125,7 +125,16 @@ export const getStampById = async (id: string) => {
   const docRef = doc(db, "stamps", id);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
+    const data = docSnap.data();
+    try {
+      const { getUserProfile } = await import("./userService");
+      const profile = await getUserProfile(data.userId);
+      if (profile) {
+        data.userName = profile.displayName;
+        data.userAvatar = profile.photoURL;
+      }
+    } catch (err) {}
+    return { id: docSnap.id, ...data };
   } else {
     throw new Error("Không tìm thấy tem!");
   }
@@ -160,6 +169,20 @@ export const getComments = async (stampId: string): Promise<CommentData[]> => {
     const snapshot = await getDocs(q);
     const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommentData[];
     
+    // Fetch latest user profiles to ensure up-to-date avatars
+    const { getUserProfile } = await import("./userService");
+    await Promise.all(comments.map(async (comment) => {
+      if (comment.userId) {
+        try {
+          const profile = await getUserProfile(comment.userId);
+          if (profile) {
+            comment.userName = profile.displayName;
+            comment.userAvatar = profile.photoURL;
+          }
+        } catch (err) {}
+      }
+    }));
+
     // Client-side sort if no index
     return comments.sort((a: any, b: any) => {
       const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;

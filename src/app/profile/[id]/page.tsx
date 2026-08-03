@@ -98,6 +98,22 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
     }
   };
 
+  const handleRemoveFriend = async () => {
+    if (!user || !profile) return;
+    if (!confirm(`Bạn có chắc chắn muốn hủy kết bạn với ${profile.displayName}?`)) return;
+    setIsSaving(true);
+    try {
+      const { removeFriend } = await import("@/lib/friendService");
+      await removeFriend(user.uid, profile.uid);
+      alert("Đã hủy kết bạn!");
+      window.location.reload(); 
+    } catch (error: any) {
+      alert("Lỗi khi hủy kết bạn.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-10 bg-paper relative font-sans">
       {/* Cover Photo */}
@@ -130,17 +146,30 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* Friend Request Action */}
-            {user && user.uid !== profile.uid && !viewerProfile?.friends?.includes(profile.uid) && (
+            {/* Friend Action */}
+            {user && user.uid !== profile.uid && (
               <div className="flex flex-wrap justify-end gap-3">
-                <button 
-                  onClick={handleSendFriendRequest} 
-                  disabled={isSaving} 
-                  className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2"
-                >
-                  <UserPlus size={20} />
-                  <span className="hidden sm:inline">{isSaving ? "Đang gửi..." : "Thêm bạn bè"}</span>
-                </button>
+                {viewerProfile?.friends?.includes(profile.uid) ? (
+                  <button 
+                    onClick={handleRemoveFriend} 
+                    disabled={isSaving} 
+                    className="px-6 py-3 bg-red-50 border-[3px] border-pencil text-marker-red shadow-[2px_2px_0_0_#2d2d2d] wobbly-border font-bold font-patrick text-lg hover:bg-red-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rotate-1 flex items-center gap-2 group"
+                  >
+                    <Check size={20} className="group-hover:hidden" />
+                    <span className="hidden group-hover:inline-block rotate-45 text-xl font-kalam">+</span>
+                    <span className="hidden sm:inline group-hover:hidden">{isSaving ? "Đang xử lý..." : "Bạn bè"}</span>
+                    <span className="hidden sm:hidden group-hover:inline">{isSaving ? "Đang xử lý..." : "Hủy kết bạn"}</span>
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleSendFriendRequest} 
+                    disabled={isSaving} 
+                    className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2"
+                  >
+                    <UserPlus size={20} />
+                    <span className="hidden sm:inline">{isSaving ? "Đang gửi..." : "Thêm bạn bè"}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -439,11 +439,15 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                       const dateStr = comment.createdAt?.toMillis ? new Date(comment.createdAt.toMillis()).toLocaleDateString('vi-VN') : "Vừa xong";
                       return (
                         <div key={comment.id} className="flex gap-3">
-                          <img src={comment.userAvatar} alt={comment.userName} className="w-10 h-10 rounded-full border-2 border-pencil object-cover flex-shrink-0" />
+                          <Link href={`/profile/${comment.userId}`} className="flex-shrink-0 group">
+                            <img src={comment.userAvatar} alt={comment.userName} className="w-10 h-10 rounded-full border-2 border-pencil object-cover group-hover:scale-110 transition-transform" />
+                          </Link>
                           <div>
                             <div className="bg-postit/30 border-2 border-pencil p-3 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] inline-block">
                               <div className="flex items-baseline gap-2 mb-1">
-                                <span className="font-bold font-kalam text-lg text-pencil">{comment.userName}</span>
+                                <Link href={`/profile/${comment.userId}`} className="font-bold font-kalam text-lg text-pencil hover:text-marker-blue transition-colors">
+                                  {comment.userName}
+                                </Link>
                                 <span className="text-xs font-patrick text-pencil/50">{dateStr}</span>
                               </div>
                               <p className="font-patrick text-lg text-pencil whitespace-pre-wrap leading-tight">{comment.text}</p>
