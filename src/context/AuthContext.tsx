@@ -17,6 +17,7 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
+  userProfile: any | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (e: string, p: string) => Promise<void>;
@@ -27,6 +28,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userProfile: null,
   loading: true,
   signInWithGoogle: async () => {},
   signInWithEmail: async () => {},
@@ -39,6 +41,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,25 +55,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Create user document in Firestore if it doesn't exist
+        // Create user document in Firestore if it doesn't exist, and fetch userProfile
         try {
           const userDocRef = doc(db, "users", currentUser.uid);
           const docSnap = await getDoc(userDocRef);
           if (!docSnap.exists()) {
-            await setDoc(userDocRef, {
+            const newProfile = {
               uid: currentUser.uid,
               name: currentUser.displayName,
               email: currentUser.email,
               avatar: currentUser.photoURL,
               joinDate: new Date().toISOString(),
-              stats: { stamps: 0, albums: 0, followers: 0, following: 0 }
-            });
+              stats: { stamps: 0, albums: 0, followers: 0, following: 0 },
+              role: "user"
+            };
+            await setDoc(userDocRef, newProfile);
+            setUserProfile(newProfile);
+          } else {
+            setUserProfile(docSnap.data());
           }
         } catch (error) {
           console.error("Error creating user profile in Firestore:", error);
         }
       } else {
         setUser(null);
+        setUserProfile(null);
       }
       setLoading(false);
     });
@@ -106,14 +115,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Khởi tạo thông tin user trong Firestore
       try {
         const userDocRef = doc(db, "users", userCredential.user.uid);
-        await setDoc(userDocRef, {
+        const newProfile = {
           uid: userCredential.user.uid,
           name: name,
           email: email,
           avatar: null,
           joinDate: new Date().toISOString(),
-          stats: { stamps: 0, albums: 0, followers: 0, following: 0 }
-        });
+          stats: { stamps: 0, albums: 0, followers: 0, following: 0 },
+          role: "user"
+        };
+        await setDoc(userDocRef, newProfile);
+        setUserProfile(newProfile);
       } catch (e) {
         console.error("Lỗi tạo Firestore document", e);
       }
@@ -134,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );
