@@ -1,7 +1,7 @@
 "use client";
 
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
-import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft, ShieldAlert, MessageSquare } from "lucide-react";
+import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft, ShieldAlert, MessageSquare, UserPlus, Copy, Check, Users as UsersIcon } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +12,7 @@ import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/userServic
 import { compressImage } from "@/lib/imageUtils";
 import { getUserAlbums, createAlbum, deleteAlbum, updateAlbum, addStampToAlbum, removeStampFromAlbum, Album } from "@/lib/albumService";
 import { submitFeedback } from "@/lib/feedbackService";
+import { searchUserByShortUid, addFriend, getFriends, removeFriend } from "@/lib/friendService";
 
 export default function ProfilePage() {
   const { user, userProfile, loading, logout } = useAuth();
@@ -24,7 +25,7 @@ export default function ProfilePage() {
   
   // Album states
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view'>('stamps');
+  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view' | 'friends'>('stamps');
   const [viewingAlbum, setViewingAlbum] = useState<Album | null>(null);
   const [isCreatingAlbum, setIsCreatingAlbum] = useState(false);
   const [newAlbumTitle, setNewAlbumTitle] = useState("");
@@ -51,6 +52,14 @@ export default function ProfilePage() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
+  // Friend System States
+  const [friendsList, setFriendsList] = useState<UserProfile[]>([]);
+  const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
+  const [searchUid, setSearchUid] = useState("");
+  const [searchResult, setSearchResult] = useState<UserProfile | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
   useEffect(() => {
     if (user) {
       getUserStamps(user.uid).then(userStamps => {
@@ -63,6 +72,9 @@ export default function ProfilePage() {
       getUserProfile(user.uid).then(data => {
         if (data) {
           setProfile(data);
+          if (data.friends && data.friends.length > 0) {
+            getFriends(user.uid).then(setFriendsList);
+          }
         } else {
           // Initialize empty profile if not exists
           setProfile({
@@ -71,7 +83,8 @@ export default function ProfilePage() {
             photoURL: user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
             bio: "Nhà sưu tầm tem Temsy.",
             location: "Việt Nam",
-            bannerUrl: ""
+            bannerUrl: "",
+            friends: []
           });
         }
       });
@@ -268,6 +281,74 @@ export default function ProfilePage() {
     }
   };
 
+  const copyUid = () => {
+    if (profile?.uid) {
+      navigator.clipboard.writeText(profile.uid.slice(-4));
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  const handleSearchFriend = async () => {
+    if (!searchUid.trim() || searchUid.length < 4) {
+      alert("Vui lòng nhập 4 ký tự UID");
+      return;
+    }
+    
+    if (searchUid.trim() === profile?.uid.slice(-4)) {
+      alert("Bạn không thể tự kết bạn với chính mình!");
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const result = await searchUserByShortUid(searchUid.trim());
+      setSearchResult(result);
+      if (!result) {
+        alert("Không tìm thấy người dùng với UID này.");
+      }
+    } catch (error) {
+      alert("Lỗi khi tìm kiếm.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleAddFriend = async () => {
+    if (!user || !searchResult) return;
+    setIsSaving(true);
+    try {
+      await addFriend(user.uid, searchResult.uid);
+      alert("Kết bạn thành công!");
+      
+      // Update local state
+      const newFriends = [...friendsList, searchResult];
+      setFriendsList(newFriends);
+      setProfile({ ...profile!, friends: [...(profile!.friends || []), searchResult.uid] });
+      
+      setIsFriendModalOpen(false);
+      setSearchUid("");
+      setSearchResult(null);
+    } catch (error: any) {
+      alert(error.message || "Lỗi khi kết bạn.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveFriend = async (friendId: string, friendName: string) => {
+    if (!user) return;
+    if (!confirm(`Bạn có chắc muốn hủy kết bạn với ${friendName}?`)) return;
+    
+    try {
+      await removeFriend(user.uid, friendId);
+      setFriendsList(friendsList.filter(f => f.uid !== friendId));
+      setProfile({ ...profile!, friends: profile!.friends?.filter(id => id !== friendId) || [] });
+    } catch (error) {
+      alert("Lỗi khi hủy kết bạn.");
+    }
+  };
+
   if (loading || (user && !profile)) {
     return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
   }
@@ -324,12 +405,21 @@ export default function ProfilePage() {
           </div>
           
           <div className="flex-1 flex flex-col md:flex-row justify-between md:items-center gap-4">
-            <div className="bg-white/80 backdrop-blur-md border-[3px] border-pencil p-4 wobbly-border shadow-pencil rotate-1">
-              <h1 className="text-4xl font-kalam font-bold text-pencil">{profile.displayName}</h1>
+            <div className="bg-white/80 backdrop-blur-md border-[3px] border-pencil p-4 wobbly-border shadow-pencil rotate-1 relative">
+              {/* Short UID Badge */}
+              <div className="absolute -top-4 right-4 bg-marker-red text-white px-3 py-1 border-2 border-pencil wobbly-border shadow-[2px_2px_0_0_#2d2d2d] flex items-center gap-2 transform rotate-2">
+                <span className="font-bold font-patrick text-sm">UID: {profile.uid.slice(-4)}</span>
+                <button onClick={copyUid} className="hover:scale-110 transition-transform" title="Copy UID">
+                  {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+              </div>
+              
+              <h1 className="text-4xl font-kalam font-bold text-pencil pr-20">{profile.displayName}</h1>
               <p className="text-pencil/80 mt-1 font-patrick text-lg">{profile.bio}</p>
-              <div className="flex gap-4 mt-2 text-sm text-pencil/70 font-patrick font-bold">
+              <div className="flex flex-wrap gap-4 mt-2 text-sm text-pencil/70 font-patrick font-bold">
                 <span className="flex items-center gap-1"><MapPin size={16} /> {profile.location}</span>
                 <span className="flex items-center gap-1"><Calendar size={16} /> Thành viên Temsy</span>
+                <span className="flex items-center gap-1"><UsersIcon size={16} /> {profile.friends?.length || 0}/20 Bạn bè</span>
               </div>
             </div>
             
@@ -343,6 +433,10 @@ export default function ProfilePage() {
                   <span>Admin</span>
                 </Link>
               )}
+              <button onClick={() => setIsFriendModalOpen(true)} className="px-6 py-3 bg-white border-[3px] border-pencil text-marker-blue shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-blue-50 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2">
+                <UserPlus size={20} />
+                <span className="hidden sm:inline">Tìm bạn bè</span>
+              </button>
               <button onClick={() => setIsFeedbackOpen(true)} className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1 flex items-center gap-2">
                 <MessageSquare size={20} />
                 <span className="hidden sm:inline">Góp ý</span>
@@ -445,6 +539,12 @@ export default function ProfilePage() {
           >
             Bộ Sưu Tập
           </button>
+          <button 
+            onClick={() => setActiveTab('friends')}
+            className={`px-6 py-2 font-kalam font-bold text-2xl border-[3px] border-pencil wobbly-border shadow-pencil transition-all ${activeTab === 'friends' ? 'bg-postit text-pencil rotate-2' : 'bg-white text-pencil hover:bg-muted-paper -rotate-1'}`}
+          >
+            Bạn Bè ({profile.friends?.length || 0}/20)
+          </button>
         </div>
 
         {/* User's Stamps or Albums */}
@@ -533,6 +633,40 @@ export default function ProfilePage() {
               {stamps.filter(s => viewingAlbum?.stamps?.includes(s.id)).length === 0 && (
                 <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white rotate-1">
                   Bộ sưu tập này chưa có tem nào. Hãy thêm tem từ phần "Tất cả tem"!
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Friends View */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-kalam font-bold text-pencil -rotate-1">Danh sách Bạn bè</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {friendsList.map((friend) => (
+                <div key={friend.uid} className="bg-white border-[3px] border-pencil p-4 flex items-center gap-4 wobbly-border shadow-pencil hover:shadow-pencil-hover transition-all rotate-1 group relative">
+                  <div className="w-16 h-16 border-2 border-pencil rounded-full overflow-hidden shrink-0">
+                    <img src={friend.photoURL} alt={friend.displayName} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <h3 className="font-kalam font-bold text-xl text-pencil truncate">{friend.displayName}</h3>
+                    <p className="text-sm font-patrick text-pencil/60 truncate">{friend.bio || "Thành viên Temsy"}</p>
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleRemoveFriend(friend.uid, friend.displayName)}
+                    className="absolute top-2 right-2 p-2 bg-red-50 text-marker-red border-2 border-transparent rounded-full opacity-0 group-hover:opacity-100 hover:border-marker-red transition-all"
+                    title="Hủy kết bạn"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+              
+              {friendsList.length === 0 && (
+                <div className="col-span-1 sm:col-span-2 md:col-span-3 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white rotate-1">
+                  Bạn chưa có người bạn nào. Hãy lấy 4 ký tự UID của bạn bè để kết bạn nhé!
                 </div>
               )}
             </div>
@@ -823,6 +957,71 @@ export default function ProfilePage() {
             >
               {isSaving ? "Đang gửi..." : "Gửi góp ý"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Find Friend Modal */}
+      {isFriendModalOpen && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-md w-full max-w-sm overflow-hidden shadow-pencil flex flex-col -rotate-1 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-kalam font-bold text-marker-blue flex items-center gap-2">
+                <UserPlus className="text-marker-blue" />
+                Tìm bạn bè
+              </h2>
+              <button onClick={() => {setIsFriendModalOpen(false); setSearchResult(null); setSearchUid("");}} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-white wobbly-border transition-all">
+                <X size={24} className="text-pencil" />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <p className="font-patrick text-pencil/80">Nhập 4 ký tự cuối của mã UID người bạn muốn tìm:</p>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={searchUid}
+                  onChange={(e) => setSearchUid(e.target.value.toUpperCase())}
+                  placeholder="Ví dụ: A1B2"
+                  maxLength={4}
+                  className="flex-1 px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-xl font-bold uppercase focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
+                  autoFocus
+                />
+                <button 
+                  onClick={handleSearchFriend}
+                  disabled={isSearching || searchUid.length < 4}
+                  className="px-4 border-[3px] border-pencil bg-marker-red text-white wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] font-bold font-patrick hover:bg-red-600 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all disabled:opacity-50"
+                >
+                  {isSearching ? "..." : "Tìm"}
+                </button>
+              </div>
+
+              {searchResult && (
+                <div className="mt-6 p-4 border-[3px] border-pencil bg-white wobbly-border rotate-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <img src={searchResult.photoURL} alt="Avatar" className="w-12 h-12 rounded-full border-2 border-pencil object-cover" />
+                    <div>
+                      <h3 className="font-kalam font-bold text-xl text-pencil">{searchResult.displayName}</h3>
+                      <p className="font-patrick text-sm text-pencil/60">UID: #{searchResult.uid.slice(-4)}</p>
+                    </div>
+                  </div>
+                  
+                  {profile?.friends?.includes(searchResult.uid) ? (
+                    <button disabled className="w-full py-2 bg-muted-paper border-2 border-pencil font-patrick font-bold text-pencil/50 wobbly-border">
+                      Đã là bạn bè
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleAddFriend}
+                      disabled={isSaving}
+                      className="w-full py-2 bg-postit border-[3px] border-pencil font-patrick font-bold text-lg text-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-yellow-300 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                    >
+                      {isSaving ? "Đang thêm..." : "Thêm bạn bè"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

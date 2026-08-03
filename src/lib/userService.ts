@@ -11,6 +11,7 @@ export interface UserProfile {
   location?: string;
   role?: string;
   title?: string;
+  friends?: string[];
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
