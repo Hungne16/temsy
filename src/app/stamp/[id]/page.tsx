@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getStampById, deleteStamp, updateStampMetadata, getComments, addComment, CommentData } from "@/lib/stampService";
 import { createReport } from "@/lib/reportService";
-import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle, Flag } from "lucide-react";
+import { sendMessage } from "@/lib/chatService";
+import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle, Flag, Reply } from "lucide-react";
 import Link from "next/link";
 
 export default function StampDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,10 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const [comments, setComments] = useState<CommentData[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
   
   useEffect(() => {
     getStampById(id)
@@ -125,6 +130,27 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleSendReply = async () => {
+    if (!user || !stamp) return;
+    setIsReplying(true);
+    try {
+      await sendMessage(
+        user.uid,
+        stamp.userId,
+        replyMessage.trim() || `Đã phản hồi tem: ${stamp.metadata?.title || "Không tên"}`,
+        stamp.imageUrl,
+        stamp.id
+      );
+      alert("Đã gửi phản hồi thành công!");
+      setShowReplyModal(false);
+      setReplyMessage("");
+    } catch (error) {
+      alert("Gửi phản hồi thất bại.");
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper">
@@ -175,12 +201,20 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
           {!isOwner && user && !stamp.metadata?.isSecret && (
-            <button 
-              onClick={handleReport}
-              className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-red-50 transition-all rotate-1 font-bold font-patrick text-lg text-marker-red"
-            >
-              <Flag size={18} /> Báo cáo
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setShowReplyModal(true)}
+                className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-yellow-50 transition-all -rotate-1 font-bold font-patrick text-lg text-marker-blue"
+              >
+                <Reply size={18} /> Phản hồi
+              </button>
+              <button 
+                onClick={handleReport}
+                className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-red-50 transition-all rotate-1 font-bold font-patrick text-lg text-marker-red"
+              >
+                <Flag size={18} /> Báo cáo
+              </button>
+            </div>
           )}
         </header>
 
@@ -426,6 +460,41 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
+      
+      {/* Reply Modal */}
+      {showReplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white border-[4px] border-pencil wobbly-border-md p-6 max-w-sm w-full font-patrick relative rotate-1 shadow-pencil">
+            <button 
+              onClick={() => setShowReplyModal(false)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-marker-red border-2 border-pencil rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform z-10"
+            >
+              <X size={16} />
+            </button>
+            
+            <h3 className="font-kalam font-bold text-2xl text-marker-blue mb-4">Phản hồi Tem</h3>
+            
+            <div className="mb-4 aspect-video rounded border-2 border-pencil overflow-hidden bg-muted-paper flex items-center justify-center">
+              <img src={stamp.imageUrl} alt="preview" className="w-full h-full object-cover opacity-80" />
+            </div>
+            
+            <textarea
+              value={replyMessage}
+              onChange={(e) => setReplyMessage(e.target.value)}
+              placeholder="Nhập tin nhắn của bạn..."
+              className="w-full p-3 border-2 border-pencil bg-yellow-50 focus:outline-none focus:bg-white resize-none h-24 mb-4 text-lg wobbly-border shadow-sm"
+            />
+            
+            <button
+              onClick={handleSendReply}
+              disabled={isReplying}
+              className="w-full py-3 bg-marker-blue border-2 border-pencil text-white font-bold text-xl shadow-[2px_2px_0_0_#2d2d2d] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 flex justify-center items-center gap-2"
+            >
+              {isReplying ? "Đang gửi..." : <><Send size={20} /> Gửi tin nhắn</>}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

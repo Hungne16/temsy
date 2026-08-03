@@ -120,7 +120,19 @@ export default function ChatRoomPage() {
                         : "bg-white text-pencil rounded-t-xl rounded-r-xl"
                       }`}
                   >
-                    {msg.text}
+                    {msg.imageUrl && (
+                      <div className="mb-2">
+                        {msg.stampId ? (
+                          <Link href={`/stamp/${msg.stampId}`} className="block overflow-hidden rounded-lg border-2 border-pencil hover:opacity-90">
+                            <img src={msg.imageUrl} alt="stamp" className="w-full h-auto object-cover max-h-[200px]" />
+                            <div className="bg-pencil text-white text-xs p-1 text-center font-bold">Xem tem</div>
+                          </Link>
+                        ) : (
+                          <img src={msg.imageUrl} alt="attached" className="w-full h-auto rounded-lg border-2 border-pencil object-cover max-h-[200px]" />
+                        )}
+                      </div>
+                    )}
+                    {msg.text && <div>{msg.text}</div>}
                   </div>
                 </div>
               );

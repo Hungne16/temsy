@@ -7,6 +7,8 @@ export interface Message {
   id?: string;
   senderId: string;
   text: string;
+  imageUrl?: string;
+  stampId?: string;
   createdAt: any;
 }
 
@@ -23,24 +25,28 @@ export const getChatId = (uid1: string, uid2: string) => {
 };
 
 // Send a message
-export const sendMessage = async (senderId: string, receiverId: string, text: string) => {
+export const sendMessage = async (senderId: string, receiverId: string, text: string, imageUrl?: string, stampId?: string) => {
   const chatId = getChatId(senderId, receiverId);
   const chatRef = doc(db, "chats", chatId);
   
   // Ensure chat document exists and update lastMessage
   await setDoc(chatRef, {
     participants: [senderId, receiverId],
-    lastMessage: text,
+    lastMessage: text || (imageUrl ? "Đã gửi một hình ảnh" : ""),
     lastUpdated: serverTimestamp()
   }, { merge: true });
 
   // Add message to subcollection
   const messagesRef = collection(chatRef, "messages");
-  await addDoc(messagesRef, {
+  const msgData: any = {
     senderId,
     text,
     createdAt: serverTimestamp()
-  });
+  };
+  if (imageUrl) msgData.imageUrl = imageUrl;
+  if (stampId) msgData.stampId = stampId;
+  
+  await addDoc(messagesRef, msgData);
 
   // Send notification to the receiver
   try {
@@ -50,7 +56,7 @@ export const sendMessage = async (senderId: string, receiverId: string, text: st
       receiverId,
       "chat",
       `Tin nhắn mới từ ${senderName}`,
-      text,
+      text || "Đã gửi một hình ảnh",
       `/chat/${senderId}`,
       senderProfile?.photoURL
     );

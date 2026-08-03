@@ -21,7 +21,8 @@ export function NotificationBell() {
     }
 
     const unsubscribe = subscribeToNotifications(user.uid, (data) => {
-      setNotifications(data);
+      // Lọc bỏ thông báo chat vì đã hiển thị ở ChatBubble
+      setNotifications(data.filter(n => n.type !== 'chat'));
     });
 
     return () => unsubscribe();
