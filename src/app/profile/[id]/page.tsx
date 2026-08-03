@@ -132,8 +132,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
       <div className="max-w-5xl mx-auto px-6 relative z-10">
         {/* Profile Info Header */}
         <div className="relative -mt-16 md:-mt-20 flex flex-col md:flex-row gap-6 md:items-end mb-10">
-          <div className="w-32 h-32 md:w-40 md:h-40 border-[4px] border-pencil overflow-hidden bg-white shadow-pencil z-10 flex-shrink-0 wobbly-border -rotate-2">
-            <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full object-cover" />
+          <div className="relative z-10 flex-shrink-0">
+            <div className="w-32 h-32 md:w-40 md:h-40 border-[4px] border-pencil overflow-hidden bg-white shadow-pencil wobbly-border -rotate-2">
+              <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full object-cover" />
+            </div>
+            {/* Badge overlay */}
+            <div className="absolute -top-4 -left-4 w-12 h-12 md:w-16 md:h-16 z-20 hover:scale-110 transition-transform duration-300 rotate-3">
+              <img src={`/badges/${stampCount >= 50 ? 'legend' : stampCount >= 25 ? 'voyager' : stampCount >= 10 ? 'adventurer' : stampCount >= 5 ? 'traveler' : 'explorer'}.png`} alt="Badge" className="w-full h-full object-contain drop-shadow-md" />
+            </div>
           </div>
           
           <div className="flex-1 flex flex-col md:flex-row justify-between md:items-center gap-4">
