@@ -153,10 +153,26 @@ export const getComments = async (stampId: string): Promise<CommentData[]> => {
 export const addComment = async (stampId: string, text: string) => {
   if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để bình luận!");
   
+  const uid = auth.currentUser.uid;
+  let userName = auth.currentUser.displayName || "Người dùng ẩn danh";
+  let userAvatar = auth.currentUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop";
+
+  try {
+    const userDocRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userDocRef);
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      if (userData.name) userName = userData.name;
+      if (userData.avatar) userAvatar = userData.avatar;
+    }
+  } catch (err) {
+    console.error("Lỗi lấy thông tin user:", err);
+  }
+
   const comment: CommentData = {
-    userId: auth.currentUser.uid,
-    userName: auth.currentUser.displayName || "Người dùng ẩn danh",
-    userAvatar: auth.currentUser.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+    userId: uid,
+    userName,
+    userAvatar,
     text,
     createdAt: serverTimestamp(),
   };
