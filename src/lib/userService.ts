@@ -19,7 +19,12 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return docSnap.data() as UserProfile;
+      const data = docSnap.data();
+      return {
+        ...data,
+        displayName: data.displayName || data.name || "Người dùng ẩn danh",
+        photoURL: data.photoURL || data.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"
+      } as UserProfile;
     } else {
       return null;
     }
