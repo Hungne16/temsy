@@ -117,8 +117,8 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
     setTimeout(() => setIsCut(true), 240);
     
     setTimeout(() => {
-      // Export at 2× for quality
-      const EX = 2;
+      // Export at higher multiplier for better quality (4x instead of 2x)
+      const EX = 4;
       const outW = FRAME_W * EX;
       const outH = FRAME_H * EX;
 

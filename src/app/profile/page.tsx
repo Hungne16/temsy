@@ -88,8 +88,8 @@ export default function ProfilePage() {
     if (!file) return;
 
     try {
-      const maxWidth = type === 'avatar' ? 500 : 1920;
-      const base64 = await compressImage(file, maxWidth, 0.8);
+      const maxWidth = type === 'avatar' ? 256 : 1024;
+      const base64 = await compressImage(file, maxWidth, 0.6);
       if (type === 'avatar') setEditAvatarUrl(base64);
       if (type === 'banner') setEditBannerUrl(base64);
     } catch (error) {
@@ -128,7 +128,7 @@ export default function ProfilePage() {
     
     setIsSaving(true);
     try {
-      const base64 = await compressImage(file, 1920, 0.8);
+      const base64 = await compressImage(file, 1024, 0.6);
       await updateUserProfile(user.uid, { bannerUrl: base64 });
       setProfile({ ...profile, bannerUrl: base64 });
     } catch (error) {
