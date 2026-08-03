@@ -1,21 +1,26 @@
 "use client";
 
-import { MapPin, Calendar, Heart, Image as ImageIcon, Award, ArrowLeft, Lock, Globe } from "lucide-react";
+import { MapPin, Calendar, Heart, Image as ImageIcon, Award, ArrowLeft, Lock, Globe, UserPlus, Check } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { getUserStamps } from "@/lib/stampService";
 import { getUserProfile, UserProfile } from "@/lib/userService";
 import { getUserAlbums, Album } from "@/lib/albumService";
+import { useAuth } from "@/context/AuthContext";
+import { createFriendRequestNotification } from "@/lib/notificationService";
 
 export default function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const userId = resolvedParams.id;
 
+  const { user, userProfile: viewerProfile } = useAuth();
+  
   const [stampCount, setStampCount] = useState(0);
   const [stamps, setStamps] = useState<any[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Album states
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -75,6 +80,24 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
     );
   }
 
+  const handleSendFriendRequest = async () => {
+    if (!user || !profile || !viewerProfile) return;
+    setIsSaving(true);
+    try {
+      await createFriendRequestNotification(
+        user.uid,
+        profile.uid, // profile is the person being viewed
+        viewerProfile.displayName || "Người dùng",
+        viewerProfile.photoURL
+      );
+      alert("Đã gửi lời mời kết bạn! Vui lòng chờ phản hồi.");
+    } catch (error: any) {
+      alert(error.message || "Lỗi khi gửi lời mời kết bạn.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-10 bg-paper relative font-sans">
       {/* Cover Photo */}
@@ -98,14 +121,34 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
           </div>
           
           <div className="flex-1 flex flex-col md:flex-row justify-between md:items-center gap-4">
-            <div className="bg-white/80 backdrop-blur-md border-[3px] border-pencil p-4 wobbly-border shadow-pencil rotate-1">
-              <h1 className="text-4xl font-kalam font-bold text-pencil">{profile.displayName}</h1>
+            <div className="bg-white/80 backdrop-blur-md border-[3px] border-pencil p-4 wobbly-border shadow-pencil rotate-1 relative">
+              <h1 className="text-4xl font-kalam font-bold text-pencil pr-10">{profile.displayName}</h1>
               <p className="text-pencil/80 mt-1 font-patrick text-lg">{profile.bio}</p>
               <div className="flex gap-4 mt-2 text-sm text-pencil/70 font-patrick font-bold">
                 <span className="flex items-center gap-1"><MapPin size={16} /> {profile.location}</span>
                 <span className="flex items-center gap-1"><Calendar size={16} /> Thành viên Temsy</span>
               </div>
             </div>
+
+            {/* Friend Request Action */}
+            {user && user.uid !== profile.uid && (
+              <div className="flex flex-wrap justify-end gap-3">
+                {viewerProfile?.friends?.includes(profile.uid) ? (
+                  <button disabled className="px-6 py-3 bg-muted-paper border-[3px] border-pencil text-pencil/50 shadow-[2px_2px_0_0_#2d2d2d] wobbly-border font-bold font-patrick text-lg rotate-1 flex items-center gap-2">
+                    <Check size={20} /> Đã là bạn bè
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleSendFriendRequest} 
+                    disabled={isSaving} 
+                    className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2"
+                  >
+                    <UserPlus size={20} />
+                    <span className="hidden sm:inline">{isSaving ? "Đang gửi..." : "Thêm bạn bè"}</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

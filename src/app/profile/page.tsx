@@ -646,17 +646,19 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {friendsList.map((friend) => (
                 <div key={friend.uid} className="bg-white border-[3px] border-pencil p-4 flex items-center gap-4 wobbly-border shadow-pencil hover:shadow-pencil-hover transition-all rotate-1 group relative">
-                  <div className="w-16 h-16 border-2 border-pencil rounded-full overflow-hidden shrink-0">
-                    <img src={friend.photoURL} alt={friend.displayName} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <h3 className="font-kalam font-bold text-xl text-pencil truncate">{friend.displayName}</h3>
-                    <p className="text-sm font-patrick text-pencil/60 truncate">{friend.bio || "Thành viên Temsy"}</p>
-                  </div>
+                  <Link href={`/profile/${friend.uid}`} className="flex-1 flex items-center gap-4 hover:opacity-80 transition-opacity">
+                    <div className="w-16 h-16 border-2 border-pencil rounded-full overflow-hidden shrink-0">
+                      <img src={friend.photoURL} alt={friend.displayName} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <h3 className="font-kalam font-bold text-xl text-pencil truncate group-hover:text-marker-blue transition-colors">{friend.displayName}</h3>
+                      <p className="text-sm font-patrick text-pencil/60 truncate">{friend.bio || "Thành viên Temsy"}</p>
+                    </div>
+                  </Link>
                   
                   <button 
-                    onClick={() => handleRemoveFriend(friend.uid, friend.displayName)}
-                    className="absolute top-2 right-2 p-2 bg-red-50 text-marker-red border-2 border-transparent rounded-full opacity-0 group-hover:opacity-100 hover:border-marker-red transition-all"
+                    onClick={(e) => { e.preventDefault(); handleRemoveFriend(friend.uid, friend.displayName); }}
+                    className="absolute top-2 right-2 p-2 bg-red-50 text-marker-red border-2 border-transparent rounded-full opacity-0 group-hover:opacity-100 hover:border-marker-red transition-all z-10"
                     title="Hủy kết bạn"
                   >
                     <Trash2 size={16} />
