@@ -16,15 +16,15 @@ export interface NotificationData {
 // 1. Tạo thông báo cá nhân (ví dụ: có bình luận mới)
 export const createPersonalNotification = async (recipientId: string, type: 'system' | 'comment', title: string, message: string, link?: string) => {
   try {
-    const notification: NotificationData = {
+    const notification: any = {
       recipientId,
       type,
       title,
       message,
-      link,
       isRead: false,
       createdAt: serverTimestamp(),
     };
+    if (link) notification.link = link;
     await addDoc(collection(db, "notifications"), notification);
   } catch (error) {
     console.error("Lỗi khi tạo thông báo cá nhân:", error);
@@ -34,15 +34,15 @@ export const createPersonalNotification = async (recipientId: string, type: 'sys
 // 2. Tạo thông báo toàn hệ thống (dành cho Admin)
 export const createGlobalNotification = async (title: string, message: string, link?: string) => {
   try {
-    const notification: NotificationData = {
+    const notification: any = {
       recipientId: "ALL",
       type: "system",
       title,
       message,
-      link,
       readBy: [],
       createdAt: serverTimestamp(),
     };
+    if (link) notification.link = link;
     await addDoc(collection(db, "notifications"), notification);
   } catch (error) {
     console.error("Lỗi khi tạo thông báo toàn hệ thống:", error);
