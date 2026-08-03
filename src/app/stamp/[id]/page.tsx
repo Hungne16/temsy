@@ -330,6 +330,11 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                 <div>
                   <h1 className="text-5xl font-kalam font-bold text-pencil leading-tight break-words">{stamp.metadata.title || "Kỷ niệm không tên"}</h1>
                   
+                  <Link href={`/profile/${stamp.userId}`} className="mt-4 flex items-center gap-3 group w-max">
+                    <img src={stamp.userAvatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} alt={stamp.userName} className="w-10 h-10 rounded-full border-2 border-pencil object-cover group-hover:scale-110 transition-transform shadow-sm" />
+                    <span className="font-kalam text-xl font-bold text-pencil group-hover:text-marker-blue transition-colors">bởi {stamp.userName || "Người dùng ẩn danh"}</span>
+                  </Link>
+                  
                   <div className="mt-6 flex flex-wrap gap-4">
                     <div className="flex items-center gap-2 text-xl font-bold font-patrick bg-postit border-2 border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1">
                       <MapPin size={20} className="text-marker-red" />
