@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, PlusCircle, Bookmark, User as UserIcon, Shield } from "lucide-react";
+import { Home, Compass, PlusCircle, Bookmark, User as UserIcon, Shield, MessageCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export function FloatingDock() {
@@ -14,6 +14,7 @@ export function FloatingDock() {
     { href: "/map", icon: Compass, label: "Map" },
     { href: "/create", icon: PlusCircle, label: "Tạo Tem", isPrimary: true },
     { href: "/collection", icon: Bookmark, label: "Bộ Sưu Tập" },
+    { href: "/chat", icon: MessageCircle, label: "Nhắn tin" },
     { href: "/profile", icon: UserIcon, label: "Profile" },
   ];
 

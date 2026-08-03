@@ -656,13 +656,23 @@ export default function ProfilePage() {
                     </div>
                   </Link>
                   
-                  <button 
-                    onClick={(e) => { e.preventDefault(); handleRemoveFriend(friend.uid, friend.displayName); }}
-                    className="absolute top-2 right-2 p-2 bg-red-50 text-marker-red border-2 border-transparent rounded-full opacity-0 group-hover:opacity-100 hover:border-marker-red transition-all z-10"
-                    title="Hủy kết bạn"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <Link 
+                      href={`/chat/${friend.uid}`}
+                      className="p-2 bg-blue-50 text-marker-blue border-2 border-transparent rounded-full hover:border-marker-blue transition-all"
+                      title="Nhắn tin"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MessageSquare size={16} />
+                    </Link>
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveFriend(friend.uid, friend.displayName); }}
+                      className="p-2 bg-red-50 text-marker-red border-2 border-transparent rounded-full hover:border-marker-red transition-all"
+                      title="Hủy kết bạn"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
               
