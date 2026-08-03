@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getAllUsers, updateUserTitle, deleteUserProfile, createNewUser } from "@/lib/adminService";
 import { createPersonalNotification } from "@/lib/notificationService";
-import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell } from "lucide-react";
+import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check } from "lucide-react";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -18,6 +18,15 @@ export default function AdminUsersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ email: "", password: "", name: "", role: "user" as "admin" | "user" });
   const [addLoading, setAddLoading] = useState(false);
+  
+  const [copiedUid, setCopiedUid] = useState<string | null>(null);
+
+  const handleCopyUid = (uid: string) => {
+    const shortUid = uid.substring(uid.length - 4);
+    navigator.clipboard.writeText(shortUid);
+    setCopiedUid(uid);
+    setTimeout(() => setCopiedUid(null), 2000);
+  };
 
   const fetchUsers = async () => {
     try {
@@ -134,6 +143,7 @@ export default function AdminUsersPage() {
             <thead className="bg-muted-paper border-b-2 border-pencil/20">
               <tr>
                 <th className="p-4 font-bold text-pencil text-lg">Người dùng</th>
+                <th className="p-4 font-bold text-pencil text-lg text-center">UID</th>
                 <th className="p-4 font-bold text-pencil text-lg">Danh hiệu</th>
                 <th className="p-4 font-bold text-pencil text-lg">Vai trò</th>
                 <th className="p-4 font-bold text-pencil text-lg text-center">Hành động</th>
@@ -142,11 +152,11 @@ export default function AdminUsersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-pencil/50 text-lg font-bold">Đang tải dữ liệu...</td>
+                  <td colSpan={5} className="p-8 text-center text-pencil/50 text-lg font-bold">Đang tải dữ liệu...</td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-pencil/50 text-lg font-bold">Không tìm thấy người dùng nào</td>
+                  <td colSpan={5} className="p-8 text-center text-pencil/50 text-lg font-bold">Không tìm thấy người dùng nào</td>
                 </tr>
               ) : (
                 filteredUsers.map(user => (
@@ -162,6 +172,20 @@ export default function AdminUsersPage() {
                             {user.email}
                           </div>
                         </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-bold text-pencil text-lg font-mono">
+                          {user.id.substring(user.id.length - 4)}
+                        </span>
+                        <button
+                          onClick={() => handleCopyUid(user.id)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                          title="Sao chép UID"
+                        >
+                          {copiedUid === user.id ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-pencil/50" />}
+                        </button>
                       </div>
                     </td>
                     <td className="p-4">
