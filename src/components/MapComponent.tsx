@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { getMapStamps } from "@/lib/stampService";
 import { useAuth } from "@/context/AuthContext";
-import { X, ChevronLeft, MapPin, Calendar, BookOpen, Lock, Globe, Plus, Filter } from "lucide-react";
+import { X, ChevronLeft, MapPin, Calendar, BookOpen, Lock, Globe, Plus, Filter, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -501,10 +501,16 @@ export default function MapComponent() {
               })()}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col gap-3 pt-2">
+                <Link
+                  href={`/stamp/${detailStamp.id}`}
+                  className="w-full py-3 text-center flex items-center justify-center gap-2 font-patrick font-bold text-sm border-2 border-pencil rounded-xl bg-marker-blue text-white hover:bg-marker-blue/90 hover:-translate-y-1 transition-all shadow-[2px_2px_0_0_#2d2d2d]"
+                >
+                  <ExternalLink size={16} /> Xem toàn bộ chi tiết
+                </Link>
                 <Link
                   href="/create"
-                  className="flex-1 py-3 text-center font-patrick font-bold text-sm border-2 border-pencil rounded-xl bg-white hover:bg-muted-paper transition-colors shadow-[2px_2px_0_0_#2d2d2d]"
+                  className="w-full py-3 text-center font-patrick font-bold text-sm border-2 border-pencil rounded-xl bg-white hover:bg-muted-paper transition-colors shadow-[2px_2px_0_0_#2d2d2d]"
                 >
                   + Thêm tem địa điểm này
                 </Link>
