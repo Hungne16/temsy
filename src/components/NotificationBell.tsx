@@ -61,7 +61,7 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="fixed top-6 left-6 z-50 font-patrick" ref={dropdownRef}>
+    <div className="fixed bottom-24 left-4 md:top-6 md:left-6 md:bottom-auto z-50 font-patrick" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-3 rounded-full border-[3px] border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] transition-all
@@ -79,7 +79,7 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-16 left-0 w-80 sm:w-96 bg-white border-[4px] border-pencil wobbly-border shadow-[4px_4px_0px_0px_#2d2d2d] overflow-hidden flex flex-col max-h-[70vh]">
+        <div className="absolute bottom-16 md:bottom-auto md:top-16 left-0 w-80 sm:w-96 bg-white border-[4px] border-pencil wobbly-border shadow-[4px_4px_0px_0px_#2d2d2d] overflow-hidden flex flex-col max-h-[70vh]">
           <div className="bg-muted-paper border-b-[3px] border-pencil p-4 flex justify-between items-center relative">
             <div className="absolute top-1 left-2 w-10 h-3 bg-black/10 -rotate-3" style={{ clipPath: "polygon(0 0%, 100% 10%, 95% 100%, 5% 95%)" }}></div>
             <h3 className="font-kalam font-bold text-2xl text-pencil pl-2">Thông báo</h3>
