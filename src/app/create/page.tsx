@@ -545,6 +545,29 @@ export default function CreateStampPage() {
                     <Lock size={16} /> Riêng tư
                   </button>
                 </div>
+                
+                {/* Geocaching toggle */}
+                {isPublic && metadata.coordinates && (
+                  <button
+                    onClick={() => setMetadata({ ...metadata, isSecret: !metadata.isSecret })}
+                    className={`flex items-center gap-2 px-4 py-3 mt-2 border-2 border-pencil font-bold font-patrick transition-all wobbly-border ${
+                      metadata.isSecret 
+                        ? "bg-marker-red text-white shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1" 
+                        : "bg-white text-pencil hover:bg-muted-paper rotate-1"
+                    }`}
+                  >
+                    <MapPin size={18} className={metadata.isSecret ? "text-white" : "text-marker-red"} />
+                    <div className="flex flex-col text-left">
+                      <span>Tem Ẩn (Định vị)</span>
+                      <span className={`text-xs font-normal ${metadata.isSecret ? "text-white/80" : "text-pencil/60"}`}>
+                        Yêu cầu người khác phải đến gần (50m) mới xem được
+                      </span>
+                    </div>
+                    <div className="ml-auto">
+                      {metadata.isSecret ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-pencil/40" />}
+                    </div>
+                  </button>
+                )}
                 <p className="text-sm text-pencil/60 px-1 font-patrick">
                   {isPublic 
                     ? "Mọi người có thể xem tem này trên bản đồ và trang chủ." 

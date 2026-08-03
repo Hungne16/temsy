@@ -250,35 +250,61 @@ export default function MapComponent() {
           {/* Stamp Grid */}
           <div className="flex-1 overflow-y-auto p-4">
             <div className="grid grid-cols-2 gap-3">
-              {albumGroup.map((stamp) => (
-                <button
-                  key={stamp.id}
-                  onClick={() => openDetail(stamp)}
-                  className="group relative rounded-xl overflow-hidden border-2 border-pencil/20 bg-white shadow-[2px_2px_0_0_rgba(45,45,45,0.15)] hover:shadow-[3px_3px_0_0_#2d2d2d] hover:-translate-y-0.5 transition-all text-left"
-                >
-                  {/* Stamp image */}
-                  <div className="aspect-square w-full overflow-hidden bg-muted-paper">
-                    <img
-                      src={stamp.imageUrl}
-                      alt={stamp.metadata.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  {/* Info */}
-                  <div className="p-2.5">
-                    <p className="font-patrick font-bold text-sm text-pencil truncate">{stamp.metadata.title}</p>
-                    <p className="font-patrick text-xs text-pencil/50 mt-0.5 truncate">{stamp.metadata.date}</p>
-                  </div>
-                  {/* Privacy badge */}
-                  <div className="absolute top-2 right-2">
-                    {stamp.isPublic === false ? (
-                      <span className="bg-white/80 backdrop-blur-sm rounded-full p-1 flex"><Lock size={10} className="text-pencil/60" /></span>
-                    ) : (
-                      <span className="bg-white/80 backdrop-blur-sm rounded-full p-1 flex"><Globe size={10} className="text-marker-blue" /></span>
-                    )}
-                  </div>
-                </button>
-              ))}
+              {albumGroup.map((stamp) => {
+                const isSecret = stamp.metadata?.isSecret;
+                const distance = haversineMetres(
+                  position[0],
+                  position[1],
+                  stamp.metadata?.coordinates?.lat || 0,
+                  stamp.metadata?.coordinates?.lng || 0
+                );
+                const isLocked = isSecret && distance > 50;
+
+                return (
+                  <button
+                    key={stamp.id}
+                    onClick={() => openDetail(stamp)}
+                    className="group relative rounded-xl overflow-hidden border-2 border-pencil/20 bg-white shadow-[2px_2px_0_0_rgba(45,45,45,0.15)] hover:shadow-[3px_3px_0_0_#2d2d2d] hover:-translate-y-0.5 transition-all text-left"
+                  >
+                    {/* Stamp image */}
+                    <div className="aspect-square w-full overflow-hidden bg-muted-paper flex items-center justify-center relative">
+                      {isLocked ? (
+                        <div className="absolute inset-0 bg-pencil/10 backdrop-blur-md flex flex-col items-center justify-center p-4">
+                          <Lock size={32} className="text-pencil/40 mb-2" />
+                          <span className="font-patrick text-xs font-bold text-center text-pencil/60">
+                            Khoảng cách: {Math.round(distance)}m
+                          </span>
+                        </div>
+                      ) : (
+                        <img
+                          src={stamp.imageUrl}
+                          alt={stamp.metadata.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="p-2.5">
+                      <p className="font-patrick font-bold text-sm text-pencil truncate">
+                        {isLocked ? "Tem Ẩn Định Vị" : stamp.metadata.title}
+                      </p>
+                      <p className="font-patrick text-xs text-pencil/50 mt-0.5 truncate">
+                        {isLocked ? "Hãy đến gần hơn" : stamp.metadata.date}
+                      </p>
+                    </div>
+                    {/* Privacy badge */}
+                    <div className="absolute top-2 right-2">
+                      {isSecret ? (
+                        <span className="bg-white/80 backdrop-blur-sm rounded-full p-1 flex shadow-sm border border-marker-red/20"><MapPin size={10} className="text-marker-red" /></span>
+                      ) : stamp.isPublic === false ? (
+                        <span className="bg-white/80 backdrop-blur-sm rounded-full p-1 flex"><Lock size={10} className="text-pencil/60" /></span>
+                      ) : (
+                        <span className="bg-white/80 backdrop-blur-sm rounded-full p-1 flex"><Globe size={10} className="text-marker-blue" /></span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
 
               {/* Add new stamp CTA */}
               <Link
@@ -322,18 +348,52 @@ export default function MapComponent() {
           <div className="flex-1 overflow-y-auto">
             {/* Big stamp image */}
             <div className="w-full max-h-[50vh] flex items-center justify-center overflow-hidden bg-muted-paper relative">
-              <img
-                src={detailStamp.imageUrl}
-                alt={detailStamp.metadata.title}
-                className="w-full h-full object-contain"
-              />
+              {(() => {
+                const isSecret = detailStamp.metadata?.isSecret;
+                const distance = haversineMetres(
+                  position[0],
+                  position[1],
+                  detailStamp.metadata?.coordinates?.lat || 0,
+                  detailStamp.metadata?.coordinates?.lng || 0
+                );
+                const isLocked = isSecret && distance > 50;
+
+                if (isLocked) {
+                  return (
+                    <div className="absolute inset-0 bg-pencil/10 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center">
+                      <Lock size={48} className="text-pencil/40 mb-4" />
+                      <h3 className="font-kalam font-bold text-2xl text-pencil mb-2">Tem Ẩn Định Vị</h3>
+                      <p className="font-patrick text-pencil/70">
+                        Bạn còn cách vị trí của tem khoảng <strong className="text-marker-red">{Math.round(distance)}m</strong>.
+                      </p>
+                      <p className="font-patrick text-pencil/70">Hãy đến gần dưới 50m để mở khóa và xem nội dung!</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <img
+                    src={detailStamp.imageUrl}
+                    alt={detailStamp.metadata.title}
+                    className="w-full h-full object-contain"
+                  />
+                );
+              })()}
             </div>
 
             <div className="p-5 space-y-4">
               {/* Title & privacy */}
               <div className="flex items-start justify-between gap-2">
-                <h1 className="font-kalam font-bold text-2xl text-pencil leading-tight">{detailStamp.metadata.title}</h1>
-                {detailStamp.isPublic === false ? (
+                <h1 className="font-kalam font-bold text-2xl text-pencil leading-tight">
+                  {detailStamp.metadata?.isSecret && haversineMetres(position[0], position[1], detailStamp.metadata?.coordinates?.lat || 0, detailStamp.metadata?.coordinates?.lng || 0) > 50
+                    ? "Kho Báu Bị Khóa" 
+                    : detailStamp.metadata.title}
+                </h1>
+                {detailStamp.metadata?.isSecret ? (
+                  <span className="flex items-center gap-1 text-xs font-patrick font-bold text-marker-red border border-marker-red/20 rounded-full px-2 py-0.5 shrink-0 shadow-sm bg-marker-red/5">
+                    <MapPin size={10} /> Tem Ẩn
+                  </span>
+                ) : detailStamp.isPublic === false ? (
                   <span className="flex items-center gap-1 text-xs font-patrick font-bold text-pencil/50 border border-pencil/20 rounded-full px-2 py-0.5 shrink-0">
                     <Lock size={10} /> Riêng tư
                   </span>
@@ -373,17 +433,34 @@ export default function MapComponent() {
               </div>
 
               {/* Story */}
-              {detailStamp.metadata.story && (
-                <div className="bg-postit border-2 border-pencil/20 rounded-xl p-4 -rotate-[0.5deg]">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <BookOpen size={12} className="text-pencil/60" />
-                    <span className="text-xs font-patrick font-bold text-pencil/60 uppercase tracking-wider">Câu chuyện</span>
-                  </div>
-                  <p className="font-patrick text-sm text-pencil/80 leading-relaxed italic">
-                    &quot;{detailStamp.metadata.story}&quot;
-                  </p>
-                </div>
-              )}
+              {(() => {
+                const isLocked = detailStamp.metadata?.isSecret && haversineMetres(position[0], position[1], detailStamp.metadata?.coordinates?.lat || 0, detailStamp.metadata?.coordinates?.lng || 0) > 50;
+                
+                if (isLocked) {
+                  return (
+                    <div className="bg-muted-paper/50 border-2 border-dashed border-pencil/20 rounded-xl p-4 flex flex-col items-center justify-center gap-2">
+                      <Lock size={20} className="text-pencil/40" />
+                      <span className="text-sm font-patrick italic text-pencil/50">Câu chuyện đang bị khóa...</span>
+                    </div>
+                  );
+                }
+
+                if (detailStamp.metadata.story) {
+                  return (
+                    <div className="bg-postit border-2 border-pencil/20 rounded-xl p-4 -rotate-[0.5deg]">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <BookOpen size={12} className="text-pencil/60" />
+                        <span className="text-xs font-patrick font-bold text-pencil/60 uppercase tracking-wider">Câu chuyện</span>
+                      </div>
+                      <p className="font-patrick text-sm text-pencil/80 leading-relaxed italic">
+                        &quot;{detailStamp.metadata.story}&quot;
+                      </p>
+                    </div>
+                  );
+                }
+                
+                return null;
+              })()}
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">

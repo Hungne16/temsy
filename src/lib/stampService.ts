@@ -8,6 +8,7 @@ export interface StampMetadata {
   date: string;
   story?: string;
   coordinates?: { lat: number; lng: number };
+  isSecret?: boolean;
 }
 
 export const uploadStamp = async (

@@ -138,15 +138,29 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
         </header>
 
         <div className="flex flex-col lg:flex-row gap-12 items-start">
-          {/* Stamp Display (Full Image) */}
+          {/* Stamp Display */}
           <div className="w-full lg:w-1/2 flex justify-center sticky top-12">
-            <div className="w-full max-w-xl bg-white border-[4px] border-pencil p-4 md:p-6 wobbly-border-md shadow-pencil rotate-1">
-              <img 
-                src={stamp.imageUrl} 
-                alt={stamp.metadata.title}
-                className="w-full h-auto drop-shadow-md"
-              />
+            <div className="w-full max-w-xl bg-white border-[4px] border-pencil p-4 md:p-6 wobbly-border-md shadow-pencil rotate-1 relative">
+              {stamp.metadata?.isSecret && !isOwner ? (
+                <div className="w-full aspect-[4/3] bg-muted-paper/50 flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-pencil/20">
+                  <Lock size={64} className="text-pencil/40 mb-4" />
+                  <h3 className="font-kalam font-bold text-3xl text-pencil mb-2">Kho Báu Bị Khóa</h3>
+                  <p className="font-patrick text-pencil/70 text-lg">
+                    Đây là một Tem Ẩn Định Vị. Bạn chỉ có thể mở khóa nó bằng cách đi đến đúng địa điểm này và mở qua Bản Đồ!
+                  </p>
+                  <Link href="/map" className="mt-6 px-6 py-2 border-[3px] border-pencil bg-marker-red text-white font-bold font-patrick text-xl wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:-translate-y-1 hover:shadow-pencil transition-all -rotate-1">
+                    Mở Bản Đồ
+                  </Link>
+                </div>
+              ) : (
+                <img 
+                  src={stamp.imageUrl} 
+                  alt={stamp.metadata.title}
+                  className="w-full h-auto drop-shadow-md"
+                />
+              )}
             </div>
+
           </div>
 
           {/* Metadata / Editor */}
@@ -249,7 +263,15 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
                 
-                {stamp.metadata.story && (
+                {stamp.metadata?.isSecret && !isOwner ? (
+                  <div className="mt-8 border-l-[4px] border-pencil pl-6 relative">
+                    <div className="absolute -left-6 -top-4 text-4xl text-marker-red font-kalam font-bold rotate-12">&quot;</div>
+                    <div className="bg-muted-paper/50 border-2 border-dashed border-pencil/20 rounded-xl p-4 flex flex-col items-center justify-center gap-2">
+                      <Lock size={20} className="text-pencil/40" />
+                      <span className="text-sm font-patrick italic text-pencil/50">Câu chuyện đang bị khóa...</span>
+                    </div>
+                  </div>
+                ) : stamp.metadata.story && (
                   <div className="mt-8 border-l-[4px] border-pencil pl-6 relative">
                     <div className="absolute -left-6 -top-4 text-4xl text-marker-red font-kalam font-bold rotate-12">&quot;</div>
                     <p className="text-2xl font-patrick leading-relaxed text-pencil/90 whitespace-pre-wrap italic">
