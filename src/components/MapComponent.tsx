@@ -243,11 +243,9 @@ export default function MapComponent() {
           const first = cluster.stamps[0];
           const pos: [number, number] = [cluster.lat, cluster.lng];
           
-          const isOwner = user?.uid === first.userId;
-          const distance = haversineMetres(position[0], position[1], first.metadata.coordinates.lat, first.metadata.coordinates.lng);
-          const isLocked = first.metadata?.isSecret && !isOwner && distance > 50;
+          const isSecretStamp = first.metadata?.isSecret === true;
 
-          const icon = createStampIcon(first.imageUrl, cluster.stamps.length, isLocked);
+          const icon = createStampIcon(first.imageUrl, cluster.stamps.length, isSecretStamp);
 
           return (
             <Marker
