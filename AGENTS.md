@@ -11,5 +11,6 @@ When working on multi-phase implementation plans or complex projects, execute al
 
 <!-- BEGIN:auto-push-rule -->
 # Auto-Push to GitHub
-Whenever a feature, task, or phase is fully completed and verified, automatically commit and push the changes to GitHub without waiting for explicit user instructions. Use the standard commands: `git add .`, `git commit -m "..."`, and `git push`.
+Whenever you make any code changes, complete a feature, or finish a task, automatically commit and push the changes to GitHub IMMEDIATELY without waiting for explicit user instructions. 
+IMPORTANT: Since the OS is Windows and the shell is PowerShell, always use `;` instead of `&&` to chain commands (e.g., `git add .; git commit -m "..."; git push`).
 <!-- END:auto-push-rule -->
