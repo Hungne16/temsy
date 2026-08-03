@@ -21,7 +21,7 @@ const userIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const createStampIcon = (imageUrl: string, count = 1) =>
+const createStampIcon = (imageUrl: string, count = 1, isLocked = false) =>
   new L.DivIcon({
     html: `
       <div style="position:relative;width:52px;height:52px;">
@@ -32,8 +32,11 @@ const createStampIcon = (imageUrl: string, count = 1) =>
           overflow:hidden;
           box-shadow:3px 3px 0 #2d2d2d;
           background:#fdfbf7;
+          display:flex;align-items:center;justify-content:center;
         ">
-          <img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" />
+          ${isLocked 
+            ? `<div style="font-size:28px; font-weight:bold; color:#2d2d2d; font-family: 'Kalam', cursive;">?</div>` 
+            : `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" />`}
         </div>
         ${
           count > 1
@@ -239,7 +242,12 @@ export default function MapComponent() {
         {clusters.map((cluster) => {
           const first = cluster.stamps[0];
           const pos: [number, number] = [cluster.lat, cluster.lng];
-          const icon = createStampIcon(first.imageUrl, cluster.stamps.length);
+          
+          const isOwner = user?.uid === first.userId;
+          const distance = haversineMetres(position[0], position[1], first.metadata.coordinates.lat, first.metadata.coordinates.lng);
+          const isLocked = first.metadata?.isSecret && !isOwner && distance > 50;
+
+          const icon = createStampIcon(first.imageUrl, cluster.stamps.length, isLocked);
 
           return (
             <Marker
