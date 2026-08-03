@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -15,6 +15,7 @@ L.Icon.Default.mergeOptions({
 
 interface LocationPickerMapProps {
   initialPosition?: { lat: number; lng: number };
+  searchedPosition?: { lat: number; lng: number } | null;
   onLocationSelect: (lat: number, lng: number) => void;
 }
 
@@ -27,10 +28,26 @@ function MapEvents({ onLocationSelect }: { onLocationSelect: (lat: number, lng: 
   return null;
 }
 
-export default function LocationPickerMap({ initialPosition, onLocationSelect }: LocationPickerMapProps) {
+function MapUpdater({ position }: { position: { lat: number; lng: number } | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (position) {
+      map.flyTo([position.lat, position.lng], map.getZoom() > 13 ? map.getZoom() : 15);
+    }
+  }, [position, map]);
+  return null;
+}
+
+export default function LocationPickerMap({ initialPosition, searchedPosition, onLocationSelect }: LocationPickerMapProps) {
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(
     initialPosition || null
   );
+
+  useEffect(() => {
+    if (searchedPosition) {
+      setPosition(searchedPosition);
+    }
+  }, [searchedPosition]);
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setPosition({ lat, lng });
@@ -38,17 +55,18 @@ export default function LocationPickerMap({ initialPosition, onLocationSelect }:
   };
 
   return (
-    <div className="w-full h-[400px] rounded-xl overflow-hidden relative z-0">
+    <div className="w-full h-[400px] rounded-sm overflow-hidden relative z-0 border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] bg-white -rotate-1">
       <MapContainer
         center={position ? [position.lat, position.lng] : [21.0285, 105.8542]}
         zoom={13}
         style={{ height: "100%", width: "100%", zIndex: 0 }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='&copy; Google Maps'
+          url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
         />
         <MapEvents onLocationSelect={handleLocationSelect} />
+        <MapUpdater position={position} />
         {position && <Marker position={[position.lat, position.lng]} />}
       </MapContainer>
     </div>

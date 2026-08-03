@@ -4,8 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getStampById, deleteStamp, updateStampMetadata } from "@/lib/stampService";
-import { StampPreview } from "@/components/StampPreview";
-import { ArrowLeft, Trash2, Edit3, Save, X } from "lucide-react";
+import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock } from "lucide-react";
 import Link from "next/link";
 
 export default function StampDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -44,7 +43,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
     
     try {
       await deleteStamp(id);
-      router.push("/collection");
+      router.back();
     } catch (err) {
       alert("Xóa thất bại. Vui lòng thử lại.");
     }
@@ -67,18 +66,22 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-pastel-blue border-t-transparent animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-paper">
+        <div className="font-patrick font-bold text-xl text-pencil">Đang tải tem...</div>
       </div>
     );
   }
 
   if (error || !stamp) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <h1 className="text-2xl font-bold text-red-500">Lỗi</h1>
-        <p>{error || "Không tìm thấy tem này."}</p>
-        <Link href="/collection" className="text-pastel-blue underline">Quay lại bộ sưu tập</Link>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-paper p-6">
+        <div className="bg-white border-[4px] border-pencil wobbly-border-md p-10 rotate-2 max-w-md w-full text-center shadow-pencil">
+          <h1 className="text-4xl font-kalam font-bold text-marker-red mb-4">Lỗi</h1>
+          <p className="font-patrick text-xl text-pencil mb-6">{error || "Không tìm thấy tem này."}</p>
+          <button onClick={() => router.back()} className="px-6 py-3 border-[3px] border-pencil bg-marker-blue text-white font-bold font-patrick text-xl wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:-translate-y-1 hover:shadow-pencil transition-all -rotate-1">
+            Quay lại
+          </button>
+        </div>
       </div>
     );
   }
@@ -86,146 +89,158 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const isOwner = user?.uid === stamp.userId;
 
   return (
-    <div className="min-h-screen p-6 md:p-12 pb-32">
-      <header className="mb-10 flex items-center justify-between">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors">
-          <ArrowLeft size={20} />
-          <span className="font-medium">Quay lại</span>
-        </button>
-        
-        {isOwner && !isEditing && (
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setIsEditing(true)}
-              className="p-3 bg-white border shadow-sm rounded-xl hover:bg-gray-50 transition-colors text-foreground"
-            >
-              <Edit3 size={18} />
-            </button>
-            <button 
-              onClick={handleDelete}
-              className="p-3 bg-white border shadow-sm rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors text-foreground"
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-        )}
-      </header>
-
-      <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-start">
-        {/* Stamp Display */}
-        <div className="w-full md:w-1/2 flex justify-center">
-          <div className="w-full max-w-sm">
-            <img 
-              src={stamp.imageUrl} 
-              alt={stamp.metadata.title}
-              className="w-full h-auto drop-shadow-xl rounded-sm"
-            />
-          </div>
-        </div>
-
-        {/* Metadata / Editor */}
-        <div className="w-full md:w-1/2 glass-card p-8">
-          {isEditing ? (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold mb-6">Chỉnh sửa thông tin</h2>
-              
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground/70">Tiêu đề</label>
-                <input 
-                  type="text" 
-                  value={editData.title}
-                  onChange={(e) => setEditData({...editData, title: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
-                />
-              </div>
-              <div className="flex gap-2">
-                <div className="space-y-1 flex-1">
-                  <label className="text-sm font-medium text-foreground/70">Địa điểm</label>
-                  <input 
-                    type="text" 
-                    value={editData.location}
-                    onChange={(e) => setEditData({...editData, location: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
-                  />
-                </div>
-                <div className="space-y-1 flex-1">
-                  <label className="text-sm font-medium text-foreground/70">Ngày tháng</label>
-                  <input 
-                    type="text" 
-                    value={editData.date}
-                    onChange={(e) => setEditData({...editData, date: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground/70">Câu chuyện</label>
-                <textarea 
-                  value={editData.story}
-                  onChange={(e) => setEditData({...editData, story: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border bg-white focus:outline-none focus:ring-2 focus:ring-pastel-blue/50 min-h-[100px] resize-none"
-                  placeholder="Viết một câu chuyện về con tem này..."
-                />
-              </div>
-              
-              <div className="flex gap-3 pt-6">
-                <button 
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 py-3 rounded-xl font-medium border hover:bg-gray-50 flex justify-center items-center gap-2"
-                >
-                  <X size={18} /> Hủy
-                </button>
-                <button 
-                  onClick={handleUpdate}
-                  disabled={isSaving}
-                  className="flex-1 py-3 bg-pastel-blue text-white rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-pastel-blue-dark"
-                >
-                  {isSaving ? "Đang lưu..." : <><Save size={18} /> Lưu lại</>}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-4xl font-black mb-3 uppercase tracking-tight text-foreground">{stamp.metadata.title || "Vô danh"}</h1>
-                <div className="flex items-center gap-4 text-pastel-blue-dark font-semibold text-sm bg-pastel-blue/10 inline-flex px-4 py-2 rounded-xl">
-                  <span className="flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    {stamp.metadata.location}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                    {stamp.metadata.date}
-                  </span>
-                </div>
-              </div>
-              
-                <div className="p-5 bg-pastel-blue/5 rounded-2xl border border-pastel-blue/20 relative">
-                  <div className="absolute -top-3 left-6 bg-white px-2 text-xs font-bold text-pastel-blue-dark uppercase tracking-wider">Câu chuyện của bạn</div>
-                  <p className="italic text-foreground/90 font-medium leading-relaxed whitespace-pre-wrap mt-2">
-                    "{stamp.metadata.story}"
-                  </p>
-                </div>
-              
-              <div className="pt-6 border-t border-black/10 flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-foreground/50 mb-1">Phong cách</div>
-                  <div className="font-semibold uppercase tracking-wider">{stamp.style}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-foreground/50 mb-1">Trạng thái</div>
-                  <div className="font-semibold">
-                    {stamp.isPublic === false ? "Riêng tư 🔒" : "Công khai 🌍"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-foreground/50 mb-1">Lượt thích</div>
-                  <div className="font-semibold flex items-center gap-1 text-red-500">❤️ {stamp.likes || 0}</div>
-                </div>
-              </div>
+    <div className="min-h-screen p-6 md:p-12 pb-32 bg-paper text-pencil">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-10 flex items-center justify-between">
+          <button onClick={() => router.back()} className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-muted-paper transition-all -rotate-1 font-bold font-patrick text-lg">
+            <ArrowLeft size={20} />
+            Quay lại
+          </button>
+          
+          {isOwner && !isEditing && (
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-muted-paper transition-all rotate-1 font-bold font-patrick text-lg text-marker-blue"
+              >
+                <Edit3 size={18} /> Sửa
+              </button>
+              <button 
+                onClick={handleDelete}
+                className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-red-50 transition-all -rotate-1 font-bold font-patrick text-lg text-marker-red"
+              >
+                <Trash2 size={18} /> Xóa
+              </button>
             </div>
           )}
+        </header>
+
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          {/* Stamp Display (Full Image) */}
+          <div className="w-full lg:w-1/2 flex justify-center sticky top-12">
+            <div className="w-full max-w-xl bg-white border-[4px] border-pencil p-4 md:p-6 wobbly-border-md shadow-pencil rotate-1">
+              <img 
+                src={stamp.imageUrl} 
+                alt={stamp.metadata.title}
+                className="w-full h-auto drop-shadow-md"
+              />
+            </div>
+          </div>
+
+          {/* Metadata / Editor */}
+          <div className="w-full lg:w-1/2 bg-white border-[4px] border-pencil p-6 md:p-10 wobbly-border-md shadow-pencil -rotate-1 relative">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-32 h-8 bg-black/10 rotate-3" style={{ clipPath: "polygon(0 0%, 100% 5%, 95% 100%, 5% 95%)" }}></div>
+            
+            {isEditing ? (
+              <div className="space-y-6">
+                <h2 className="text-4xl font-kalam font-bold text-marker-red mb-8">Sửa Kỷ Niệm</h2>
+                
+                <div className="space-y-2">
+                  <label className="text-xl font-bold font-patrick">Tiêu đề</label>
+                  <input 
+                    type="text" 
+                    value={editData.title}
+                    onChange={(e) => setEditData({...editData, title: e.target.value})}
+                    className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border text-xl font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50"
+                  />
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="space-y-2 flex-1">
+                    <label className="text-xl font-bold font-patrick">Địa điểm</label>
+                    <input 
+                      type="text" 
+                      value={editData.location}
+                      onChange={(e) => setEditData({...editData, location: e.target.value})}
+                      className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border text-xl font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50"
+                    />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <label className="text-xl font-bold font-patrick">Ngày tháng</label>
+                    <input 
+                      type="text" 
+                      value={editData.date}
+                      onChange={(e) => setEditData({...editData, date: e.target.value})}
+                      className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border text-xl font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-xl font-bold font-patrick">Câu chuyện</label>
+                  <textarea 
+                    value={editData.story}
+                    onChange={(e) => setEditData({...editData, story: e.target.value})}
+                    className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border text-xl font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50 min-h-[150px] resize-none"
+                    placeholder="Viết một câu chuyện..."
+                  />
+                </div>
+                
+                <div className="flex gap-4 pt-6">
+                  <button 
+                    onClick={() => setIsEditing(false)}
+                    className="flex-1 py-3 border-[3px] border-pencil bg-white wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] font-bold font-patrick text-xl hover:bg-muted-paper transition-all flex items-center justify-center gap-2"
+                  >
+                    <X size={20} /> Hủy
+                  </button>
+                  <button 
+                    onClick={handleUpdate}
+                    disabled={isSaving}
+                    className="flex-1 py-3 border-[3px] border-pencil bg-marker-blue text-white wobbly-border shadow-pencil font-bold font-patrick text-xl hover:-translate-y-1 hover:shadow-pencil-hover transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isSaving ? "Đang lưu..." : <><Save size={20} /> Lưu lại</>}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                <div>
+                  <h1 className="text-5xl font-kalam font-bold text-pencil leading-tight break-words">{stamp.metadata.title || "Kỷ niệm không tên"}</h1>
+                  
+                  <div className="mt-6 flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2 text-xl font-bold font-patrick bg-postit border-2 border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1">
+                      <MapPin size={20} className="text-marker-red" />
+                      {stamp.metadata.location || "Chưa ghim địa điểm"}
+                    </div>
+                    {stamp.metadata.date && (
+                      <div className="flex items-center gap-2 text-xl font-bold font-patrick bg-white border-2 border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1">
+                        <Calendar size={20} className="text-marker-blue" />
+                        {stamp.metadata.date}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {stamp.metadata.story && (
+                  <div className="mt-8 border-l-[4px] border-pencil pl-6 relative">
+                    <div className="absolute -left-6 -top-4 text-4xl text-marker-red font-kalam font-bold rotate-12">"</div>
+                    <p className="text-2xl font-patrick leading-relaxed text-pencil/90 whitespace-pre-wrap italic">
+                      {stamp.metadata.story}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="pt-8 mt-8 border-t-[3px] border-pencil border-dashed grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div>
+                    <div className="text-lg font-bold font-patrick text-pencil/60 mb-1">Phong cách</div>
+                    <div className="text-xl font-bold font-kalam text-pencil">{stamp.style}</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold font-patrick text-pencil/60 mb-1">Trạng thái</div>
+                    <div className="text-xl font-bold font-patrick flex items-center gap-2">
+                      {stamp.isPublic === false ? <><Lock size={18} className="text-marker-red" /> Riêng tư</> : <><Globe size={18} className="text-marker-blue" /> Công khai</>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold font-patrick text-pencil/60 mb-1">Lượt thích</div>
+                    <div className="text-xl font-bold font-patrick flex items-center gap-2 text-marker-red">
+                      <Heart size={18} className="fill-marker-red" /> {stamp.likes || 0}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
