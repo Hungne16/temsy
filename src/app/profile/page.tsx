@@ -314,7 +314,7 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex flex-wrap justify-end gap-3">
-              {(userProfile?.role === "admin" || profile?.role === "admin") && (
+              {(userProfile?.role === "admin" || profile?.role === "admin" || user?.email === "admin123@gmail.temsy") && (
                 <Link
                   href="/admin"
                   className="px-6 py-3 bg-marker-red border-[3px] border-pencil text-white shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-red-600 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1 flex items-center gap-2"

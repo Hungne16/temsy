@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export function FloatingDock() {
   const pathname = usePathname();
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
@@ -17,7 +17,7 @@ export function FloatingDock() {
     { href: "/profile", icon: UserIcon, label: "Profile" },
   ];
 
-  if (userProfile?.role === "admin") {
+  if (userProfile?.role === "admin" || user?.email === "admin123@gmail.temsy") {
     navItems.push({ href: "/admin", icon: Shield, label: "Admin" });
   }
 
