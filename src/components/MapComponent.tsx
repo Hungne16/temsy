@@ -321,11 +321,11 @@ export default function MapComponent() {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {/* Big stamp image */}
-            <div className="w-full aspect-[4/3] overflow-hidden bg-muted-paper">
+            <div className="w-full max-h-[50vh] flex items-center justify-center overflow-hidden bg-muted-paper relative">
               <img
                 src={detailStamp.imageUrl}
                 alt={detailStamp.metadata.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
 
