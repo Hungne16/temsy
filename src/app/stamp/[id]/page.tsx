@@ -19,6 +19,8 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ title: "", location: "", date: "", story: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [userAlbums, setUserAlbums] = useState<any[]>([]);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
   
   useEffect(() => {
     getStampById(id)
@@ -38,6 +40,20 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
       });
   }, [id]);
 
+  useEffect(() => {
+    if (user?.uid) {
+      import("@/lib/albumService").then(({ getUserAlbums }) => {
+        getUserAlbums(user.uid).then(albums => {
+          setUserAlbums(albums);
+          const currentAlbum = albums.find(a => a.stamps?.includes(id));
+          if (currentAlbum) {
+            setSelectedAlbumId(currentAlbum.id);
+          }
+        });
+      });
+    }
+  }, [user?.uid, id]);
+
   const handleDelete = async () => {
     if (!confirm("Bạn có chắc chắn muốn xóa tem này vĩnh viễn?")) return;
     
@@ -55,6 +71,12 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
       // Giữ lại coordinates nếu có
       const updatedMetadata = { ...stamp.metadata, ...editData };
       await updateStampMetadata(id, updatedMetadata);
+      
+      if (user?.uid) {
+        const { setStampAlbums } = await import("@/lib/albumService");
+        await setStampAlbums(user.uid, id, selectedAlbumId ? [selectedAlbumId] : []);
+      }
+      
       setStamp({ ...stamp, metadata: updatedMetadata });
       setIsEditing(false);
     } catch (err) {
@@ -175,6 +197,22 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                     placeholder="Viết một câu chuyện..."
                   />
                 </div>
+                
+                {userAlbums.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-xl font-bold font-patrick">Bộ sưu tập</label>
+                    <select
+                      value={selectedAlbumId}
+                      onChange={(e) => setSelectedAlbumId(e.target.value)}
+                      className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border text-xl font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50"
+                    >
+                      <option value="">-- Không chọn bộ sưu tập --</option>
+                      {userAlbums.map(album => (
+                        <option key={album.id} value={album.id}>{album.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 
                 <div className="flex gap-4 pt-6">
                   <button 

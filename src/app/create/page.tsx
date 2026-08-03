@@ -71,9 +71,20 @@ export default function CreateStampPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
+  const [userAlbums, setUserAlbums] = useState<any[]>([]);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
+  
   const stampRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      import("@/lib/albumService").then(({ getUserAlbums }) => {
+        getUserAlbums(user.uid).then(setUserAlbums);
+      });
+    }
+  }, [user]);
 
   // Load CamanJS
   useEffect(() => {
@@ -285,7 +296,12 @@ export default function CreateStampPage() {
       const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 1.5, quality: 0.8 });
       const { uploadStamp } = await import("@/lib/stampService");
       
-      await uploadStamp(dataUrl, stampStyle, finalMetadata, isPublic);
+      const newStamp = await uploadStamp(dataUrl, stampStyle, finalMetadata, isPublic);
+      
+      if (selectedAlbumId) {
+        const { addStampToAlbum } = await import("@/lib/albumService");
+        await addStampToAlbum(selectedAlbumId, newStamp.id);
+      }
       
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
@@ -492,7 +508,25 @@ export default function CreateStampPage() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-lg font-bold font-patrick">Quyền riêng tư</label>
+                <label className="text-lg font-bold font-patrick flex items-center justify-between">
+                  Quyền riêng tư & Bộ sưu tập
+                </label>
+                
+                {userAlbums.length > 0 && (
+                  <div className="flex flex-col mb-2">
+                    <select
+                      value={selectedAlbumId}
+                      onChange={(e) => setSelectedAlbumId(e.target.value)}
+                      className="w-full px-4 py-2 border-[3px] border-pencil bg-white wobbly-border focus:outline-none focus:ring-2 focus:ring-marker-blue/20 text-lg font-patrick text-pencil"
+                    >
+                      <option value="">-- Không chọn bộ sưu tập --</option>
+                      {userAlbums.map(album => (
+                        <option key={album.id} value={album.id}>{album.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
                 <div className="flex gap-2 bg-muted-paper/30 p-1 wobbly-border border-2 border-pencil border-dashed">
                   <button
                     onClick={() => setIsPublic(true)}

@@ -84,3 +84,25 @@ export const removeStampFromAlbum = async (albumId: string, stampId: string): Pr
     throw error;
   }
 };
+
+export const setStampAlbums = async (userId: string, stampId: string, selectedAlbumIds: string[]): Promise<void> => {
+  try {
+    // 1. Get all user's albums
+    const albums = await getUserAlbums(userId);
+    
+    // 2. Iterate and update
+    for (const album of albums) {
+      const hasStamp = album.stamps?.includes(stampId);
+      const shouldHaveStamp = selectedAlbumIds.includes(album.id);
+      
+      if (hasStamp && !shouldHaveStamp) {
+        await removeStampFromAlbum(album.id, stampId);
+      } else if (!hasStamp && shouldHaveStamp) {
+        await addStampToAlbum(album.id, stampId);
+      }
+    }
+  } catch (error) {
+    console.error("Lỗi cập nhật album cho tem:", error);
+    throw error;
+  }
+};
