@@ -8,13 +8,14 @@ export interface NotificationData {
   title: string;
   message: string;
   link?: string;
+  imageUrl?: string; // Hình ảnh đính kèm (ví dụ: ảnh tem bị xóa)
   readBy?: string[]; // Mảng chứa ID những người đã đọc (dùng cho 'ALL')
   isRead?: boolean; // Dùng cho thông báo cá nhân
   createdAt?: any;
 }
 
 // 1. Tạo thông báo cá nhân (ví dụ: có bình luận mới)
-export const createPersonalNotification = async (recipientId: string, type: 'system' | 'comment', title: string, message: string, link?: string) => {
+export const createPersonalNotification = async (recipientId: string, type: 'system' | 'comment', title: string, message: string, link?: string, imageUrl?: string) => {
   try {
     const notification: any = {
       recipientId,
@@ -25,6 +26,7 @@ export const createPersonalNotification = async (recipientId: string, type: 'sys
       createdAt: serverTimestamp(),
     };
     if (link) notification.link = link;
+    if (imageUrl) notification.imageUrl = imageUrl;
     await addDoc(collection(db, "notifications"), notification);
   } catch (error) {
     console.error("Lỗi khi tạo thông báo cá nhân:", error);

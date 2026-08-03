@@ -131,6 +131,11 @@ export function NotificationBell() {
                         <p className={`text-md ${isUnread ? 'text-pencil/90' : 'text-pencil/60'} leading-tight`}>
                           {notification.message}
                         </p>
+                        {notification.imageUrl && (
+                          <div className="mt-2 w-full max-w-[200px] h-24 rounded-lg border-2 border-pencil overflow-hidden">
+                            <img src={notification.imageUrl} alt="Notification Image" className="w-full h-full object-cover" />
+                          </div>
+                        )}
                         <p className="text-xs text-pencil/40 mt-2 italic font-bold">
                           {dateStr}
                         </p>

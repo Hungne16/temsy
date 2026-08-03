@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getAllStampsForAdmin, toggleStampFeatured } from "@/lib/adminService";
 import { deleteStamp } from "@/lib/stampService";
+import { createPersonalNotification } from "@/lib/notificationService";
 import { Star, Trash2, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
@@ -39,14 +40,31 @@ export default function AdminStampsPage() {
     }
   };
 
-  const handleDeleteStamp = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tem này? Mọi dữ liệu liên quan sẽ bị mất.")) {
+  const handleDeleteStamp = async (stamp: any) => {
+    const reason = window.prompt(`Xóa tem "${stamp.title || "Không tiêu đề"}". Vui lòng nhập lý do xóa (sẽ gửi cho tác giả):`, "Vi phạm tiêu chuẩn cộng đồng");
+    if (reason === null) return; // Bị hủy
+    
+    if (!window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tem này?")) {
       return;
     }
-    setDeletingId(id);
+    
+    setDeletingId(stamp.id);
     try {
-      await deleteStamp(id);
-      setStamps(prev => prev.filter(s => s.id !== id));
+      await deleteStamp(stamp.id);
+      
+      // Gửi thông báo cho tác giả nếu có lý do và không phải tem ẩn danh
+      if (reason.trim() !== "" && stamp.userId && !stamp.metadata?.isSecret) {
+        await createPersonalNotification(
+          stamp.userId,
+          'system',
+          'Tem của bạn đã bị gỡ',
+          `Tem "${stamp.title || 'Không tiêu đề'}" đã bị gỡ. Lý do: ${reason}`,
+          undefined, // Không có link vì tem đã bị xóa
+          stamp.imageUrl
+        );
+      }
+      
+      setStamps(prev => prev.filter(s => s.id !== stamp.id));
     } catch (error) {
       alert("Lỗi khi xóa tem.");
     } finally {
@@ -129,7 +147,7 @@ export default function AdminStampsPage() {
 
                   <button 
                     disabled={deletingId === stamp.id}
-                    onClick={() => handleDeleteStamp(stamp.id)}
+                    onClick={() => handleDeleteStamp(stamp)}
                     className="flex items-center justify-center gap-1.5 py-2 bg-white hover:bg-red-50 rounded-xl border-2 border-pencil text-marker-red font-bold transition-colors text-sm disabled:opacity-50"
                   >
                     <Trash2 size={16} /> 
