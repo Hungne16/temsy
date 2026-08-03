@@ -23,7 +23,7 @@ export default function AdminUsersPage() {
       setLoading(true);
       const data = await getAllUsers();
       // Sort by join date descending
-      data.sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
+      data.sort((a: any, b: any) => new Date(b.joinDate || 0).getTime() - new Date(a.joinDate || 0).getTime());
       setUsers(data);
     } catch (err) {
       console.error(err);
