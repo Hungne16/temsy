@@ -309,7 +309,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                     <div className="flex-1 flex flex-col gap-2">
                       <div className="text-sm font-patrick font-bold text-pencil">Âm thanh kỷ niệm</div>
-                      <audio src={stamp.metadata.audioData} controls className="w-full h-8" />
+                      <audio src={stamp.metadata.audioData} controls className="w-full max-w-[250px]" />
                     </div>
                   </div>
                 )}

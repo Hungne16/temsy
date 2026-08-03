@@ -189,7 +189,8 @@ export default function CreateStampPage() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const mimeType = mediaRecorder.mimeType || "audio/webm";
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
@@ -597,7 +598,7 @@ export default function CreateStampPage() {
                     </button>
                   ) : (
                     <div className="flex items-center gap-2 w-full p-2 border-[3px] border-pencil bg-muted-paper/50 wobbly-border shadow-[2px_2px_0_0_#2d2d2d]">
-                      <audio src={audioUrl} controls className="h-10 flex-1 max-w-[200px]" />
+                      <audio src={audioUrl} controls className="flex-1 max-w-[200px]" />
                       <button 
                         onClick={deleteRecording}
                         className="p-2 text-marker-red hover:bg-marker-red/10 rounded-full transition-colors ml-auto"
