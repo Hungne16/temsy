@@ -44,7 +44,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
         }
 
         // Only show public stamps for other users
-        const publicStamps = userStamps.filter(s => s.isPublic !== false);
+        const publicStamps = userStamps.filter((s: any) => s.isPublic !== false);
         setStamps(publicStamps);
         setStampCount(publicStamps.length);
         
