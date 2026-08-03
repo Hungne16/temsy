@@ -44,8 +44,8 @@
 }
 
 body {
-  background: #fdfbf7;
-  color: var(--foreground);
+  background: var(--color-paper);
+  color: var(--color-pencil);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   /* Mobile optimization */
   -webkit-tap-highlight-color: transparent;

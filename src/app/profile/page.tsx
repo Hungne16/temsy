@@ -1,7 +1,7 @@
 "use client";
 
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
-import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut } from "lucide-react";
+import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +9,8 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getUserStamps, deleteStamp, updateStampMetadata } from "@/lib/stampService";
 import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/userService";
+import { compressImage } from "@/lib/imageUtils";
+import { getUserAlbums, createAlbum, deleteAlbum, updateAlbum, addStampToAlbum, removeStampFromAlbum, Album } from "@/lib/albumService";
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
@@ -18,6 +20,15 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Album states
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view'>('stamps');
+  const [viewingAlbum, setViewingAlbum] = useState<Album | null>(null);
+  const [isCreatingAlbum, setIsCreatingAlbum] = useState(false);
+  const [newAlbumTitle, setNewAlbumTitle] = useState("");
+  const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
+  const [editAlbumTitle, setEditAlbumTitle] = useState("");
   
   // Form states
   const [editName, setEditName] = useState("");
@@ -41,6 +52,8 @@ export default function ProfilePage() {
         setStamps(userStamps);
         setStampCount(userStamps.length);
       });
+      
+      getUserAlbums(user.uid).then(data => setAlbums(data));
       
       getUserProfile(user.uid).then(data => {
         if (data) {
@@ -70,17 +83,18 @@ export default function ProfilePage() {
     setIsEditing(true);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
+    try {
+      const maxWidth = type === 'avatar' ? 500 : 1920;
+      const base64 = await compressImage(file, maxWidth, 0.8);
       if (type === 'avatar') setEditAvatarUrl(base64);
       if (type === 'banner') setEditBannerUrl(base64);
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      alert("Lỗi xử lý ảnh.");
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -113,19 +127,16 @@ export default function ProfilePage() {
     if (!file || !user || !profile) return;
     
     setIsSaving(true);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
-      try {
-        await updateUserProfile(user.uid, { bannerUrl: base64 });
-        setProfile({ ...profile, bannerUrl: base64 });
-      } catch (error) {
-        alert("Lỗi cập nhật ảnh bìa.");
-      } finally {
-        setIsSaving(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const base64 = await compressImage(file, 1920, 0.8);
+      await updateUserProfile(user.uid, { bannerUrl: base64 });
+      setProfile({ ...profile, bannerUrl: base64 });
+    } catch (error) {
+      alert("Lỗi cập nhật ảnh bìa. Kích thước ảnh có thể quá lớn.");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteStamp = async (id: string) => {
@@ -167,6 +178,73 @@ export default function ProfilePage() {
       alert("Lỗi cập nhật tem.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCreateAlbum = async () => {
+    if (!newAlbumTitle.trim()) return;
+    setIsSaving(true);
+    try {
+      const newAlbum = await createAlbum(newAlbumTitle.trim());
+      setAlbums([newAlbum, ...albums]);
+      setNewAlbumTitle("");
+      setIsCreatingAlbum(false);
+    } catch (error) {
+      alert("Lỗi khi tạo bộ sưu tập.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAlbum = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bộ sưu tập này không? Các tem bên trong vẫn sẽ được giữ lại.")) return;
+    try {
+      await deleteAlbum(id);
+      setAlbums(albums.filter(a => a.id !== id));
+      if (viewingAlbum?.id === id) {
+        setActiveTab('albums');
+        setViewingAlbum(null);
+      }
+    } catch (error) {
+      alert("Lỗi khi xóa bộ sưu tập.");
+    }
+  };
+
+  const handleEditAlbumClick = (album: Album, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAlbum(album);
+    setEditAlbumTitle(album.title);
+  };
+
+  const handleSaveAlbum = async () => {
+    if (!editingAlbum || !editAlbumTitle.trim()) return;
+    setIsSaving(true);
+    try {
+      await updateAlbum(editingAlbum.id, editAlbumTitle.trim());
+      setAlbums(albums.map(a => a.id === editingAlbum.id ? { ...a, title: editAlbumTitle.trim() } : a));
+      if (viewingAlbum?.id === editingAlbum.id) {
+        setViewingAlbum({ ...viewingAlbum, title: editAlbumTitle.trim() });
+      }
+      setEditingAlbum(null);
+    } catch (error) {
+      alert("Lỗi cập nhật tên bộ sưu tập.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleStampInAlbum = async (albumId: string, stampId: string, shouldAdd: boolean) => {
+    try {
+      if (shouldAdd) {
+        await addStampToAlbum(albumId, stampId);
+        setAlbums(albums.map(a => a.id === albumId ? { ...a, stamps: [...(a.stamps || []), stampId] } : a));
+      } else {
+        await removeStampFromAlbum(albumId, stampId);
+        setAlbums(albums.map(a => a.id === albumId ? { ...a, stamps: (a.stamps || []).filter(id => id !== stampId) } : a));
+      }
+    } catch (error) {
+      alert("Lỗi cập nhật bộ sưu tập.");
     }
   };
 
@@ -258,7 +336,7 @@ export default function ProfilePage() {
             <span className="text-sm font-bold font-patrick text-pencil/70 flex items-center gap-1 mt-1"><ImageIcon size={16} /> Tem đã tạo</span>
           </div>
           <div className="bg-white border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil -rotate-1">
-            <span className="text-4xl font-bold font-kalam text-marker-blue">0</span>
+            <span className="text-4xl font-bold font-kalam text-marker-blue">{albums.length}</span>
             <span className="text-sm font-bold font-patrick text-pencil/70 flex items-center gap-1 mt-1"><ImageIcon size={16} /> Album</span>
           </div>
           <div className="bg-white border-[3px] border-pencil p-4 flex flex-col items-center justify-center text-center wobbly-border shadow-pencil rotate-2">
@@ -320,24 +398,125 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* User's Stamps */}
-        <h2 className="text-3xl font-kalam font-bold mb-6 text-pencil -rotate-1">Tem gần đây</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {stamps.map((stamp) => (
-            <StampCard 
-              key={stamp.id} 
-              stamp={stamp} 
-              showOptions={true}
-              onDelete={handleDeleteStamp}
-              onEdit={handleEditStampClick}
-            />
-          ))}
-          {stamps.length === 0 && (
-            <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white rotate-1">
-              Bạn chưa có tem nào. Hãy tạo con tem đầu tiên nhé!
-            </div>
-          )}
+        {/* Tabs */}
+        <div className="flex gap-4 mb-8">
+          <button 
+            onClick={() => setActiveTab('stamps')}
+            className={`px-6 py-2 font-kalam font-bold text-2xl border-[3px] border-pencil wobbly-border shadow-pencil transition-all ${activeTab === 'stamps' ? 'bg-marker-blue text-white -rotate-2' : 'bg-white text-pencil hover:bg-muted-paper rotate-1'}`}
+          >
+            Tất cả Tem
+          </button>
+          <button 
+            onClick={() => setActiveTab('albums')}
+            className={`px-6 py-2 font-kalam font-bold text-2xl border-[3px] border-pencil wobbly-border shadow-pencil transition-all ${activeTab === 'albums' ? 'bg-marker-red text-white rotate-2' : 'bg-white text-pencil hover:bg-muted-paper -rotate-1'}`}
+          >
+            Bộ Sưu Tập
+          </button>
         </div>
+
+        {/* User's Stamps or Albums */}
+        {activeTab === 'stamps' ? (
+          <>
+            <h2 className="text-3xl font-kalam font-bold mb-6 text-marker-blue -rotate-1">Tem gần đây</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {stamps.map((stamp) => (
+                <StampCard 
+                  key={stamp.id} 
+                  stamp={stamp} 
+                  showOptions={true}
+                  onDelete={handleDeleteStamp}
+                  onEdit={handleEditStampClick}
+                />
+              ))}
+              {stamps.length === 0 && (
+                <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white rotate-1">
+                  Bạn chưa có tem nào. Hãy tạo con tem đầu tiên nhé!
+                </div>
+              )}
+            </div>
+          </>
+        ) : activeTab === 'albums' ? (
+          <>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-kalam font-bold text-marker-red rotate-1">Bộ sưu tập của bạn</h2>
+              <button 
+                onClick={() => setIsCreatingAlbum(true)}
+                className="flex items-center gap-2 bg-postit text-pencil px-4 py-2 font-bold font-patrick border-[3px] border-pencil wobbly-border shadow-pencil hover:bg-marker-red hover:text-white hover:-translate-y-1 transition-all -rotate-1"
+              >
+                <Plus size={20} /> Tạo mới
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {albums.map((album) => (
+                <div key={album.id} onClick={() => { setViewingAlbum(album); setActiveTab('album_view'); }} className="bg-white border-[3px] border-pencil p-4 wobbly-border shadow-pencil hover:shadow-pencil-hover transition-all group relative rotate-1 hover:-rotate-1 cursor-pointer">
+                  <div className="aspect-square bg-muted-paper border-2 border-pencil border-dashed flex items-center justify-center mb-4 relative overflow-hidden">
+                    <ImageIcon className="text-pencil/30" size={48} />
+                  </div>
+                  <h3 className="font-kalam font-bold text-xl text-pencil truncate">{album.title}</h3>
+                  <p className="font-patrick font-bold text-pencil/60">{album.stamps?.length || 0} tem</p>
+                  
+                  <button 
+                    onClick={(e) => handleEditAlbumClick(album, e)}
+                    className="absolute top-2 right-12 bg-white border-2 border-pencil text-marker-blue p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marker-blue hover:text-white"
+                  >
+                    <Pen size={16} />
+                  </button>
+                  <button 
+                    onClick={(e) => handleDeleteAlbum(album.id, e)}
+                    className="absolute top-2 right-2 bg-white border-2 border-pencil text-marker-red p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marker-red hover:text-white"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                    <ImageIcon className="text-pencil/30" size={48} />
+                  </div>
+                  <h3 className="font-kalam font-bold text-xl text-pencil truncate">{album.title}</h3>
+                  <p className="font-patrick font-bold text-pencil/60">{album.stamps?.length || 0} tem</p>
+                  
+                  <button 
+                    onClick={(e) => handleDeleteAlbum(album.id, e)}
+                    className="absolute top-2 right-2 bg-white border-2 border-pencil text-marker-red p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marker-red hover:text-white"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+              {albums.length === 0 && (
+                <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white -rotate-1">
+                  Bạn chưa có bộ sưu tập nào. Nhấn "Tạo mới" để thêm!
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Album View */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-4">
+                <button onClick={() => { setActiveTab('albums'); setViewingAlbum(null); }} className="p-2 border-2 border-pencil bg-white hover:bg-muted-paper wobbly-border -rotate-1 transition-all">
+                  <ArrowLeft size={20} className="text-pencil" />
+                </button>
+                <h2 className="text-3xl font-kalam font-bold text-marker-red rotate-1">{viewingAlbum?.title}</h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {stamps.filter(s => viewingAlbum?.stamps?.includes(s.id)).map((stamp) => (
+                <StampCard 
+                  key={stamp.id} 
+                  stamp={stamp} 
+                  showOptions={true}
+                  onDelete={handleDeleteStamp}
+                  onEdit={handleEditStampClick}
+                />
+              ))}
+              {stamps.filter(s => viewingAlbum?.stamps?.includes(s.id)).length === 0 && (
+                <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white rotate-1">
+                  Bộ sưu tập này chưa có tem nào. Hãy thêm tem từ phần "Tất cả tem"!
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Edit Profile Modal */}
@@ -449,6 +628,29 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-4">
+                {/* Adding to Album */}
+                <div className="space-y-2">
+                  <label className="text-lg font-bold font-patrick text-pencil block">Thuộc bộ sưu tập</label>
+                  <div className="flex flex-wrap gap-2">
+                    {albums.length === 0 ? (
+                      <span className="text-sm font-patrick text-pencil/50 italic">Bạn chưa có bộ sưu tập nào.</span>
+                    ) : (
+                      albums.map(album => {
+                        const isSelected = album.stamps?.includes(editingStamp.id);
+                        return (
+                          <button
+                            key={album.id}
+                            onClick={() => toggleStampInAlbum(album.id, editingStamp.id, !isSelected)}
+                            className={`px-3 py-1 border-2 border-pencil wobbly-border font-patrick font-bold text-sm transition-all ${isSelected ? 'bg-marker-red text-white -rotate-2' : 'bg-white text-pencil hover:bg-muted-paper rotate-1'}`}
+                          >
+                            {album.title}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-lg font-bold font-patrick text-pencil">Tên tem</label>
                   <input 
@@ -491,6 +693,76 @@ export default function ProfilePage() {
                 {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Create Album Modal */}
+      {isCreatingAlbum && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-md w-full max-w-sm overflow-hidden shadow-pencil flex flex-col rotate-1 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-kalam font-bold text-marker-red">Tạo Bộ Sưu Tập</h2>
+              <button onClick={() => setIsCreatingAlbum(false)} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-white wobbly-border transition-all">
+                <X size={24} className="text-pencil" />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-lg font-bold font-patrick text-pencil block mb-2">Tên bộ sưu tập</label>
+                <input 
+                  type="text" 
+                  value={newAlbumTitle}
+                  onChange={(e) => setNewAlbumTitle(e.target.value)}
+                  placeholder="Ví dụ: Chuyến đi Đà Lạt"
+                  className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleCreateAlbum}
+              disabled={isSaving || !newAlbumTitle.trim()}
+              className="w-full py-3 border-[3px] border-pencil bg-marker-red wobbly-border shadow-pencil font-bold font-patrick text-xl text-white hover:bg-marker-red/90 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Đang tạo..." : "Xác nhận tạo"}
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Edit Album Modal */}
+      {editingAlbum && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-md w-full max-w-sm overflow-hidden shadow-pencil flex flex-col -rotate-1 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-kalam font-bold text-marker-blue">Đổi tên Bộ Sưu Tập</h2>
+              <button onClick={() => setEditingAlbum(null)} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-white wobbly-border transition-all">
+                <X size={24} className="text-pencil" />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-lg font-bold font-patrick text-pencil block mb-2">Tên mới</label>
+                <input 
+                  type="text" 
+                  value={editAlbumTitle}
+                  onChange={(e) => setEditAlbumTitle(e.target.value)}
+                  className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleSaveAlbum}
+              disabled={isSaving || !editAlbumTitle.trim()}
+              className="w-full py-3 border-[3px] border-pencil bg-marker-blue wobbly-border shadow-pencil font-bold font-patrick text-xl text-white hover:bg-marker-blue/90 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+            </button>
           </div>
         </div>
       )}
