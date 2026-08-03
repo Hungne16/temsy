@@ -1,5 +1,5 @@
 import { db } from "./firebase";
-import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, getCountFromServer, query, orderBy, limit } from "firebase/firestore";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 
@@ -11,6 +11,30 @@ export const getAllUsers = async () => {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error("Lỗi lấy danh sách user:", error);
+    throw error;
+  }
+};
+
+// Lấy thông kê Dashboard
+export const getDashboardStats = async () => {
+  try {
+    const usersCountSnap = await getCountFromServer(collection(db, "users"));
+    const stampsCountSnap = await getCountFromServer(collection(db, "stamps"));
+    const albumsCountSnap = await getCountFromServer(collection(db, "albums"));
+
+    // Lấy 5 con tem mới nhất
+    const stampsQuery = query(collection(db, "stamps"), orderBy("createdAt", "desc"), limit(5));
+    const recentStampsSnap = await getDocs(stampsQuery);
+    const recentStamps = recentStampsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    return {
+      totalUsers: usersCountSnap.data().count,
+      totalStamps: stampsCountSnap.data().count,
+      totalAlbums: albumsCountSnap.data().count,
+      recentStamps
+    };
+  } catch (error) {
+    console.error("Lỗi lấy thông kê dashboard:", error);
     throw error;
   }
 };

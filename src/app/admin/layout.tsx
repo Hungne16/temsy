@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
 import { ShieldAlert, Users, LayoutDashboard, LogOut } from "lucide-react";
@@ -9,6 +9,7 @@ import { ShieldAlert, Users, LayoutDashboard, LogOut } from "lucide-react";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && (!user || (userProfile?.role !== "admin" && user.email !== "admin123@gmail.temsy"))) {
@@ -56,14 +57,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav className="flex-1 p-4 space-y-2">
           <Link 
-            href="/admin" 
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-transparent hover:border-pencil hover:bg-muted-paper transition-all font-bold text-pencil/80 hover:text-pencil"
+            href="/admin/dashboard" 
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold ${
+              pathname === "/admin/dashboard" || pathname === "/admin"
+                ? "border-pencil bg-muted-paper wobbly-border shadow-[2px_2px_0_0_#2d2d2d] text-pencil" 
+                : "border-transparent hover:border-pencil hover:bg-muted-paper text-pencil/80 hover:text-pencil"
+            }`}
           >
             <LayoutDashboard size={20} /> Tổng quan
           </Link>
           <Link 
             href="/admin/users" 
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-pencil bg-muted-paper wobbly-border shadow-[2px_2px_0_0_#2d2d2d] font-bold text-pencil"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold ${
+              pathname === "/admin/users"
+                ? "border-pencil bg-muted-paper wobbly-border shadow-[2px_2px_0_0_#2d2d2d] text-pencil" 
+                : "border-transparent hover:border-pencil hover:bg-muted-paper text-pencil/80 hover:text-pencil"
+            }`}
           >
             <Users size={20} /> Quản lý người dùng
           </Link>
