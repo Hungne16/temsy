@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getAllUsers, updateUserTitle, deleteUserProfile, createNewUser } from "@/lib/adminService";
 import { createPersonalNotification } from "@/lib/notificationService";
 import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -18,6 +19,9 @@ export default function AdminUsersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ email: "", password: "", name: "", role: "user" as "admin" | "user" });
   const [addLoading, setAddLoading] = useState(false);
+  
+  // View user modal
+  const [viewingUser, setViewingUser] = useState<any | null>(null);
   
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
 
@@ -161,7 +165,7 @@ export default function AdminUsersPage() {
               ) : (
                 filteredUsers.map(user => (
                   <tr key={user.id} className="border-b-2 border-dashed border-pencil/10 hover:bg-yellow-50/50 transition-colors">
-                    <td className="p-4">
+                    <td className="p-4 cursor-pointer hover:bg-yellow-100/30" onClick={() => setViewingUser(user)}>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full border-2 border-pencil overflow-hidden bg-muted-paper shrink-0 flex items-center justify-center font-kalam font-bold">
                           {user.photoURL || user.avatar ? <img src={user.photoURL || user.avatar} className="w-full h-full object-cover" /> : (user.displayName || user.name)?.charAt(0) || "U"}
@@ -325,6 +329,53 @@ export default function AdminUsersPage() {
                 {addLoading ? "Đang tạo..." : "Tạo tài khoản"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View User Modal */}
+      {viewingUser && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-[4px] border-pencil p-6 rounded-2xl wobbly-border-md shadow-pencil max-w-md w-full relative rotate-1">
+            <button 
+              onClick={() => setViewingUser(null)}
+              className="absolute top-4 right-4 text-pencil/50 hover:text-pencil"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-3xl font-kalam font-bold text-marker-blue mb-6 text-center">Trang cá nhân</h2>
+            
+            <div className="flex flex-col items-center text-center font-patrick">
+              <div className="w-24 h-24 rounded-full border-[3px] border-pencil overflow-hidden bg-muted-paper mb-4 shadow-sm">
+                {viewingUser.photoURL || viewingUser.avatar ? (
+                  <img src={viewingUser.photoURL || viewingUser.avatar} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center font-kalam font-bold text-4xl">
+                    {(viewingUser.displayName || viewingUser.name)?.charAt(0) || "U"}
+                  </div>
+                )}
+              </div>
+              
+              <h3 className="text-2xl font-bold text-pencil mb-1">{viewingUser.displayName || viewingUser.name}</h3>
+              <p className="text-pencil/60 mb-2">{viewingUser.email}</p>
+              
+              <span className="font-bold text-marker-blue bg-marker-blue/10 border border-marker-blue/20 px-3 py-1 rounded-full text-sm mb-4">
+                {viewingUser.title || "Tân binh"}
+              </span>
+
+              {viewingUser.bio && (
+                <p className="text-pencil mb-4 italic text-lg px-4">&quot;{viewingUser.bio}&quot;</p>
+              )}
+              
+              <div className="flex flex-wrap justify-center gap-4 text-pencil/70 font-bold mb-6 text-sm">
+                {viewingUser.location && <span>📍 {viewingUser.location}</span>}
+                <span>📅 Tham gia Temsy</span>
+              </div>
+              
+              <Link href={`/profile/${viewingUser.id}`} className="w-full py-3 bg-postit text-pencil font-bold text-xl border-[3px] border-pencil wobbly-border shadow-pencil hover:-translate-y-1 hover:shadow-pencil-hover transition-all flex items-center justify-center gap-2">
+                Xem toàn bộ hồ sơ
+              </Link>
+            </div>
           </div>
         </div>
       )}
