@@ -21,7 +21,7 @@ const userIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const createStampIcon = (imageUrl: string, count = 1, isLocked = false) =>
+const createStampIcon = (imageUrl: string, count = 1, isLocked = false, hasAudio = false) =>
   new L.DivIcon({
     html: `
       <div style="position:relative;width:52px;height:52px;">
@@ -33,10 +33,12 @@ const createStampIcon = (imageUrl: string, count = 1, isLocked = false) =>
           box-shadow:3px 3px 0 #2d2d2d;
           background:#fdfbf7;
           display:flex;align-items:center;justify-content:center;
+          position:relative;
         ">
           ${isLocked 
             ? `<div style="font-size:28px; font-weight:bold; color:#2d2d2d; font-family: 'Kalam', cursive;">?</div>` 
             : `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" />`}
+          ${hasAudio && !isLocked ? `<div style="position:absolute;bottom:2px;left:2px;background:rgba(255,255,255,0.8);border-radius:50%;padding:2px;font-size:10px;line-height:1;box-shadow:0 1px 2px rgba(0,0,0,0.3);">🎵</div>` : ''}
         </div>
         ${
           count > 1
@@ -244,8 +246,9 @@ export default function MapComponent() {
           const pos: [number, number] = [cluster.lat, cluster.lng];
           
           const isSecretStamp = first.metadata?.isSecret === true;
+          const hasAudio = !!first.metadata?.audioData;
 
-          const icon = createStampIcon(first.imageUrl, cluster.stamps.length, isSecretStamp);
+          const icon = createStampIcon(first.imageUrl, cluster.stamps.length, isSecretStamp, hasAudio);
 
           return (
             <Marker

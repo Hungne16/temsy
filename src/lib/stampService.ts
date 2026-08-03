@@ -9,6 +9,7 @@ export interface StampMetadata {
   story?: string;
   coordinates?: { lat: number; lng: number };
   isSecret?: boolean;
+  audioData?: string;
 }
 
 export const uploadStamp = async (

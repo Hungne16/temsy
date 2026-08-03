@@ -79,7 +79,7 @@ export function StampCard({ stamp, isSelectionMode, isSelected, onToggleSelect, 
         </div>
       )}
       
-      <div className="block">
+      <div className="block relative">
         <div className={`bg-white border-[3px] border-pencil p-2 wobbly-border shadow-[4px_4px_0px_0px_rgba(45,45,45,0.1)] group-hover:shadow-pencil transition-all duration-300 ${isSelected ? 'opacity-80' : ''}`}>
             <img 
               src={stamp.imageUrl} 
@@ -87,6 +87,11 @@ export function StampCard({ stamp, isSelectionMode, isSelected, onToggleSelect, 
               className="w-full h-auto drop-shadow-sm" 
             />
         </div>
+        {stamp.metadata?.audioData && (
+          <div className="absolute bottom-4 right-4 bg-white/90 border-[2px] border-pencil rounded-full p-1 shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-6 z-10 w-8 h-8 flex items-center justify-center text-sm animate-bounce">
+            🎵
+          </div>
+        )}
       </div>
       <div className="flex flex-col px-1">
         <div className="flex items-start justify-between">

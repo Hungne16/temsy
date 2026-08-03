@@ -5,7 +5,7 @@ import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
 import { toJpeg, toPng } from "html-to-image";
-import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight, Check } from "lucide-react";
+import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight, Check, Mic, Square, Trash2, Play, CircleStop } from "lucide-react";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -75,6 +75,14 @@ export default function CreateStampPage() {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>("");
   
   const stampRef = useRef<HTMLDivElement>(null);
+
+  // Audio Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { user } = useAuth();
 
@@ -166,6 +174,74 @@ export default function CreateStampPage() {
     }
   };
   
+  // ── Audio Recording ──────────────────────────────────────────────────────────
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string;
+          setMetadata(prev => ({ ...prev, audioData: base64Audio }));
+          setAudioUrl(base64Audio);
+        };
+        // Dọn dẹp stream
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingTime((prev) => {
+          if (prev >= 14) {
+            stopRecording();
+            return 15;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } catch (err) {
+      alert("Vui lòng cấp quyền sử dụng Micro để thu âm!");
+      console.error(err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    }
+  };
+
+  const deleteRecording = () => {
+    setAudioUrl(null);
+    setMetadata(prev => ({ ...prev, audioData: undefined }));
+    setRecordingTime(0);
+  };
+
+  const formatTime = (time: number) => {
+    const mins = Math.floor(time / 60);
+    const secs = time % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
   const handleImageSelected = (url: string) => {
     setOriginalImage(url);
     setStep("crop");
@@ -506,6 +582,32 @@ export default function CreateStampPage() {
                   className="w-full px-4 py-3 border-[3px] border-pencil bg-white wobbly-border focus:outline-none focus:ring-2 focus:ring-marker-blue/20 text-lg font-patrick placeholder-pencil/40 resize-none h-24"
                   placeholder="Viết vài dòng lưu giữ kỷ niệm đằng sau con tem này..."
                 />
+                
+                {/* Audio Recorder UI */}
+                <div className="mt-1 flex items-center gap-3">
+                  {!audioUrl ? (
+                    <button
+                      onClick={isRecording ? stopRecording : startRecording}
+                      className={`flex items-center gap-2 px-4 py-2 border-[3px] border-pencil wobbly-border transition-colors font-patrick font-bold shadow-[2px_2px_0_0_#2d2d2d] ${
+                        isRecording ? "bg-marker-red text-white" : "bg-white text-pencil hover:bg-muted-paper"
+                      }`}
+                    >
+                      {isRecording ? <Square size={16} fill="currentColor" /> : <Mic size={16} />}
+                      {isRecording ? `Đang thu... 00:${recordingTime < 10 ? "0" : ""}${recordingTime}` : "Thu âm kỷ niệm (Max 15s)"}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 w-full p-2 border-[3px] border-pencil bg-muted-paper/50 wobbly-border shadow-[2px_2px_0_0_#2d2d2d]">
+                      <audio src={audioUrl} controls className="h-10 flex-1 max-w-[200px]" />
+                      <button 
+                        onClick={deleteRecording}
+                        className="p-2 text-marker-red hover:bg-marker-red/10 rounded-full transition-colors ml-auto"
+                        title="Xóa đoạn ghi âm"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col gap-3">

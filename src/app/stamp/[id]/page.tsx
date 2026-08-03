@@ -301,6 +301,18 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                     </p>
                   </div>
                 )}
+
+                {stamp.metadata?.audioData && (!stamp.metadata?.isSecret || isOwner) && (
+                  <div className="mt-8 bg-muted-paper border-2 border-pencil rounded-xl p-4 wobbly-border shadow-[4px_4px_0_0_#2d2d2d] flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white rounded-full border-[3px] border-pencil flex items-center justify-center animate-[spin_10s_linear_infinite]">
+                      🎵
+                    </div>
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="text-sm font-patrick font-bold text-pencil">Âm thanh kỷ niệm</div>
+                      <audio src={stamp.metadata.audioData} controls className="w-full h-8" />
+                    </div>
+                  </div>
+                )}
                 
                 <div className="pt-8 mt-8 border-t-[3px] border-pencil border-dashed grid grid-cols-2 md:grid-cols-3 gap-6">
                   <div>
