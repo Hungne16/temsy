@@ -1,7 +1,7 @@
 "use client";
 
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
-import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft, ShieldAlert } from "lucide-react";
+import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft, ShieldAlert, MessageSquare } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +11,7 @@ import { getUserStamps, deleteStamp, updateStampMetadata } from "@/lib/stampServ
 import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/userService";
 import { compressImage } from "@/lib/imageUtils";
 import { getUserAlbums, createAlbum, deleteAlbum, updateAlbum, addStampToAlbum, removeStampFromAlbum, Album } from "@/lib/albumService";
+import { submitFeedback } from "@/lib/feedbackService";
 
 export default function ProfilePage() {
   const { user, userProfile, loading, logout } = useAuth();
@@ -45,6 +46,10 @@ export default function ProfilePage() {
   const [editStampTitle, setEditStampTitle] = useState("");
   const [editStampLocation, setEditStampLocation] = useState("");
   const [editStampStory, setEditStampStory] = useState("");
+
+  // Feedback State
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -248,6 +253,21 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSendFeedback = async () => {
+    if (!feedbackMessage.trim() || !user || !profile) return;
+    setIsSaving(true);
+    try {
+      await submitFeedback(user.uid, profile.displayName || "Người dùng", user.email || "", feedbackMessage.trim());
+      alert("Cảm ơn bạn đã gửi góp ý! Chúng mình sẽ xem xét sớm.");
+      setIsFeedbackOpen(false);
+      setFeedbackMessage("");
+    } catch (error) {
+      alert("Lỗi khi gửi góp ý.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading || (user && !profile)) {
     return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
   }
@@ -323,6 +343,10 @@ export default function ProfilePage() {
                   <span>Admin</span>
                 </Link>
               )}
+              <button onClick={() => setIsFeedbackOpen(true)} className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rotate-1 flex items-center gap-2">
+                <MessageSquare size={20} />
+                <span className="hidden sm:inline">Góp ý</span>
+              </button>
               <button onClick={handleEditClick} className="px-6 py-3 bg-white border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-muted-paper hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-2">
                 Chỉnh sửa
               </button>
@@ -759,6 +783,45 @@ export default function ProfilePage() {
               className="w-full py-3 border-[3px] border-pencil bg-marker-blue wobbly-border shadow-pencil font-bold font-patrick text-xl text-white hover:bg-marker-blue/90 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      {isFeedbackOpen && (
+        <div className="fixed inset-0 bg-pencil/40 backdrop-blur-sm z-[3000] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-paper border-[4px] border-pencil wobbly-border-md w-full max-w-lg overflow-hidden shadow-pencil flex flex-col rotate-1 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-kalam font-bold text-marker-blue flex items-center gap-2">
+                <MessageSquare className="text-marker-blue" />
+                Gửi góp ý cho Admin
+              </h2>
+              <button onClick={() => setIsFeedbackOpen(false)} className="p-2 border-[3px] border-transparent hover:border-pencil hover:bg-white wobbly-border transition-all">
+                <X size={24} className="text-pencil" />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <p className="font-patrick text-pencil/80 text-lg">Bạn có ý tưởng hay gặp vấn đề gì? Hãy cho Temsy biết nhé!</p>
+              <div>
+                <textarea 
+                  value={feedbackMessage}
+                  onChange={(e) => setFeedbackMessage(e.target.value)}
+                  placeholder="Nhập nội dung góp ý của bạn..."
+                  rows={4}
+                  className="w-full px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-lg focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d] resize-none"
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleSendFeedback}
+              disabled={isSaving || !feedbackMessage.trim()}
+              className="w-full py-3 border-[3px] border-pencil bg-marker-blue wobbly-border shadow-pencil font-bold font-patrick text-xl text-white hover:bg-marker-blue/90 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Đang gửi..." : "Gửi góp ý"}
             </button>
           </div>
         </div>
