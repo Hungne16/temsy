@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // If Firebase config is missing, just don't crash and leave user null
     if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY || !auth) {
       console.warn("Firebase is not configured. Auth will be disabled.");
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
       return;
     }
 

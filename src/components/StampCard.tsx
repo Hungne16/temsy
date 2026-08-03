@@ -105,7 +105,7 @@ export function StampCard({ stamp, isSelectionMode, isSelected, onToggleSelect, 
         
         {stamp.metadata.story && (
           <p className="text-sm font-bold text-pencil/80 mt-3 line-clamp-2 italic font-patrick border-l-[3px] border-pencil pl-3 bg-muted-paper py-2 pr-2">
-            "{stamp.metadata.story}"
+            &quot;{stamp.metadata.story}&quot;
           </p>
         )}
       </div>

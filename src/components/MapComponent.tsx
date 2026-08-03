@@ -344,7 +344,7 @@ export default function MapComponent() {
                     <span className="text-xs font-patrick font-bold text-pencil/60 uppercase tracking-wider">Câu chuyện</span>
                   </div>
                   <p className="font-patrick text-sm text-pencil/80 leading-relaxed italic">
-                    "{detailStamp.metadata.story}"
+                    &quot;{detailStamp.metadata.story}&quot;
                   </p>
                 </div>
               )}

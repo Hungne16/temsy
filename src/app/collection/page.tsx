@@ -307,7 +307,7 @@ export default function CollectionPage() {
               ))}
               {albums.length === 0 && (
                 <div className="col-span-full p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white -rotate-1">
-                  Bạn chưa có bộ sưu tập nào. Nhấn "Tạo mới" để thêm!
+                  Bạn chưa có bộ sưu tập nào. Nhấn &quot;Tạo mới&quot; để thêm!
                 </div>
               )}
             </div>

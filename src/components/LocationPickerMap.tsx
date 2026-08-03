@@ -45,7 +45,7 @@ export default function LocationPickerMap({ initialPosition, searchedPosition, o
 
   useEffect(() => {
     if (searchedPosition) {
-      setPosition(searchedPosition);
+      setTimeout(() => setPosition(searchedPosition), 0);
     }
   }, [searchedPosition]);
 

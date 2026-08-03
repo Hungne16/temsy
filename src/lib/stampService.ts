@@ -68,7 +68,7 @@ export const getMapStamps = async (currentUserId?: string) => {
     // Cách an toàn ko cần composite index: 
     const publicQuery = query(stampsRef, where("isPublic", "==", true));
     const publicSnap = await getDocs(publicQuery);
-    let stamps = publicSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    const stamps = publicSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
     
     if (currentUserId) {
       // Tìm tem của chính user nhưng isPublic == false (tem private)

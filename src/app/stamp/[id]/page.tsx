@@ -213,7 +213,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                 
                 {stamp.metadata.story && (
                   <div className="mt-8 border-l-[4px] border-pencil pl-6 relative">
-                    <div className="absolute -left-6 -top-4 text-4xl text-marker-red font-kalam font-bold rotate-12">"</div>
+                    <div className="absolute -left-6 -top-4 text-4xl text-marker-red font-kalam font-bold rotate-12">&quot;</div>
                     <p className="text-2xl font-patrick leading-relaxed text-pencil/90 whitespace-pre-wrap italic">
                       {stamp.metadata.story}
                     </p>
