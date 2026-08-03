@@ -981,10 +981,10 @@ export default function ProfilePage() {
                 <input 
                   type="text" 
                   value={searchUid}
-                  onChange={(e) => setSearchUid(e.target.value.toUpperCase())}
-                  placeholder="Ví dụ: A1B2"
+                  onChange={(e) => setSearchUid(e.target.value.trim())}
+                  placeholder="Ví dụ: a1B2"
                   maxLength={4}
-                  className="flex-1 px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-xl font-bold uppercase focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
+                  className="flex-1 px-4 py-3 border-[3px] border-pencil wobbly-border bg-white text-pencil font-patrick text-xl font-bold focus:outline-none focus:bg-yellow-50 transition-colors shadow-[2px_2px_0px_0px_#2d2d2d]"
                   autoFocus
                 />
                 <button 
