@@ -163,5 +163,29 @@ export const addComment = async (stampId: string, text: string) => {
 
   const commentsRef = collection(db, "stamps", stampId, "comments");
   const docRef = await addDoc(commentsRef, comment);
+  
+  // Gửi thông báo cho chủ tem (nếu người bình luận khác chủ tem)
+  try {
+    const stampRef = doc(db, "stamps", stampId);
+    const stampSnap = await getDoc(stampRef);
+    if (stampSnap.exists()) {
+      const stampOwnerId = stampSnap.data().userId;
+      if (stampOwnerId && stampOwnerId !== auth.currentUser.uid) {
+        // dynamic import để tránh circular dependency nếu có
+        const { createPersonalNotification } = await import("./notificationService");
+        const stampTitle = stampSnap.data().metadata?.title || "Một tem không tên";
+        await createPersonalNotification(
+          stampOwnerId,
+          "comment",
+          "Bình luận mới!",
+          `${auth.currentUser.displayName || "Ai đó"} đã bình luận vào tem "${stampTitle}" của bạn.`,
+          `/stamp/${stampId}`
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi khi gửi thông báo bình luận:", err);
+  }
+
   return { id: docRef.id, ...comment, createdAt: { toMillis: () => Date.now() } };
 };

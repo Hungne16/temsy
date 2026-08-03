@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { getDashboardStats } from "@/lib/adminService";
-import { Users, StickyNote, BookImage, Activity, MapPin } from "lucide-react";
+import { Users, StickyNote, BookImage, Activity, MapPin, Send, BellRing } from "lucide-react";
 import Link from "next/link";
+import { createGlobalNotification } from "@/lib/notificationService";
 
 interface DashboardStats {
   totalUsers: number;
@@ -15,6 +16,10 @@ interface DashboardStats {
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     async function loadStats() {
@@ -29,6 +34,23 @@ export default function DashboardPage() {
     }
     loadStats();
   }, []);
+
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notifyTitle.trim() || !notifyMessage.trim()) return;
+
+    setIsSending(true);
+    try {
+      await createGlobalNotification(notifyTitle.trim(), notifyMessage.trim());
+      alert("Đã gửi thông báo toàn hệ thống thành công!");
+      setNotifyTitle("");
+      setNotifyMessage("");
+    } catch (err) {
+      alert("Lỗi khi gửi thông báo.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -76,6 +98,42 @@ export default function DashboardPage() {
           </div>
           <p className="text-5xl font-kalam font-bold text-pencil">{stats?.totalAlbums || 0}</p>
         </div>
+      </div>
+
+      {/* Phát Thông Báo Toàn Hệ Thống */}
+      <div className="bg-white border-4 border-pencil p-6 rounded-xl shadow-[6px_6px_0_0_#2d2d2d] mb-10 rotate-1">
+        <div className="flex items-center gap-3 mb-6 border-b-2 border-pencil/20 pb-4">
+          <BellRing className="text-marker-blue" size={28} />
+          <h2 className="text-2xl font-bold text-pencil">Phát Thông Báo Toàn Hệ Thống</h2>
+        </div>
+        <form onSubmit={handleSendNotification} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-lg font-bold text-pencil/80 mb-1">Tiêu đề thông báo</label>
+            <input 
+              type="text" 
+              value={notifyTitle}
+              onChange={(e) => setNotifyTitle(e.target.value)}
+              placeholder="VD: Cập nhật hệ thống mới!"
+              className="w-full px-4 py-2 border-[3px] border-pencil bg-white wobbly-border text-lg font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-bold text-pencil/80 mb-1">Nội dung</label>
+            <textarea 
+              value={notifyMessage}
+              onChange={(e) => setNotifyMessage(e.target.value)}
+              placeholder="Nhập nội dung thông báo muốn gửi đến tất cả người dùng..."
+              className="w-full px-4 py-2 border-[3px] border-pencil bg-white wobbly-border text-lg font-patrick shadow-[2px_2px_0px_0px_#2d2d2d] focus:outline-none focus:bg-yellow-50 min-h-[100px] resize-none"
+            />
+          </div>
+          <button 
+            type="submit"
+            disabled={isSending || !notifyTitle.trim() || !notifyMessage.trim()}
+            className="self-end px-6 py-2 border-[3px] border-pencil bg-marker-blue text-white font-bold font-patrick text-xl wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:-translate-y-1 hover:shadow-pencil transition-all -rotate-1 disabled:opacity-50 flex items-center gap-2"
+          >
+            {isSending ? "Đang gửi..." : <><Send size={20} /> Phát thông báo</>}
+          </button>
+        </form>
       </div>
 
       {/* Hoạt động gần đây */}

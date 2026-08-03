@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { SplashScreen } from "@/components/SplashScreen";
 import { FloatingDock } from "@/components/FloatingDock";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +63,7 @@ export default function RootLayout({
             <main className="w-full max-w-7xl mx-auto pb-32">
               {children}
             </main>
+            <NotificationBell />
             <FloatingDock />
           </SplashScreen>
         </AuthProvider>
