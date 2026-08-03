@@ -64,7 +64,7 @@ export default function CreateStampPage() {
     story: "",
     coordinates: undefined
   });
-  const [isPublic, setIsPublic] = useState(true);
+  const [privacy, setPrivacy] = useState<"public" | "private" | "friend">("public");
   const [isAutoGPS, setIsAutoGPS] = useState(true);
   const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
   
@@ -374,7 +374,7 @@ export default function CreateStampPage() {
       const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 3, quality: 0.92 });
       const { uploadStamp } = await import("@/lib/stampService");
       
-      const newStamp = await uploadStamp(dataUrl, stampStyle, finalMetadata, isPublic);
+      const newStamp = await uploadStamp(dataUrl, stampStyle, finalMetadata, privacy);
       
       if (selectedAlbumId) {
         const { addStampToAlbum } = await import("@/lib/albumService");
@@ -631,27 +631,35 @@ export default function CreateStampPage() {
                   </div>
                 )}
                 
-                <div className="flex gap-2 bg-muted-paper/30 p-1 wobbly-border border-2 border-pencil border-dashed">
-                  <button
-                    onClick={() => setIsPublic(true)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 font-bold font-patrick transition-all wobbly-border ${
-                      isPublic ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
+                <div className="flex bg-white border-2 border-pencil rounded-md p-1 font-patrick wobbly-border text-sm sm:text-base">
+                  <button 
+                    onClick={() => setPrivacy("public")}
+                    className={`flex-1 py-2 sm:py-3 font-bold transition-all ${
+                      privacy === "public" ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
                     }`}
                   >
-                    <Globe size={16} /> Công khai
+                    Công khai
                   </button>
-                  <button
-                    onClick={() => setIsPublic(false)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 font-bold font-patrick transition-all wobbly-border ${
-                      !isPublic ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
+                  <button 
+                    onClick={() => setPrivacy("friend")}
+                    className={`flex-1 py-2 sm:py-3 font-bold transition-all ${
+                      privacy === "friend" ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
                     }`}
                   >
-                    <Lock size={16} /> Riêng tư
+                    Bạn bè
+                  </button>
+                  <button 
+                    onClick={() => setPrivacy("private")}
+                    className={`flex-1 py-2 sm:py-3 font-bold transition-all ${
+                      privacy === "private" ? "bg-postit border-2 border-pencil shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1" : "hover:bg-muted-paper text-pencil/70 border-2 border-transparent"
+                    }`}
+                  >
+                    Riêng tư
                   </button>
                 </div>
                 
                 {/* Geocaching toggle */}
-                {isPublic && metadata.coordinates && (
+                {privacy !== "private" && metadata.coordinates && (
                   <button
                     onClick={() => setMetadata({ ...metadata, isSecret: !metadata.isSecret })}
                     className={`flex items-center gap-2 px-4 py-3 mt-2 border-2 border-pencil font-bold font-patrick transition-all wobbly-border ${
@@ -660,7 +668,12 @@ export default function CreateStampPage() {
                         : "bg-white text-pencil hover:bg-muted-paper rotate-1"
                     }`}
                   >
-                    <MapPin size={18} className={metadata.isSecret ? "text-white" : "text-marker-red"} />
+                    {privacy === "public" 
+                      ? <Globe size={24} className={isSaving ? "animate-spin" : ""} /> 
+                      : privacy === "friend"
+                        ? <Check size={24} className={isSaving ? "animate-spin" : ""} /> 
+                        : <Lock size={24} className={isSaving ? "animate-spin" : ""} />
+                    }
                     <div className="flex flex-col text-left">
                       <span>Tem Ẩn (Định vị)</span>
                       <span className={`text-xs font-normal ${metadata.isSecret ? "text-white/80" : "text-pencil/60"}`}>

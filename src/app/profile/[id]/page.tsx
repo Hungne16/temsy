@@ -131,22 +131,16 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Friend Request Action */}
-            {user && user.uid !== profile.uid && (
+            {user && user.uid !== profile.uid && !viewerProfile?.friends?.includes(profile.uid) && (
               <div className="flex flex-wrap justify-end gap-3">
-                {viewerProfile?.friends?.includes(profile.uid) ? (
-                  <button disabled className="px-6 py-3 bg-muted-paper border-[3px] border-pencil text-pencil/50 shadow-[2px_2px_0_0_#2d2d2d] wobbly-border font-bold font-patrick text-lg rotate-1 flex items-center gap-2">
-                    <Check size={20} /> Đã là bạn bè
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleSendFriendRequest} 
-                    disabled={isSaving} 
-                    className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2"
-                  >
-                    <UserPlus size={20} />
-                    <span className="hidden sm:inline">{isSaving ? "Đang gửi..." : "Thêm bạn bè"}</span>
-                  </button>
-                )}
+                <button 
+                  onClick={handleSendFriendRequest} 
+                  disabled={isSaving} 
+                  className="px-6 py-3 bg-postit border-[3px] border-pencil text-pencil shadow-pencil wobbly-border font-bold font-patrick text-lg hover:bg-yellow-300 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-pencil-hover active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all -rotate-1 flex items-center gap-2"
+                >
+                  <UserPlus size={20} />
+                  <span className="hidden sm:inline">{isSaving ? "Đang gửi..." : "Thêm bạn bè"}</span>
+                </button>
               </div>
             )}
           </div>

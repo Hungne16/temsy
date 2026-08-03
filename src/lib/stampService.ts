@@ -16,7 +16,7 @@ export const uploadStamp = async (
   dataUrl: string, 
   style: StampStyle, 
   metadata: StampMetadata,
-  isPublic: boolean = true
+  privacy: "public" | "private" | "friend" = "public"
 ) => {
   if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để lưu tem!");
 
@@ -31,7 +31,8 @@ export const uploadStamp = async (
     imageUrl: dataUrl,
     style,
     metadata,
-    isPublic,
+    privacy,
+    isPublic: privacy === "public", // for legacy queries
     likes: 0,
     createdAt: serverTimestamp(),
   };
@@ -61,36 +62,57 @@ export const getUserStamps = async (userId: string) => {
   }
 };
 
-// Lấy tất cả tem public VÀ tem private của chính user đó (để hiển thị trên bản đồ)
+// Lấy tất cả tem public, tem private của chính user, và tem friend (nếu user là bạn)
 export const getMapStamps = async (currentUserId?: string) => {
   try {
     const stampsRef = collection(db, "stamps");
-    let snapshot;
+    const stampsMap = new Map();
     
-    // Firestore có hỗ trợ OR queries, hoặc fetch all rồi lọc.
-    // Vì collection nhỏ, ta có thể dùng or() nếu có Firebase SDK mới, hoặc chỉ fetch where isPublic == true 
-    // và fetch riêng where userId == currentUserId rồi gộp lại để tránh lỗi missing index.
-    
-    // Cách an toàn ko cần composite index: 
-    const publicQuery = query(stampsRef, where("isPublic", "==", true));
+    // 1. Fetch public stamps
+    const publicQuery = query(stampsRef, where("privacy", "==", "public"));
     const publicSnap = await getDocs(publicQuery);
-    const stamps = publicSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    publicSnap.docs.forEach(doc => {
+      stampsMap.set(doc.id, { id: doc.id, ...doc.data() });
+    });
     
+    // For legacy stamps that don't have privacy field but have isPublic=true
+    const legacyPublicQuery = query(stampsRef, where("isPublic", "==", true));
+    const legacyPublicSnap = await getDocs(legacyPublicQuery);
+    legacyPublicSnap.docs.forEach(doc => {
+      if (!stampsMap.has(doc.id)) {
+        stampsMap.set(doc.id, { id: doc.id, ...doc.data() });
+      }
+    });
+
     if (currentUserId) {
-      // Tìm tem của chính user nhưng isPublic == false (tem private)
-      const userPrivateQuery = query(stampsRef, where("userId", "==", currentUserId));
-      const userPrivateSnap = await getDocs(userPrivateQuery);
-      
-      userPrivateSnap.docs.forEach(doc => {
-        const data = doc.data();
-        // Thêm vào nếu nó là private và chưa có trong list
-        if (data.isPublic === false && !stamps.some(s => s.id === doc.id)) {
-          stamps.push({ id: doc.id, ...data });
+      // 2. Fetch user's own stamps (private or otherwise)
+      const userStampsQuery = query(stampsRef, where("userId", "==", currentUserId));
+      const userStampsSnap = await getDocs(userStampsQuery);
+      userStampsSnap.docs.forEach(doc => {
+        if (!stampsMap.has(doc.id)) {
+          stampsMap.set(doc.id, { id: doc.id, ...doc.data() });
         }
       });
+
+      // 3. Fetch friend stamps and filter locally
+      // First get current user profile to know their friends
+      const { getUserProfile } = await import("./userService");
+      const userProfile = await getUserProfile(currentUserId);
+      const friendsList = userProfile?.friends || [];
+
+      if (friendsList.length > 0) {
+        const friendQuery = query(stampsRef, where("privacy", "==", "friend"));
+        const friendSnap = await getDocs(friendQuery);
+        friendSnap.docs.forEach(doc => {
+          const data = doc.data();
+          if (friendsList.includes(data.userId) && !stampsMap.has(doc.id)) {
+            stampsMap.set(doc.id, { id: doc.id, ...data });
+          }
+        });
+      }
     }
 
-    return stamps;
+    return Array.from(stampsMap.values());
   } catch (error) {
     console.error("Lỗi lấy danh sách tem cho bản đồ:", error);
     return [];
