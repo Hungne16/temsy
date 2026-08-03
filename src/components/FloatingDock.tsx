@@ -22,6 +22,11 @@ export function FloatingDock() {
     navItems.push({ href: "/admin", icon: Shield, label: "Admin" });
   }
 
+  // Hide on chat room (e.g. /chat/123) but keep on chat list (/chat)
+  if (pathname.startsWith("/chat/") && pathname !== "/chat") {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4">
       <div className="bg-white/90 backdrop-blur-md shadow-2xl border border-gray-200/50 rounded-full px-2 py-2 flex items-center gap-1 md:gap-2">

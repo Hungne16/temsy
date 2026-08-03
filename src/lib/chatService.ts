@@ -1,5 +1,7 @@
 import { db } from "./firebase";
-import { collection, doc, setDoc, addDoc, getDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs, where } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs, where } from "firebase/firestore";
+import { createPersonalNotification } from "./notificationService";
+import { getUserProfile } from "./userService";
 
 export interface Message {
   id?: string;
@@ -39,6 +41,22 @@ export const sendMessage = async (senderId: string, receiverId: string, text: st
     text,
     createdAt: serverTimestamp()
   });
+
+  // Send notification to the receiver
+  try {
+    const senderProfile = await getUserProfile(senderId);
+    const senderName = senderProfile?.displayName || "Một người bạn";
+    await createPersonalNotification(
+      receiverId,
+      "chat",
+      `Tin nhắn mới từ ${senderName}`,
+      text,
+      `/chat/${senderId}`,
+      senderProfile?.photoURL
+    );
+  } catch (error) {
+    console.error("Lỗi gửi thông báo tin nhắn:", error);
+  }
 };
 
 // Subscribe to messages in a chat (returns unsubscribe function)

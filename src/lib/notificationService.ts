@@ -4,7 +4,7 @@ import { collection, addDoc, serverTimestamp, query, where, doc, updateDoc, arra
 export interface NotificationData {
   id?: string;
   recipientId: string; // user.uid hoặc 'ALL'
-  type: 'system' | 'comment' | 'friend_request';
+  type: 'system' | 'comment' | 'friend_request' | 'chat';
   title: string;
   message: string;
   link?: string;
@@ -17,7 +17,7 @@ export interface NotificationData {
 }
 
 // 1. Tạo thông báo cá nhân (ví dụ: có bình luận mới)
-export const createPersonalNotification = async (recipientId: string, type: 'system' | 'comment', title: string, message: string, link?: string, imageUrl?: string) => {
+export const createPersonalNotification = async (recipientId: string, type: 'system' | 'comment' | 'chat', title: string, message: string, link?: string, imageUrl?: string) => {
   try {
     const notification: any = {
       recipientId,
