@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { getMapStamps } from "@/lib/stampService";
 import { useAuth } from "@/context/AuthContext";
-import { X, ChevronLeft, MapPin, Calendar, BookOpen, Lock, Globe, Plus } from "lucide-react";
+import { X, ChevronLeft, MapPin, Calendar, BookOpen, Lock, Globe, Plus, Filter } from "lucide-react";
 import Link from "next/link";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -77,6 +77,7 @@ export default function MapComponent() {
   // Panel state
   const [albumGroup, setAlbumGroup] = useState<any[] | null>(null); // list of stamps at a location
   const [detailStamp, setDetailStamp] = useState<any | null>(null);  // single stamp detail
+  const [filter, setFilter] = useState<"all" | "public" | "private" | "secret">("all");
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -118,8 +119,16 @@ export default function MapComponent() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  const filteredStamps = stamps.filter(stamp => {
+    if (filter === "all") return true;
+    if (filter === "public") return stamp.isPublic !== false && !stamp.metadata?.isSecret;
+    if (filter === "private") return stamp.isPublic === false;
+    if (filter === "secret") return stamp.metadata?.isSecret === true;
+    return true;
+  });
+
   const clusters: { lat: number; lng: number; stamps: any[] }[] = [];
-  for (const stamp of stamps) {
+  for (const stamp of filteredStamps) {
     const lat = stamp.metadata.coordinates.lat;
     const lng = stamp.metadata.coordinates.lng;
     const existing = clusters.find(
@@ -193,6 +202,26 @@ export default function MapComponent() {
           Đang lấy vị trí của bạn...
         </div>
       )}
+
+      {/* Filter UI */}
+      <div className="absolute top-4 right-4 z-[1000] group">
+        <div className="bg-white border-2 border-pencil wobbly-border shadow-[2px_2px_0_0_#2d2d2d] flex flex-col overflow-hidden transition-all duration-300">
+          <div className="px-3 py-2 flex items-center gap-2 cursor-pointer bg-postit/50 border-b-2 border-pencil/10">
+            <Filter size={16} className="text-pencil" />
+            <span className="font-patrick font-bold text-pencil text-sm">
+              {filter === "all" ? "Tất cả tem" : 
+               filter === "public" ? "Tem công khai" : 
+               filter === "private" ? "Tem riêng tư" : "Tem Ẩn"}
+            </span>
+          </div>
+          <div className="flex flex-col bg-white overflow-hidden h-0 group-hover:h-[136px] transition-all duration-300">
+            <button onClick={() => setFilter("all")} className={`px-4 py-2 text-left font-patrick text-sm hover:bg-muted-paper transition-colors ${filter === "all" ? "bg-muted-paper/50 font-bold" : ""}`}>Tất cả tem</button>
+            <button onClick={() => setFilter("public")} className={`px-4 py-2 text-left font-patrick text-sm hover:bg-muted-paper transition-colors ${filter === "public" ? "bg-muted-paper/50 font-bold" : ""}`}>Tem công khai</button>
+            <button onClick={() => setFilter("private")} className={`px-4 py-2 text-left font-patrick text-sm hover:bg-muted-paper transition-colors ${filter === "private" ? "bg-muted-paper/50 font-bold" : ""}`}>Tem riêng tư</button>
+            <button onClick={() => setFilter("secret")} className={`px-4 py-2 text-left font-patrick text-sm hover:bg-muted-paper transition-colors text-marker-red ${filter === "secret" ? "bg-muted-paper/50 font-bold" : ""}`}>Tem Ẩn (Định vị)</button>
+          </div>
+        </div>
+      </div>
 
       {/* Map */}
       <MapContainer center={position} zoom={13} style={{ height: "100%", width: "100%" }} zoomControl={false}>
