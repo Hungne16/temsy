@@ -34,6 +34,10 @@ export default function Home() {
 
   const sortedStamps = [...filteredStamps].sort((a, b) => {
     if (feedType === "trending") {
+      // Ưu tiên tem Nổi bật (isFeatured) lên đầu ở tab Nổi bật
+      if (a.isFeatured && !b.isFeatured) return -1;
+      if (!a.isFeatured && b.isFeatured) return 1;
+      
       return (b.likes || 0) - (a.likes || 0);
     } else {
       const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;

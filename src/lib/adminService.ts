@@ -121,3 +121,52 @@ export const createNewUser = async (email: string, pass: string, name: string, r
     throw error;
   }
 };
+
+// --- QUẢN LÝ TEM (STAMPS) ---
+
+export const getAllStampsForAdmin = async () => {
+  try {
+    const stampsQuery = query(collection(db, "stamps"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(stampsQuery);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Lỗi lấy danh sách tem cho Admin:", error);
+    throw error;
+  }
+};
+
+export const toggleStampFeatured = async (stampId: string, currentStatus: boolean) => {
+  try {
+    const stampRef = doc(db, "stamps", stampId);
+    await updateDoc(stampRef, { isFeatured: !currentStatus });
+  } catch (error) {
+    console.error("Lỗi cập nhật trạng thái Nổi Bật:", error);
+    throw error;
+  }
+};
+
+// Việc xóa tem có thể tái sử dụng deleteStamp trong stampService.ts, 
+// nhưng nếu cần ta có thể gọi deleteDoc trực tiếp từ UI Admin.
+
+// --- QUẢN LÝ ALBUM (ALBUMS) ---
+
+export const getAllAlbumsForAdmin = async () => {
+  try {
+    const albumsQuery = query(collection(db, "albums"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(albumsQuery);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Lỗi lấy danh sách Album cho Admin:", error);
+    throw error;
+  }
+};
+
+export const deleteAlbumAdmin = async (albumId: string) => {
+  try {
+    const albumRef = doc(db, "albums", albumId);
+    await deleteDoc(albumRef);
+  } catch (error) {
+    console.error("Lỗi xóa Album:", error);
+    throw error;
+  }
+};
