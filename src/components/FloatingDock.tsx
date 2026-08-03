@@ -14,7 +14,6 @@ export function FloatingDock() {
     { href: "/map", icon: Compass, label: "Map" },
     { href: "/create", icon: PlusCircle, label: "Tạo Tem", isPrimary: true },
     { href: "/collection", icon: Bookmark, label: "Bộ Sưu Tập" },
-    { href: "/chat", icon: MessageCircle, label: "Nhắn tin" },
     { href: "/profile", icon: UserIcon, label: "Profile" },
   ];
 
