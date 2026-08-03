@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, AlertCircle, MessageCircle, X } from "lucide-react";
+import { Bell, AlertCircle, MessageCircle, X, UserPlus, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { subscribeToNotifications, markNotificationAsRead, NotificationData } from "@/lib/notificationService";
+import { subscribeToNotifications, markNotificationAsRead, NotificationData, updateNotificationStatus } from "@/lib/notificationService";
+import { addFriend } from "@/lib/friendService";
 import { useRouter } from "next/navigation";
 
 export function NotificationBell() {
@@ -47,6 +48,11 @@ export function NotificationBell() {
   }).length;
 
   const handleNotificationClick = async (notification: NotificationData) => {
+    // Không chuyển trang nếu là friend_request đang pending
+    if (notification.type === 'friend_request' && notification.status === 'pending') {
+      return;
+    }
+
     const isGlobal = notification.recipientId === "ALL";
     const isUnread = isGlobal ? !notification.readBy?.includes(user.uid) : !notification.isRead;
 
@@ -57,6 +63,29 @@ export function NotificationBell() {
     if (notification.link) {
       setIsOpen(false);
       router.push(notification.link);
+    }
+  };
+
+  const handleAcceptFriend = async (e: React.MouseEvent, notification: NotificationData) => {
+    e.stopPropagation();
+    if (!notification.id || !notification.senderId || !user) return;
+    
+    try {
+      await addFriend(user.uid, notification.senderId);
+      await updateNotificationStatus(notification.id, 'accepted');
+      alert("Đã thêm bạn bè thành công!");
+    } catch (error: any) {
+      alert(error.message || "Lỗi khi đồng ý kết bạn");
+    }
+  };
+
+  const handleRejectFriend = async (e: React.MouseEvent, notification: NotificationData) => {
+    e.stopPropagation();
+    if (!notification.id) return;
+    try {
+      await updateNotificationStatus(notification.id, 'rejected');
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -114,6 +143,10 @@ export function NotificationBell() {
                           <div className="w-10 h-10 bg-red-100 rounded-full border-2 border-pencil flex items-center justify-center text-marker-red">
                             <AlertCircle size={20} />
                           </div>
+                        ) : notification.type === 'friend_request' ? (
+                          <div className="w-10 h-10 bg-green-100 rounded-full border-2 border-pencil flex items-center justify-center text-green-600">
+                            <UserPlus size={20} />
+                          </div>
                         ) : (
                           <div className="w-10 h-10 bg-blue-100 rounded-full border-2 border-pencil flex items-center justify-center text-marker-blue">
                             <MessageCircle size={20} />
@@ -136,6 +169,36 @@ export function NotificationBell() {
                             <img src={notification.imageUrl} alt="Notification Image" className="w-full h-full object-cover" />
                           </div>
                         )}
+                        
+                        {notification.type === 'friend_request' && (
+                          <div className="mt-3 flex gap-2">
+                            {notification.status === 'pending' ? (
+                              <>
+                                <button 
+                                  onClick={(e) => handleAcceptFriend(e, notification)}
+                                  className="flex-1 px-3 py-1.5 bg-marker-blue text-white font-bold rounded-lg border-2 border-pencil shadow-[2px_2px_0_0_#2d2d2d] active:shadow-none active:translate-y-[2px] transition-all"
+                                >
+                                  Đồng ý
+                                </button>
+                                <button 
+                                  onClick={(e) => handleRejectFriend(e, notification)}
+                                  className="flex-1 px-3 py-1.5 bg-white text-pencil font-bold rounded-lg border-2 border-pencil shadow-[2px_2px_0_0_#2d2d2d] hover:bg-gray-50 active:shadow-none active:translate-y-[2px] transition-all"
+                                >
+                                  Từ chối
+                                </button>
+                              </>
+                            ) : notification.status === 'accepted' ? (
+                              <div className="flex items-center gap-1 text-green-600 font-bold text-sm bg-green-50 px-2 py-1 rounded-md border-2 border-green-200">
+                                <Check size={16} /> Đã kết bạn
+                              </div>
+                            ) : (
+                              <div className="text-pencil/50 font-bold text-sm bg-gray-100 px-2 py-1 rounded-md border-2 border-gray-200 inline-block">
+                                Đã từ chối
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
                         <p className="text-xs text-pencil/40 mt-2 italic font-bold">
                           {dateStr}
                         </p>

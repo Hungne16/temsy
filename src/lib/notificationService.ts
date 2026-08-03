@@ -1,16 +1,18 @@
 import { db } from "./firebase";
-import { collection, addDoc, serverTimestamp, query, where, doc, updateDoc, arrayUnion, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, doc, updateDoc, arrayUnion, onSnapshot, getDocs } from "firebase/firestore";
 
 export interface NotificationData {
   id?: string;
   recipientId: string; // user.uid hoặc 'ALL'
-  type: 'system' | 'comment';
+  type: 'system' | 'comment' | 'friend_request';
   title: string;
   message: string;
   link?: string;
   imageUrl?: string; // Hình ảnh đính kèm (ví dụ: ảnh tem bị xóa)
   readBy?: string[]; // Mảng chứa ID những người đã đọc (dùng cho 'ALL')
   isRead?: boolean; // Dùng cho thông báo cá nhân
+  senderId?: string; // ID người gửi (dùng cho kết bạn)
+  status?: 'pending' | 'accepted' | 'rejected'; // Trạng thái kết bạn
   createdAt?: any;
 }
 
@@ -30,6 +32,40 @@ export const createPersonalNotification = async (recipientId: string, type: 'sys
     await addDoc(collection(db, "notifications"), notification);
   } catch (error) {
     console.error("Lỗi khi tạo thông báo cá nhân:", error);
+  }
+};
+
+// 1.5 Tạo lời mời kết bạn
+export const createFriendRequestNotification = async (senderId: string, recipientId: string, senderName: string, senderAvatar?: string) => {
+  try {
+    // Check if pending request already exists
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", recipientId),
+      where("senderId", "==", senderId),
+      where("type", "==", "friend_request"),
+      where("status", "==", "pending")
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      throw new Error("Bạn đã gửi lời mời rồi, vui lòng chờ phản hồi!");
+    }
+
+    const notification: any = {
+      recipientId,
+      type: "friend_request",
+      title: "Lời mời kết bạn",
+      message: `${senderName} muốn kết bạn với bạn.`,
+      isRead: false,
+      senderId,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    };
+    if (senderAvatar) notification.imageUrl = senderAvatar;
+    await addDoc(collection(db, "notifications"), notification);
+  } catch (error) {
+    console.error("Lỗi khi gửi lời mời kết bạn:", error);
+    throw error;
   }
 };
 
@@ -67,6 +103,19 @@ export const markNotificationAsRead = async (notificationId: string, isGlobal: b
     }
   } catch (error) {
     console.error("Lỗi khi đánh dấu thông báo đã đọc:", error);
+  }
+};
+
+// 3.5 Cập nhật trạng thái thông báo
+export const updateNotificationStatus = async (notificationId: string, status: 'accepted' | 'rejected') => {
+  try {
+    const docRef = doc(db, "notifications", notificationId);
+    await updateDoc(docRef, {
+      status,
+      isRead: true // Đánh dấu đã đọc khi đã xử lý xong
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật trạng thái thông báo:", error);
   }
 };
 

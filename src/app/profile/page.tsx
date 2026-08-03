@@ -12,7 +12,8 @@ import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/userServic
 import { compressImage } from "@/lib/imageUtils";
 import { getUserAlbums, createAlbum, deleteAlbum, updateAlbum, addStampToAlbum, removeStampFromAlbum, Album } from "@/lib/albumService";
 import { submitFeedback } from "@/lib/feedbackService";
-import { searchUserByShortUid, addFriend, getFriends, removeFriend } from "@/lib/friendService";
+import { searchUserByShortUid, getFriends, removeFriend } from "@/lib/friendService";
+import { createFriendRequestNotification } from "@/lib/notificationService";
 
 export default function ProfilePage() {
   const { user, userProfile, loading, logout } = useAuth();
@@ -314,23 +315,22 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddFriend = async () => {
-    if (!user || !searchResult) return;
+  const handleSendFriendRequest = async () => {
+    if (!user || !profile || !searchResult) return;
     setIsSaving(true);
     try {
-      await addFriend(user.uid, searchResult.uid);
-      alert("Kết bạn thành công!");
-      
-      // Update local state
-      const newFriends = [...friendsList, searchResult];
-      setFriendsList(newFriends);
-      setProfile({ ...profile!, friends: [...(profile!.friends || []), searchResult.uid] });
-      
+      await createFriendRequestNotification(
+        user.uid,
+        searchResult.uid,
+        profile.displayName,
+        profile.photoURL
+      );
+      alert("Đã gửi lời mời kết bạn! Vui lòng chờ phản hồi.");
       setIsFriendModalOpen(false);
       setSearchUid("");
       setSearchResult(null);
     } catch (error: any) {
-      alert(error.message || "Lỗi khi kết bạn.");
+      alert(error.message || "Lỗi khi gửi lời mời kết bạn.");
     } finally {
       setIsSaving(false);
     }
@@ -1012,11 +1012,11 @@ export default function ProfilePage() {
                     </button>
                   ) : (
                     <button 
-                      onClick={handleAddFriend}
+                      onClick={handleSendFriendRequest}
                       disabled={isSaving}
                       className="w-full py-2 bg-postit border-[3px] border-pencil font-patrick font-bold text-lg text-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-yellow-300 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
                     >
-                      {isSaving ? "Đang thêm..." : "Thêm bạn bè"}
+                      {isSaving ? "Đang gửi..." : "Gửi lời mời"}
                     </button>
                   )}
                 </div>
