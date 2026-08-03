@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getUserProfile, UserProfile } from "@/lib/userService";
 import { getActiveChats, ChatSession } from "@/lib/chatService";
+import { subscribeToNotifications, NotificationData } from "@/lib/notificationService";
 import Link from "next/link";
 import { MessageCircle, Users, ArrowLeft, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ export default function ChatListPage() {
   
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [activeChats, setActiveChats] = useState<ChatSession[]>([]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -40,6 +42,15 @@ export default function ChatListPage() {
     };
 
     fetchData();
+
+    // Subscribe to notifications for unread chat badges
+    const unsubNotifications = subscribeToNotifications(user.uid, (notifs) => {
+      setNotifications(notifs.filter(n => n.type === 'chat' && !n.isRead));
+    });
+
+    return () => {
+      unsubNotifications();
+    };
   }, [user, userProfile]);
 
   if (!user) {
@@ -106,21 +117,27 @@ export default function ChatListPage() {
                 const chatId = [user.uid, friend.uid].sort().join("_");
                 const activeChat = activeChats.find(c => c.id === chatId);
                 
+                // Check if there are unread messages from this friend
+                const hasUnread = notifications.some(n => n.link === `/chat/${friend.uid}`);
+                
                 return (
                   <Link 
                     href={`/chat/${friend.uid}`} 
                     key={friend.uid}
-                    className="block bg-white border-[3px] border-pencil p-4 flex items-center gap-4 wobbly-border shadow-[2px_2px_0_0_#2d2d2d] hover:shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-y-1 transition-all group"
+                    className="block bg-white border-[3px] border-pencil p-4 flex items-center gap-4 wobbly-border shadow-[2px_2px_0_0_#2d2d2d] hover:shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-y-1 transition-all group relative"
                   >
-                    <div className="w-14 h-14 rounded-full border-2 border-pencil overflow-hidden shrink-0">
+                    <div className="w-14 h-14 rounded-full border-2 border-pencil overflow-hidden shrink-0 relative">
                       <img src={friend.photoURL} alt={friend.displayName} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <h3 className="font-kalam font-bold text-xl text-pencil truncate group-hover:text-marker-blue transition-colors">
+                      <h3 className="font-kalam font-bold text-xl text-pencil truncate group-hover:text-marker-blue transition-colors flex items-center gap-2">
                         {friend.displayName}
+                        {hasUnread && (
+                          <span className="w-3 h-3 bg-marker-red rounded-full inline-block animate-pulse"></span>
+                        )}
                       </h3>
                       {activeChat?.lastMessage ? (
-                        <p className="text-sm font-patrick text-pencil/70 truncate mt-1">
+                        <p className={`text-sm font-patrick truncate mt-1 ${hasUnread ? "text-pencil font-bold" : "text-pencil/70"}`}>
                           {activeChat.lastMessage}
                         </p>
                       ) : (

@@ -2,18 +2,39 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShieldAlert, Users, LayoutDashboard, LogOut, Image as ImageIcon, BookOpen, Flag, MessageSquare } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  
+  const [pendingReports, setPendingReports] = useState(0);
+  const [pendingFeedbacks, setPendingFeedbacks] = useState(0);
 
   useEffect(() => {
     if (!loading && (!user || (userProfile?.role !== "admin" && user.email !== "admin123@gmail.temsy"))) {
       router.push("/");
+      return;
+    }
+
+    if (user && (userProfile?.role === "admin" || user.email === "admin123@gmail.temsy")) {
+      // Lắng nghe reports pending
+      const qReports = query(collection(db, "reports"), where("status", "==", "pending"));
+      const unsubReports = onSnapshot(qReports, (snap) => setPendingReports(snap.size));
+      
+      // Lắng nghe feedbacks pending
+      const qFeedbacks = query(collection(db, "feedbacks"), where("status", "==", "pending"));
+      const unsubFeedbacks = onSnapshot(qFeedbacks, (snap) => setPendingFeedbacks(snap.size));
+
+      return () => {
+        unsubReports();
+        unsubFeedbacks();
+      };
     }
   }, [user, userProfile, loading, router]);
 
@@ -98,23 +119,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
           <Link 
             href="/admin/reports" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-bold ${
               pathname === "/admin/reports"
                 ? "border-pencil bg-muted-paper wobbly-border shadow-[2px_2px_0_0_#2d2d2d] text-pencil" 
                 : "border-transparent hover:border-pencil hover:bg-muted-paper text-pencil/80 hover:text-pencil"
             }`}
           >
-            <Flag size={20} /> Quản lý Báo cáo
+            <div className="flex items-center gap-3">
+              <Flag size={20} /> Quản lý Báo cáo
+            </div>
+            {pendingReports > 0 && (
+              <span className="bg-marker-red text-white text-xs px-2 py-1 rounded-full">
+                {pendingReports}
+              </span>
+            )}
           </Link>
           <Link 
             href="/admin/feedbacks" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-bold ${
               pathname === "/admin/feedbacks"
                 ? "border-pencil bg-muted-paper wobbly-border shadow-[2px_2px_0_0_#2d2d2d] text-pencil" 
                 : "border-transparent hover:border-pencil hover:bg-muted-paper text-pencil/80 hover:text-pencil"
             }`}
           >
-            <MessageSquare size={20} /> Quản lý Phản hồi
+            <div className="flex items-center gap-3">
+              <MessageSquare size={20} /> Quản lý Phản hồi
+            </div>
+            {pendingFeedbacks > 0 && (
+              <span className="bg-marker-red text-white text-xs px-2 py-1 rounded-full">
+                {pendingFeedbacks}
+              </span>
+            )}
           </Link>
         </nav>
         
