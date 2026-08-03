@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getAllUsers, updateUserTitle, deleteUserProfile, createNewUser } from "@/lib/adminService";
-import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield } from "lucide-react";
+import { createPersonalNotification } from "@/lib/notificationService";
+import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell } from "lucide-react";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -55,6 +56,18 @@ export default function AdminUsersPage() {
       } catch (err) {
         alert("Lỗi khi xóa người dùng");
       }
+    }
+  };
+
+  const handleSendNotification = async (uid: string, name: string) => {
+    const message = window.prompt(`Gửi thông báo riêng cho ${name}:`);
+    if (!message || message.trim() === "") return;
+    
+    try {
+      await createPersonalNotification(uid, 'system', 'Thông báo từ Ban Quản Trị', message.trim());
+      alert("Đã gửi thông báo thành công!");
+    } catch (err) {
+      alert("Lỗi khi gửi thông báo.");
     }
   };
 
@@ -195,6 +208,13 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleSendNotification(user.id, user.name)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-marker-blue hover:bg-blue-50 hover:border-marker-blue/20 transition-all"
+                          title="Gửi thông báo"
+                        >
+                          <Bell size={18} />
+                        </button>
                         <button 
                           onClick={() => handleDelete(user.id, user.name)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-marker-red hover:bg-red-50 hover:border-marker-red/20 transition-all"
