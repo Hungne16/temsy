@@ -129,13 +129,13 @@ export interface CommentData {
   createdAt: any;
 }
 
-export const getComments = async (stampId: string) => {
+export const getComments = async (stampId: string): Promise<CommentData[]> => {
   try {
     const commentsRef = collection(db, "stamps", stampId, "comments");
     // Sort by createdAt descending
     const q = query(commentsRef);
     const snapshot = await getDocs(q);
-    const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommentData[];
     
     // Client-side sort if no index
     return comments.sort((a: any, b: any) => {
