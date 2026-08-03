@@ -481,13 +481,14 @@ export default function ProfilePage() {
           <h2 className="text-3xl font-kalam font-bold mb-6 flex items-center gap-2 text-pencil rotate-1">
             <Award className="text-marker-red" /> Huy hiệu & Thành tựu
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-1">
-              <div className="w-14 h-14 border-[3px] border-pencil bg-marker-red flex items-center justify-center text-white wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] shrink-0 rotate-3">
-                <Award size={28} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Explorer */}
+            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-1 transition-opacity ${stampCount >= 1 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
+              <div className="w-16 h-16 shrink-0 relative rotate-2">
+                <img src="/badges/explorer.png" alt="Explorer" className="w-full h-full object-contain drop-shadow-md" />
               </div>
               <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Người Mới Bắt Đầu</h3>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Tân binh</h3>
                 <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Tạo con tem đầu tiên của bạn.</p>
                 {stampCount >= 1 ? (
                   <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
@@ -497,9 +498,10 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil rotate-2 transition-opacity ${stampCount >= 5 ? 'opacity-100' : 'opacity-70'}`}>
-              <div className="w-14 h-14 border-[3px] border-pencil bg-marker-blue flex items-center justify-center text-white wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] shrink-0 -rotate-3">
-                <MapPin size={28} />
+            {/* Traveler */}
+            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil rotate-2 transition-opacity ${stampCount >= 5 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
+              <div className="w-16 h-16 shrink-0 relative -rotate-3">
+                <img src="/badges/traveler.png" alt="Traveler" className="w-full h-full object-contain drop-shadow-md" />
               </div>
               <div>
                 <h3 className="font-bold font-patrick text-xl text-pencil">Nhà Thám Hiểm</h3>
@@ -507,19 +509,56 @@ export default function ProfilePage() {
                 {stampCount >= 5 ? (
                   <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
                 ) : (
-                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 5)} / 5</div>
+                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 5)} / 5 tem</div>
                 )}
               </div>
             </div>
 
-            <div className="bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-2 opacity-70 hover:opacity-100 transition-opacity">
-              <div className="w-14 h-14 border-[3px] border-pencil bg-postit flex items-center justify-center text-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] shrink-0 rotate-6">
-                <Heart size={28} />
+            {/* Adventurer */}
+            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-2 transition-opacity ${stampCount >= 10 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
+              <div className="w-16 h-16 shrink-0 relative rotate-3">
+                <img src="/badges/adventurer.png" alt="Adventurer" className="w-full h-full object-contain drop-shadow-md" />
               </div>
               <div>
-                <h3 className="font-bold font-patrick text-xl text-pencil">Truyền Cảm Hứng</h3>
-                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Nhận được 100 lượt thích.</p>
-                <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">0 / 100</div>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Kẻ Mạo Hiểm</h3>
+                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Đạt được 10 con tem công khai.</p>
+                {stampCount >= 10 ? (
+                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
+                ) : (
+                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 10)} / 10 tem</div>
+                )}
+              </div>
+            </div>
+
+            {/* Voyager */}
+            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil rotate-1 transition-opacity ${stampCount >= 25 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
+              <div className="w-16 h-16 shrink-0 relative -rotate-2">
+                <img src="/badges/voyager.png" alt="Voyager" className="w-full h-full object-contain drop-shadow-md" />
+              </div>
+              <div>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Nhà Lữ Hành</h3>
+                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Đạt được 25 con tem công khai.</p>
+                {stampCount >= 25 ? (
+                  <div className="mt-2 text-sm font-bold font-patrick text-marker-blue bg-pastel-blue/20 px-2 py-1 border-2 border-marker-blue wobbly-border inline-block -rotate-2">Đã mở khóa</div>
+                ) : (
+                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 25)} / 25 tem</div>
+                )}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className={`bg-white border-[3px] border-pencil p-4 flex items-start gap-4 wobbly-border shadow-pencil -rotate-3 transition-opacity ${stampCount >= 50 ? 'opacity-100' : 'opacity-70 grayscale'}`}>
+              <div className="w-16 h-16 shrink-0 relative rotate-1">
+                <img src="/badges/legend.png" alt="Legend" className="w-full h-full object-contain drop-shadow-md" />
+              </div>
+              <div>
+                <h3 className="font-bold font-patrick text-xl text-pencil">Huyền Thoại</h3>
+                <p className="text-sm text-pencil/70 mt-1 font-patrick font-bold">Đạt được 50 con tem công khai.</p>
+                {stampCount >= 50 ? (
+                  <div className="mt-2 text-sm font-bold font-patrick text-marker-red bg-red-50 px-2 py-1 border-2 border-marker-red wobbly-border inline-block rotate-2">Đã mở khóa</div>
+                ) : (
+                  <div className="mt-2 text-sm font-bold font-patrick text-pencil/50 bg-muted-paper px-2 py-1 border-2 border-pencil/30 wobbly-border inline-block">{Math.min(stampCount, 50)} / 50 tem</div>
+                )}
               </div>
             </div>
           </div>
