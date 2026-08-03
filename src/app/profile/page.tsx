@@ -609,7 +609,7 @@ export default function ProfilePage() {
               )}
             </div>
           </>
-        ) : (
+        ) : activeTab === 'album_view' ? (
           <>
             {/* Album View */}
             <div className="flex justify-between items-center mb-6">
@@ -637,7 +637,7 @@ export default function ProfilePage() {
               )}
             </div>
           </>
-        ) : (
+        ) : activeTab === 'friends' ? (
           <>
             {/* Friends View */}
             <div className="flex justify-between items-center mb-6">
@@ -671,7 +671,7 @@ export default function ProfilePage() {
               )}
             </div>
           </>
-        )}
+        ) : null}
       </div>
 
       {/* Edit Profile Modal */}
