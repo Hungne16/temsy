@@ -468,18 +468,6 @@ export default function ProfilePage() {
                     <Trash2 size={16} />
                   </button>
                 </div>
-                    <ImageIcon className="text-pencil/30" size={48} />
-                  </div>
-                  <h3 className="font-kalam font-bold text-xl text-pencil truncate">{album.title}</h3>
-                  <p className="font-patrick font-bold text-pencil/60">{album.stamps?.length || 0} tem</p>
-                  
-                  <button 
-                    onClick={(e) => handleDeleteAlbum(album.id, e)}
-                    className="absolute top-2 right-2 bg-white border-2 border-pencil text-marker-red p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-marker-red hover:text-white"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
               ))}
               {albums.length === 0 && (
                 <div className="col-span-4 p-10 text-center font-bold font-patrick text-xl text-pencil/50 border-[3px] border-dashed border-pencil wobbly-border bg-white -rotate-1">
