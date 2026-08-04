@@ -71,15 +71,29 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
     e.preventDefault();
     if (!newComment.trim() || !user) return;
     
-    setIsSubmittingComment(true);
+    const textToSubmit = newComment.trim();
+    
+    const optimisticComment: CommentData = {
+      id: `temp-${Date.now()}`,
+      userId: user.uid,
+      userName: userProfile?.displayName || user.displayName || "Người dùng",
+      userAvatar: userProfile?.photoURL || user.photoURL || "/default-avatar.png",
+      text: textToSubmit,
+      createdAt: new Date(),
+    };
+    
+    setComments([optimisticComment, ...comments]);
+    setNewComment("");
+    
     try {
-      const added = await addComment(id, newComment.trim());
-      setComments([added, ...comments]);
-      setNewComment("");
+      const added = await addComment(id, textToSubmit);
+      // Thay thế comment tạm bằng comment thật từ server
+      setComments(prev => prev.map(c => c.id === optimisticComment.id ? added : c));
     } catch (err: any) {
+      // Rollback (hoàn tác) nếu lỗi
+      setComments(prev => prev.filter(c => c.id !== optimisticComment.id));
+      setNewComment(textToSubmit); // Khôi phục lại text cho user
       alert(err.message || "Không thể gửi bình luận");
-    } finally {
-      setIsSubmittingComment(false);
     }
   };
 
@@ -133,22 +147,27 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleSendReply = async () => {
     if (!user || !stamp) return;
-    setIsReplying(true);
+    
+    const textToSubmit = replyMessage.trim() || `Đã phản hồi tem: ${stamp.metadata?.title || "Không tên"}`;
+    
+    // Optimistic UI: Đóng modal ngay lập tức để tạo cảm giác mượt mà không độ trễ
+    setShowReplyModal(false);
+    setReplyMessage("");
+    
     try {
       await sendMessage(
         user.uid,
         stamp.userId,
-        replyMessage.trim() || `Đã phản hồi tem: ${stamp.metadata?.title || "Không tên"}`,
+        textToSubmit,
         stamp.imageUrl,
         stamp.id
       );
-      alert("Đã gửi phản hồi thành công!");
-      setShowReplyModal(false);
-      setReplyMessage("");
+      // Có thể thêm toast notification ở đây thay vì alert để không chặn thao tác
     } catch (error) {
+      // Rollback
+      setShowReplyModal(true);
+      setReplyMessage(textToSubmit);
       alert("Gửi phản hồi thất bại.");
-    } finally {
-      setIsReplying(false);
     }
   };
 
@@ -173,11 +192,17 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+    
+    // Optimistic UI: Xoá khỏi giao diện ngay lập tức
+    const previousComments = [...comments];
+    setComments(comments.filter(c => c.id !== commentId));
+    
     try {
       const { deleteComment } = await import("@/lib/stampService");
       await deleteComment(id, commentId);
-      setComments(comments.filter(c => c.id !== commentId));
     } catch (error: any) {
+      // Rollback
+      setComments(previousComments);
       alert("Lỗi khi xóa bình luận: " + error.message);
     }
   };
