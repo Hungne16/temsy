@@ -33,6 +33,26 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
   const [replyMessage, setReplyMessage] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   
+  const [detailedAddress, setDetailedAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (stamp?.metadata?.coordinates) {
+      const fetchAddress = async () => {
+        try {
+          const { lat, lng } = stamp.metadata.coordinates;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=vi`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            setDetailedAddress(data.display_name);
+          }
+        } catch (e) {
+          console.error("Lỗi lấy địa chỉ chi tiết:", e);
+        }
+      };
+      fetchAddress();
+    }
+  }, [stamp?.metadata?.coordinates]);
+  
   useEffect(() => {
     getStampById(id)
       .then((data: any) => {
@@ -402,9 +422,17 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                   </Link>
                   
                   <div className="mt-6 flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2 text-xl font-bold font-patrick bg-postit border-2 border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1">
-                      <MapPin size={20} className="text-marker-red" />
-                      {stamp.metadata.location || "Chưa ghim địa điểm"}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 text-xl font-bold font-patrick bg-postit border-2 border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] rotate-1 w-max">
+                        <MapPin size={20} className="text-marker-red" />
+                        {stamp.metadata.location || "Chưa ghim địa điểm"}
+                      </div>
+                      {detailedAddress && (
+                        <div className="text-sm font-patrick text-pencil/80 bg-white border-2 border-pencil border-dashed px-3 py-1.5 wobbly-border shadow-sm w-full max-w-sm flex gap-1.5">
+                          <span>📍</span>
+                          <span>{detailedAddress}</span>
+                        </div>
+                      )}
                     </div>
                     {stamp.metadata.date && (
                       <div className="flex items-center gap-2 text-xl font-bold font-patrick bg-white border-2 border-pencil px-4 py-2 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] -rotate-1">
