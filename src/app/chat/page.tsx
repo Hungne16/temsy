@@ -13,7 +13,7 @@ export default function ChatListPage() {
   const { user, userProfile } = useAuth();
   const router = useRouter();
   
-  const [friends, setFriends] = useState<UserProfile[]>([]);
+  const [contacts, setContacts] = useState<UserProfile[]>([]);
   const [activeChats, setActiveChats] = useState<ChatSession[]>([]);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,11 +28,23 @@ export default function ChatListPage() {
         const chats = await getActiveChats(user.uid);
         setActiveChats(chats);
         
-        // Fetch friends details
-        if (userProfile?.friends && userProfile.friends.length > 0) {
-          const friendPromises = userProfile.friends.map((friendId: string) => getUserProfile(friendId));
-          const friendsData = await Promise.all(friendPromises);
-          setFriends(friendsData.filter(Boolean) as UserProfile[]);
+        const chatUserIds = new Set<string>();
+        chats.forEach(chat => {
+          chat.participants.forEach(p => {
+            if (p !== user.uid) chatUserIds.add(p);
+          });
+        });
+
+        // Combine friends and chat partners
+        const allUserIdsToFetch = new Set<string>([
+          ...(userProfile?.friends || []),
+          ...Array.from(chatUserIds)
+        ]);
+
+        if (allUserIdsToFetch.size > 0) {
+          const userPromises = Array.from(allUserIdsToFetch).map((id: string) => getUserProfile(id));
+          const usersData = await Promise.all(userPromises);
+          setContacts(usersData.filter(Boolean) as UserProfile[]);
         }
       } catch (error) {
         console.error("Lỗi lấy dữ liệu chat:", error);
@@ -66,8 +78,8 @@ export default function ChatListPage() {
     );
   }
 
-  const filteredFriends = friends.filter(friend => 
-    friend.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredContacts = contacts.filter(contact => 
+    contact.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -105,33 +117,38 @@ export default function ChatListPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredFriends.length === 0 ? (
+            {filteredContacts.length === 0 ? (
               <div className="text-center py-12 bg-white/50 border-[3px] border-pencil border-dashed wobbly-border rotate-1">
                 <Users size={48} className="mx-auto text-pencil/30 mb-4" />
-                <h3 className="font-kalam font-bold text-xl text-pencil mb-2">Chưa có bạn bè nào</h3>
-                <p className="font-patrick text-pencil/60">Hãy kết bạn để có thể trò chuyện nhé!</p>
+                <h3 className="font-kalam font-bold text-xl text-pencil mb-2">Chưa có ai để trò chuyện</h3>
+                <p className="font-patrick text-pencil/60">Hãy kết bạn hoặc nhắn tin để bắt đầu nhé!</p>
               </div>
             ) : (
-              filteredFriends.map((friend) => {
+              filteredContacts.map((contact) => {
                 // Find if there's an active chat to show last message
-                const chatId = [user.uid, friend.uid].sort().join("_");
+                const chatId = [user.uid, contact.uid].sort().join("_");
                 const activeChat = activeChats.find(c => c.id === chatId);
                 
-                // Check if there are unread messages from this friend
-                const hasUnread = notifications.some(n => n.link === `/chat/${friend.uid}`);
+                // Check if there are unread messages from this contact
+                const hasUnread = notifications.some(n => n.link === `/chat/${contact.uid}`);
+                
+                const isStranger = !(userProfile?.friends || []).includes(contact.uid);
                 
                 return (
                   <Link 
-                    href={`/chat/${friend.uid}`} 
-                    key={friend.uid}
+                    href={`/chat/${contact.uid}`} 
+                    key={contact.uid}
                     className="block bg-white border-[3px] border-pencil p-4 flex items-center gap-4 wobbly-border shadow-[2px_2px_0_0_#2d2d2d] hover:shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-y-1 transition-all group relative"
                   >
                     <div className="w-14 h-14 rounded-full border-2 border-pencil overflow-hidden shrink-0 relative">
-                      <img src={friend.photoURL} alt={friend.displayName} className="w-full h-full object-cover" />
+                      <img src={contact.photoURL} alt={contact.displayName} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 overflow-hidden">
                       <h3 className="font-kalam font-bold text-xl text-pencil truncate group-hover:text-marker-blue transition-colors flex items-center gap-2">
-                        {friend.displayName}
+                        {contact.displayName}
+                        {isStranger && (
+                          <span title="Người lạ" className="w-5 h-5 flex items-center justify-center bg-marker-red text-white text-[10px] rounded-full font-bold">!</span>
+                        )}
                         {hasUnread && (
                           <span className="w-3 h-3 bg-marker-red rounded-full inline-block animate-pulse"></span>
                         )}
