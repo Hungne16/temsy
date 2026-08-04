@@ -211,7 +211,7 @@ export default function MapComponent() {
       )}
 
       {/* Filter UI */}
-      <div className="absolute top-4 right-4 z-[1000]">
+      <div className="absolute top-4 right-4 z-[9999]" onTouchStart={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()} onWheel={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
         <div className="bg-white border-2 border-pencil wobbly-border shadow-[2px_2px_0_0_#2d2d2d] flex flex-col overflow-hidden transition-all duration-300">
           <div 
             onClick={() => setIsFilterOpen(!isFilterOpen)}

@@ -121,8 +121,8 @@ export default function CreateStampPage() {
       img.crossOrigin = "Anonymous";
       img.src = croppedImage;
       img.onload = () => {
-        // Increase MAX_WIDTH to keep image sharpness (1200 instead of 800)
-        const MAX_WIDTH = 1200;
+        // Increase MAX_WIDTH to keep image sharpness
+        const MAX_WIDTH = 2000;
         let width = img.width;
         let height = img.height;
         if (width > MAX_WIDTH) {
@@ -371,7 +371,7 @@ export default function CreateStampPage() {
         }
       }
 
-      const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 3, quality: 0.92 });
+      const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 5, quality: 0.95 });
       const { uploadStamp } = await import("@/lib/stampService");
       
       const newStamp = await uploadStamp(dataUrl, stampStyle, finalMetadata, privacy);
