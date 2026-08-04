@@ -8,7 +8,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "postage_raw" | "film" | "wavy" | "template_1" | "template_2" | "template_3" | "template_4" | "template_5";
+export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "film" | "wavy" | "template_1" | "template_2" | "template_3" | "template_4" | "template_5";
 
 interface StampPreviewProps {
   imageUrl: string;
@@ -76,7 +76,7 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
 
     let activeMask = undefined;
     if (style === "vintage" || style === "modern") activeMask = defaultStampEdge;
-    if (style === "postage" || style === "postage_raw") activeMask = postageEdge;
+    if (style === "postage") activeMask = postageEdge;
     if (style === "film") activeMask = filmEdge;
     if (style === "wavy") activeMask = wavyEdge;
 
@@ -91,7 +91,6 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
           style === "polaroid" && "bg-white p-4 pb-16",
           style === "minimal" && "bg-transparent p-0",
           style === "postage" && "bg-white text-black p-3",
-          style === "postage_raw" && "bg-white text-black p-0",
           style === "film" && "bg-[#111] text-white p-6",
           style === "wavy" && "bg-pastel-blue/10 text-pastel-blue-dark p-5",
           style.startsWith("template_") && "bg-transparent drop-shadow-none p-0",
@@ -136,7 +135,7 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
           )}
           
           {/* Overlay Texture (only for non-template styles) */}
-          {!style.startsWith("template_") && style !== "postage_raw" && (
+          {!style.startsWith("template_") && (
             <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-multiply" 
                  style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
             </div>
@@ -144,7 +143,7 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
         </div>
 
         {/* Metadata section */}
-        {metadata && style !== "minimal" && style !== "postage_raw" && (
+        {metadata && style !== "minimal" && (
           <div className={cn(
             "mt-3 flex flex-col",
             style === "polaroid" || style === "film" ? "items-center" : "items-start"
@@ -158,9 +157,9 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
         )}
         
         {/* Value/Postage Mark */}
-        {(style === "vintage" || style === "postage") && (
-          <div className="absolute top-4 right-4 border border-current rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm opacity-50 rotate-12">
-            10
+        {(style === "vintage" || style === "modern" || style === "postage") && (
+          <div className="absolute top-6 right-6 font-mono text-2xl font-bold opacity-80 mix-blend-difference text-white drop-shadow-md">
+            100
           </div>
         )}
       </div>

@@ -5,7 +5,7 @@ import { Uploader } from "@/components/Uploader";
 import { StampEditor } from "@/components/StampEditor";
 import { StampPreview, StampStyle } from "@/components/StampPreview";
 import { toJpeg, toPng } from "html-to-image";
-import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight, Check, Mic, Square, Trash2, Play, CircleStop, Send } from "lucide-react";
+import { Download, Save, MapPin, Globe, Lock, Map as MapIcon, ToggleLeft, ToggleRight, Check, Mic, Square, Trash2, Play, CircleStop } from "lucide-react";
 import LocationPickerModal from "@/components/LocationPickerModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -45,7 +45,7 @@ const STAMP_STYLES: { id: StampStyle; name: string; type: "css" | "image" }[] = 
 
 export default function CreateStampPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"upload" | "mode" | "quick_post" | "crop" | "style">("upload");
+  const [step, setStep] = useState<"upload" | "crop" | "style">("upload");
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [stampStyle, setStampStyle] = useState<StampStyle>("vintage");
@@ -245,21 +245,25 @@ export default function CreateStampPage() {
 
   const handleImageSelected = (url: string) => {
     setOriginalImage(url);
-    setStep("mode");
+    setStep("crop");
   };
 
-  const setupAutoGPS = () => {
+  const handleCropSuccess = (croppedUrl: string) => {
+    setCroppedImage(croppedUrl);
+    
     const today = new Date().toLocaleDateString("vi-VN");
+    
+    // Tự động lấy tọa độ GPS
     if (isAutoGPS && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setMetadata(prev => ({
-            ...prev,
-            title: prev.title || "Kỷ niệm mới",
+          setMetadata({
+            title: "Kỷ niệm mới",
             location: "Đang tải vị trí...",
             date: today,
+            story: "",
             coordinates: { lat: pos.coords.latitude, lng: pos.coords.longitude }
-          }));
+          });
           
           fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=14&addressdetails=1&accept-language=vi`)
             .then(res => res.json())
@@ -275,28 +279,24 @@ export default function CreateStampPage() {
         },
         (err) => {
           console.error("Lỗi định vị:", err);
-          setMetadata(prev => ({
-            ...prev,
-            title: prev.title || "Kỷ niệm mới",
+          setMetadata({
+            title: "Kỷ niệm mới",
             location: "Chưa rõ vị trí",
-            date: today
-          }));
+            date: today,
+            story: ""
+          });
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      setMetadata(prev => ({
-        ...prev,
-        title: prev.title || "Kỷ niệm mới",
+      setMetadata({
+        title: "Kỷ niệm mới",
         location: "",
-        date: today
-      }));
+        date: today,
+        story: ""
+      });
     }
-  };
-
-  const handleCropSuccess = (croppedUrl: string) => {
-    setCroppedImage(croppedUrl);
-    setupAutoGPS();
+    
     setFilteredImage(croppedUrl);
     setStep("style");
   };
@@ -408,90 +408,6 @@ export default function CreateStampPage() {
         </div>
       )}
 
-      {step === "mode" && originalImage && (
-        <div className="w-full max-w-2xl text-center pt-10 relative z-10">
-          <h2 className="text-4xl font-kalam font-bold mb-8">Bạn muốn đăng như thế nào?</h2>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <button 
-              onClick={() => {
-                setStampStyle("postage_raw");
-                setCroppedImage(originalImage);
-                setupAutoGPS();
-                setStep("quick_post");
-              }}
-              className="flex-1 p-6 bg-marker-blue text-white border-[3px] border-pencil wobbly-border shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-y-1 transition-transform rotate-1"
-            >
-              <div className="text-2xl font-bold font-patrick mb-2">🚀 Đăng Nhanh</div>
-              <div className="text-sm opacity-90">Đăng ngay lập tức không cần chỉnh sửa</div>
-            </button>
-            <button 
-              onClick={() => setStep("crop")}
-              className="flex-1 p-6 bg-white text-pencil border-[3px] border-pencil wobbly-border shadow-[4px_4px_0_0_#2d2d2d] hover:-translate-y-1 transition-transform -rotate-1"
-            >
-              <div className="text-2xl font-bold font-patrick mb-2">🎨 Chỉnh Sửa Tem</div>
-              <div className="text-sm opacity-90">Cắt ảnh, thêm khung viền, bộ lọc màu</div>
-            </button>
-          </div>
-          <button onClick={() => {
-            setOriginalImage(null);
-            setStep("upload");
-          }} className="mt-8 text-pencil/70 font-bold underline font-patrick text-lg">Quay lại tải ảnh</button>
-        </div>
-      )}
-
-      {step === "quick_post" && croppedImage && (
-        <div className="w-full max-w-xl pt-6 flex flex-col items-center gap-6 relative z-10">
-          <div className="w-full max-w-sm">
-            <StampPreview 
-              ref={stampRef}
-              imageUrl={croppedImage} 
-              style="postage_raw"
-              metadata={metadata}
-            />
-          </div>
-          
-          <div className="w-full bg-white border-[3px] border-pencil wobbly-border-md shadow-pencil p-6 rotate-1">
-            <textarea 
-              value={metadata.story || ""}
-              onChange={(e) => setMetadata({...metadata, story: e.target.value})}
-              className="w-full px-4 py-3 border-[2px] border-pencil bg-muted-paper/30 wobbly-border focus:outline-none focus:ring-2 focus:ring-marker-blue/20 text-lg font-patrick placeholder-pencil/50 resize-none h-24 mb-4"
-              placeholder="Ghi chú về bức ảnh này..."
-            />
-            
-            <div className="flex flex-col gap-2 mb-6">
-               <label className="text-sm font-bold font-patrick">Quyền riêng tư</label>
-               <div className="flex gap-2 font-patrick">
-                 <button 
-                    onClick={() => setPrivacy("public")}
-                    className={`flex-1 py-2 font-bold text-sm border-2 transition-all ${privacy === "public" ? "border-pencil bg-postit shadow-[2px_2px_0_0_#2d2d2d] rotate-1" : "border-transparent text-pencil/50 hover:bg-muted-paper"}`}
-                 >Công khai</button>
-                 <button 
-                    onClick={() => setPrivacy("friend")}
-                    className={`flex-1 py-2 font-bold text-sm border-2 transition-all ${privacy === "friend" ? "border-pencil bg-postit shadow-[2px_2px_0_0_#2d2d2d] -rotate-1" : "border-transparent text-pencil/50 hover:bg-muted-paper"}`}
-                 >Bạn bè</button>
-                 <button 
-                    onClick={() => setPrivacy("private")}
-                    className={`flex-1 py-2 font-bold text-sm border-2 transition-all ${privacy === "private" ? "border-pencil bg-postit shadow-[2px_2px_0_0_#2d2d2d] rotate-1" : "border-transparent text-pencil/50 hover:bg-muted-paper"}`}
-                 >Riêng tư</button>
-               </div>
-            </div>
-
-            <button 
-              onClick={handleSaveToCollection}
-              disabled={isSaving || isSaved}
-              className={`w-full flex items-center justify-center gap-2 py-3 border-[3px] border-pencil wobbly-border shadow-[4px_4px_0_0_#2d2d2d] font-bold text-xl font-patrick transition-all disabled:opacity-50 ${
-                isSaved ? "bg-green-400" : "bg-marker-red text-white hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-              }`}
-            >
-              {isSaving ? "Đang gửi..." : isSaved ? "Đã ghim!" : <><Send size={20} /> Đăng ngay</>}
-            </button>
-            <button onClick={() => {
-              setStep("mode");
-            }} className="mt-6 w-full text-center text-pencil/70 font-bold underline font-patrick">Quay lại chọn chế độ</button>
-          </div>
-        </div>
-      )}
-
       {step === "crop" && originalImage && (
         <div className="w-full max-w-3xl pt-6 relative z-10">
           <div className="mb-6">
@@ -503,7 +419,7 @@ export default function CreateStampPage() {
             onCropSuccess={handleCropSuccess} 
             onCancel={() => {
               setOriginalImage(null);
-              setStep("mode");
+              setStep("upload");
             }}
           />
         </div>
