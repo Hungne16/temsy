@@ -36,6 +36,7 @@ const STAMP_STYLES: { id: StampStyle; name: string; type: "css" | "image" }[] = 
   { id: "postage", name: "Bưu chính", type: "css" },
   { id: "film", name: "Phim ảnh", type: "css" },
   { id: "wavy", name: "Lượn sóng", type: "css" },
+  { id: "ripped", name: "Giấy rách", type: "css" },
   { id: "template_1", name: "Khung 1", type: "image" },
   { id: "template_2", name: "Khung 2", type: "image" },
   { id: "template_3", name: "Khung 3", type: "image" },

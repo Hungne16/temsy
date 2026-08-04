@@ -8,7 +8,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "film" | "wavy" | "template_1" | "template_2" | "template_3" | "template_4" | "template_5";
+export type StampStyle = "vintage" | "modern" | "polaroid" | "minimal" | "postage" | "film" | "wavy" | "ripped" | "template_1" | "template_2" | "template_3" | "template_4" | "template_5";
 
 interface StampPreviewProps {
   imageUrl: string;
@@ -79,6 +79,24 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
     if (style === "postage") activeMask = postageEdge;
     if (style === "film") activeMask = filmEdge;
     if (style === "wavy") activeMask = wavyEdge;
+    if (style === "ripped") {
+      activeMask = {
+        WebkitMask: `
+          linear-gradient(#000 0 0) padding-box,
+          conic-gradient(from 135deg at 50% 0, transparent 90deg, #000 0) 0 0 / 10px 10px repeat-x,
+          conic-gradient(from -45deg at 50% 100%, transparent 90deg, #000 0) 0 100% / 10px 10px repeat-x,
+          conic-gradient(from 45deg at 100% 50%, transparent 90deg, #000 0) 100% 0 / 10px 10px repeat-y,
+          conic-gradient(from 225deg at 0 50%, transparent 90deg, #000 0) 0 0 / 10px 10px repeat-y
+        `,
+        mask: `
+          linear-gradient(#000 0 0) padding-box,
+          conic-gradient(from 135deg at 50% 0, transparent 90deg, #000 0) 0 0 / 10px 10px repeat-x,
+          conic-gradient(from -45deg at 50% 100%, transparent 90deg, #000 0) 0 100% / 10px 10px repeat-x,
+          conic-gradient(from 45deg at 100% 50%, transparent 90deg, #000 0) 100% 0 / 10px 10px repeat-y,
+          conic-gradient(from 225deg at 0 50%, transparent 90deg, #000 0) 0 0 / 10px 10px repeat-y
+        `
+      };
+    }
 
     return (
       <div 
@@ -93,6 +111,7 @@ export const StampPreview = forwardRef<HTMLDivElement, StampPreviewProps>(
           style === "postage" && "bg-white text-black p-3",
           style === "film" && "bg-[#111] text-white p-6",
           style === "wavy" && "bg-pastel-blue/10 text-pastel-blue-dark p-5",
+          style === "ripped" && "bg-[#f5e6d3] text-[#4a3f35] p-5",
           style.startsWith("template_") && "bg-transparent drop-shadow-none p-0",
           className
         )}
