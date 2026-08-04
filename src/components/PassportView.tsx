@@ -3,8 +3,8 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { MapPin, X, Save, Edit3, ChevronLeft, ChevronRight } from "lucide-react";
-import { updateStampMetadata } from "@/lib/stampService";
+import { MapPin, X, Save, Edit3, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { updateStampMetadata, deleteStamp } from "@/lib/stampService";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PassportViewProps {
@@ -58,6 +58,19 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
       console.error("Lỗi lưu hộ chiếu:", error);
     }
     setIsSaving(false);
+  };
+
+  const handleDeleteStamp = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Bạn có chắc chắn muốn xóa tem này vĩnh viễn? Dữ liệu trên web và Firebase đều sẽ bị xóa.")) return;
+    try {
+      await deleteStamp(id);
+      setLocalStamps(prev => prev.filter(s => s.id !== id));
+      if (selectedStampId === id) setSelectedStampId(null);
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi xóa tem");
+    }
   };
 
   const updateConfig = (id: string, config: any) => {
@@ -286,10 +299,17 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
                         />
                         <button 
                           onClick={() => { updateConfig(stamp.id, undefined); setSelectedStampId(null); }}
-                          className="p-1 hover:bg-red-100 rounded border-2 border-transparent hover:border-marker-red transition-colors ml-auto"
+                          className="p-1 hover:bg-yellow-100 rounded border-2 border-transparent hover:border-yellow-500 transition-colors ml-auto"
                           title="Cất về khay"
                         >
-                          <X size={20} className="text-marker-red" />
+                          <X size={20} className="text-yellow-600" />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDeleteStamp(stamp.id, e)}
+                          className="p-1 hover:bg-red-100 rounded border-2 border-transparent hover:border-marker-red transition-colors"
+                          title="Xóa tem vĩnh viễn"
+                        >
+                          <Trash2 size={20} className="text-marker-red" />
                         </button>
                       </div>
                     )}
@@ -321,15 +341,23 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
           </h4>
           <div className="flex flex-wrap gap-6 min-h-[120px]">
             {unplacedStamps.map(stamp => (
-              <div 
-                key={stamp.id}
-                onClick={() => {
-                   updateConfig(stamp.id, { x: 50, y: 50, rotation: 0 });
-                   setSelectedStampId(stamp.id);
-                }}
-                className="w-28 cursor-pointer hover:-translate-y-2 transition-transform shadow-lg"
-              >
-                <img src={stamp.imageUrl} alt="Stamp" className="w-full aspect-[3/4] object-cover border-2 border-pencil bg-white p-1 pointer-events-none" />
+              <div key={stamp.id} className="relative w-28 group">
+                <div 
+                  onClick={() => {
+                     updateConfig(stamp.id, { x: 50, y: 50, rotation: 0 });
+                     setSelectedStampId(stamp.id);
+                  }}
+                  className="w-full cursor-pointer hover:-translate-y-2 transition-transform shadow-lg"
+                >
+                  <img src={stamp.imageUrl} alt="Stamp" className="w-full aspect-[3/4] object-cover border-2 border-pencil bg-white p-1 pointer-events-none" />
+                </div>
+                <button 
+                  onClick={(e) => handleDeleteStamp(stamp.id, e)}
+                  className="absolute -top-2 -right-2 p-1.5 bg-white border-[2px] border-pencil rounded-full text-marker-red opacity-0 group-hover:opacity-100 transition-opacity shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-red-50 z-10"
+                  title="Xóa tem vĩnh viễn"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
             {unplacedStamps.length === 0 && (
