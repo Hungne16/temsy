@@ -139,23 +139,6 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
             <div className="w-32 h-32 md:w-40 md:h-40 border-[4px] border-pencil overflow-hidden bg-white shadow-pencil wobbly-border -rotate-2">
               <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full object-cover" />
             </div>
-            {/* Badge overlay */}
-            <div 
-              className={`absolute z-20 hover:scale-110 transition-transform duration-300 rotate-3 cursor-pointer ${
-                profile.customBadgeImage 
-                  ? '-top-3 -left-3 md:-top-4 md:-left-4 w-12 h-12 md:w-16 md:h-16' 
-                  : '-top-3 -left-3 md:-top-4 md:-left-4 w-10 h-16 md:w-12 md:h-20'
-              }`} 
-              onClick={() => setIsBadgesModalOpen(true)}
-            >
-              {profile.customBadgeImage ? (
-                <div className="w-full h-full rounded-full overflow-hidden border-2 border-white shadow-sm bg-white">
-                  <img src={profile.customBadgeImage} alt={profile.customBadgeTitle || "Custom Badge"} className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <img src={`/badges/${stampCount >= 50 ? 'legend' : stampCount >= 25 ? 'voyager' : stampCount >= 10 ? 'adventurer' : stampCount >= 5 ? 'traveler' : 'explorer'}.png`} alt="Badge" className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]" />
-              )}
-            </div>
           </div>
           
           <div className="flex-1 flex flex-col md:flex-row justify-between md:items-center gap-4">
