@@ -372,7 +372,7 @@ export default function CreateStampPage() {
         }
       }
 
-      const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 5, quality: 0.95 });
+      const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 2, quality: 0.85 });
       const { uploadStamp } = await import("@/lib/stampService");
       
       const newStamp = await uploadStamp(dataUrl, stampStyle, finalMetadata, privacy);
