@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getStampById, deleteStamp, updateStampMetadata, getComments, addComment, CommentData } from "@/lib/stampService";
 import { createReport } from "@/lib/reportService";
 import { sendMessage } from "@/lib/chatService";
-import { ArrowLeft, Trash2, Edit3, Save, X, MapPin, Calendar, Heart, Globe, Lock, Send, MessageCircle, Flag, Reply } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Edit3, Trash2, Reply, Flag, Heart, Share2, Send, Lock, Download, MessageCircle, Save, X, Globe } from "lucide-react";
 import AvatarWithBadge from "@/components/AvatarWithBadge";
 import Link from "next/link";
 
@@ -152,6 +152,36 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleDownloadStamp = async () => {
+    if (!stamp?.imageUrl) return;
+    try {
+      const response = await fetch(stamp.imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${stamp.metadata.title || 'temsy-stamp'}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Lỗi tải xuống:", error);
+      alert("Lỗi khi tải xuống tem.");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+    try {
+      const { deleteComment } = await import("@/lib/stampService");
+      await deleteComment(id, commentId);
+      setComments(comments.filter(c => c.id !== commentId));
+    } catch (error: any) {
+      alert("Lỗi khi xóa bình luận: " + error.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper">
@@ -180,10 +210,20 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
     <div className="min-h-screen p-6 md:p-12 pb-32 bg-paper text-pencil">
       <div className="max-w-6xl mx-auto">
         <header className="mb-10 flex items-center justify-between">
-          <button onClick={() => router.back()} className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-muted-paper transition-all -rotate-1 font-bold font-patrick text-lg">
-            <ArrowLeft size={20} />
-            Quay lại
-          </button>
+          <div className="flex gap-4 items-center">
+            <button onClick={() => router.back()} className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-muted-paper transition-all -rotate-1 font-bold font-patrick text-lg">
+              <ArrowLeft size={20} />
+              Quay lại
+            </button>
+            {(!stamp.metadata?.isSecret || isOwner) && (
+              <button 
+                onClick={handleDownloadStamp}
+                className="flex items-center gap-2 p-3 bg-white border-[3px] border-pencil wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] hover:bg-green-50 transition-all rotate-1 font-bold font-patrick text-lg text-green-700"
+              >
+                <Download size={18} /> Tải về
+              </button>
+            )}
+          </div>
           
           {isOwner && !isEditing && (
             <div className="flex gap-4">
@@ -456,7 +496,7 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </Link>
                           <div>
-                            <div className="bg-postit/30 border-2 border-pencil p-3 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] inline-block">
+                            <div className="bg-postit/30 border-2 border-pencil p-3 wobbly-border shadow-[2px_2px_0px_0px_#2d2d2d] inline-block relative pr-10">
                               <div className="flex items-baseline gap-2 mb-1">
                                 <Link href={`/profile/${comment.userId}`} className="font-bold font-kalam text-lg text-pencil hover:text-marker-blue transition-colors">
                                   {comment.userName}
@@ -464,6 +504,16 @@ export default function StampDetailPage({ params }: { params: Promise<{ id: stri
                                 <span className="text-xs font-patrick text-pencil/50">{dateStr}</span>
                               </div>
                               <p className="font-patrick text-lg text-pencil whitespace-pre-wrap leading-tight">{comment.text}</p>
+                              
+                              {(user?.uid === comment.userId || user?.email === 'admin123@gmail.temsy') && (
+                                <button 
+                                  onClick={() => comment.id && handleDeleteComment(comment.id)}
+                                  className="absolute top-2 right-2 text-pencil/40 hover:text-marker-red transition-colors"
+                                  title="Xóa bình luận"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>

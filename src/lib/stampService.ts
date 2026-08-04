@@ -258,3 +258,9 @@ export const addComment = async (stampId: string, text: string) => {
 
   return { id: docRef.id, ...comment, createdAt: { toMillis: () => Date.now() } };
 };
+
+export const deleteComment = async (stampId: string, commentId: string) => {
+  if (!auth.currentUser) throw new Error("Vui lòng đăng nhập để xóa bình luận!");
+  const commentRef = doc(db, "stamps", stampId, "comments", commentId);
+  await deleteDoc(commentRef);
+};
