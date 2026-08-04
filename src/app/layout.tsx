@@ -6,6 +6,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { FloatingDock } from "@/components/FloatingDock";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ChatBubble } from "@/components/ChatBubble";
+import { RewardPopup } from "@/components/RewardPopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,6 +68,7 @@ export default function RootLayout({
             <NotificationBell />
             <ChatBubble />
             <FloatingDock />
+            <RewardPopup />
           </SplashScreen>
         </AuthProvider>
       </body>

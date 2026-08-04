@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { getAllUsers, updateUserTitle, deleteUserProfile, createNewUser } from "@/lib/adminService";
 import { createPersonalNotification } from "@/lib/notificationService";
-import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check } from "lucide-react";
+import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check, Gift } from "lucide-react";
 import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AvatarWithBadge from "@/components/AvatarWithBadge";
+import Uploader from "@/components/Uploader";
+import { createRewardNotification } from "@/lib/notificationService";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -26,6 +28,11 @@ export default function AdminUsersPage() {
   // View user modal
   const [viewingUser, setViewingUser] = useState<any | null>(null);
   
+  // Reward modal
+  const [showRewardModal, setShowRewardModal] = useState(false);
+  const [rewardForm, setRewardForm] = useState({ uid: "", name: "", title: "", content: "", badgeTitle: "", badgeImage: "" });
+  const [rewardLoading, setRewardLoading] = useState(false);
+
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
 
   const handleCopyUid = (uid: string) => {
@@ -82,6 +89,37 @@ export default function AdminUsersPage() {
       alert("Đã gửi thông báo thành công!");
     } catch (err) {
       alert("Lỗi khi gửi thông báo.");
+    }
+  };
+
+  const handleOpenRewardModal = (user: any) => {
+    setRewardForm({ uid: user.id, name: user.displayName || user.name, title: "", content: "", badgeTitle: "", badgeImage: "" });
+    setShowRewardModal(true);
+  };
+
+  const handleSendReward = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rewardForm.title || !rewardForm.content) {
+      alert("Vui lòng nhập đủ Tiêu đề và Nội dung phần thưởng!");
+      return;
+    }
+    try {
+      setRewardLoading(true);
+      await createRewardNotification(
+        rewardForm.uid,
+        rewardForm.title,
+        rewardForm.content,
+        rewardForm.badgeTitle,
+        rewardForm.badgeImage
+      );
+      alert("Đã gửi phần thưởng thành công!");
+      setShowRewardModal(false);
+      setRewardForm({ uid: "", name: "", title: "", content: "", badgeTitle: "", badgeImage: "" });
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi gửi phần thưởng.");
+    } finally {
+      setRewardLoading(false);
     }
   };
 
@@ -173,6 +211,8 @@ export default function AdminUsersPage() {
                             avatarUrl={user.photoURL || user.avatar || ""} 
                             name={user.displayName || user.name || "U"}
                             stampCount={user.stampCount}
+                            customBadgeTitle={user.customBadgeTitle}
+                            customBadgeImage={user.customBadgeImage}
                             size="sm"
                           />
                         </div>
@@ -248,6 +288,13 @@ export default function AdminUsersPage() {
                           title="Gửi thông báo"
                         >
                           <Bell size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleOpenRewardModal(user)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-marker-red hover:bg-red-50 hover:border-marker-red/20 transition-all"
+                          title="Tặng thưởng"
+                        >
+                          <Gift size={18} />
                         </button>
                         <button 
                           onClick={() => handleDelete(user.id, user.displayName || user.name)}
@@ -352,16 +399,18 @@ export default function AdminUsersPage() {
             <h2 className="text-3xl font-kalam font-bold text-marker-blue mb-6 text-center">Trang cá nhân</h2>
             
             <div className="flex flex-col items-center text-center font-patrick">
-              <div className="w-24 h-24 rounded-full border-[3px] border-pencil overflow-hidden bg-muted-paper mb-4 shadow-sm">
+              <div className="mb-4">
                 {viewingUser.photoURL || viewingUser.avatar ? (
                   <AvatarWithBadge 
                     avatarUrl={viewingUser.photoURL || viewingUser.avatar || ""} 
                     name={viewingUser.displayName || viewingUser.name || "U"}
                     stampCount={viewingUser.stampCount}
+                    customBadgeTitle={viewingUser.customBadgeTitle}
+                    customBadgeImage={viewingUser.customBadgeImage}
                     size="lg"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center font-kalam font-bold text-4xl">
+                  <div className="w-24 h-24 rounded-full border-[3px] border-pencil overflow-hidden bg-muted-paper shadow-sm flex items-center justify-center font-kalam font-bold text-4xl">
                     {(viewingUser.displayName || viewingUser.name)?.charAt(0) || "U"}
                   </div>
                 )}
@@ -386,6 +435,96 @@ export default function AdminUsersPage() {
               <Link href={`/profile/${viewingUser.id}`} className="w-full py-3 bg-postit text-pencil font-bold text-xl border-[3px] border-pencil wobbly-border shadow-pencil hover:-translate-y-1 hover:shadow-pencil-hover transition-all flex items-center justify-center gap-2">
                 Xem toàn bộ hồ sơ
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reward Modal */}
+      {showRewardModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-lg border-[4px] border-pencil rounded-xl shadow-pencil overflow-hidden animate-in fade-in zoom-in duration-300 relative max-h-[90vh] flex flex-col">
+            <button 
+              onClick={() => setShowRewardModal(false)}
+              className="absolute top-4 right-4 p-2 text-pencil hover:bg-muted-paper rounded-full transition-colors z-10 bg-white/50"
+            >
+              <X size={24} />
+            </button>
+            
+            <div className="p-6 bg-pastel-blue text-white border-b-[4px] border-pencil">
+              <h3 className="text-3xl font-kalam font-bold flex items-center gap-3">
+                <Gift className="fill-white" size={28} />
+                Tặng thưởng cho {rewardForm.name}
+              </h3>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <form onSubmit={handleSendReward} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-pencil text-lg">Tiêu đề phần thưởng *</label>
+                  <input 
+                    type="text"
+                    value={rewardForm.title}
+                    onChange={(e) => setRewardForm({...rewardForm, title: e.target.value})}
+                    placeholder="VD: Quà tặng tri ân đặc biệt!"
+                    className="w-full px-4 py-3 bg-muted-paper border-2 border-pencil rounded-xl font-patrick text-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#2d2d2d] transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-pencil text-lg">Nội dung lời chúc *</label>
+                  <textarea 
+                    value={rewardForm.content}
+                    onChange={(e) => setRewardForm({...rewardForm, content: e.target.value})}
+                    placeholder="VD: Chúc mừng bạn đã có những tem rất đẹp!"
+                    className="w-full px-4 py-3 bg-muted-paper border-2 border-pencil rounded-xl font-patrick text-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#2d2d2d] transition-all resize-none h-24"
+                    required
+                  />
+                </div>
+                
+                <div className="pt-4 border-t-2 border-dashed border-pencil/20">
+                  <h4 className="font-kalam font-bold text-xl text-marker-red mb-2">Tùy chọn phong tặng Huy Hiệu</h4>
+                  <p className="text-sm text-pencil/70 font-patrick mb-4">Bạn có thể đính kèm một danh hiệu và hình ảnh huy hiệu đặc biệt vào phần thưởng này. Nếu bỏ trống, phần thưởng sẽ chỉ có thông báo chữ.</p>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-pencil text-lg">Danh hiệu phong tặng (Tùy chọn)</label>
+                      <input 
+                        type="text"
+                        value={rewardForm.badgeTitle}
+                        onChange={(e) => setRewardForm({...rewardForm, badgeTitle: e.target.value})}
+                        placeholder="VD: Đại sứ Temsy"
+                        className="w-full px-4 py-3 bg-muted-paper border-2 border-pencil rounded-xl font-patrick text-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#2d2d2d] transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-pencil text-lg">Ảnh huy hiệu tròn (Tùy chọn)</label>
+                      <div className="bg-muted-paper border-2 border-dashed border-pencil/50 rounded-xl p-4 flex flex-col items-center justify-center">
+                        <Uploader 
+                          onUpload={(url) => setRewardForm({...rewardForm, badgeImage: url})} 
+                          aspectRatio="1/1"
+                        />
+                        {rewardForm.badgeImage && (
+                          <div className="mt-4 p-2 border-2 border-pencil rounded-xl bg-white flex flex-col items-center gap-2">
+                            <span className="text-sm font-bold text-pencil">Ảnh đã chọn:</span>
+                            <div className="w-24 h-24 rounded-full border-2 border-pencil overflow-hidden bg-gray-100 shadow-inner flex items-center justify-center">
+                              <img src={rewardForm.badgeImage} alt="Preview Badge" className="w-full h-full object-cover" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={rewardLoading}
+                  className="w-full mt-4 bg-marker-red text-white py-4 rounded-xl font-bold font-patrick text-2xl border-[3px] border-pencil shadow-[4px_4px_0px_0px_#2d2d2d] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#2d2d2d] transition-all active:translate-y-2 active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {rewardLoading ? "Đang gửi..." : <><Gift size={24} /> Gửi Phần Thưởng Bất Ngờ</>}
+                </button>
+              </form>
             </div>
           </div>
         </div>

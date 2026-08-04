@@ -12,6 +12,8 @@ export interface UserProfile {
   role?: string;
   title?: string;
   friends?: string[];
+  customBadgeTitle?: string;
+  customBadgeImage?: string;
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {

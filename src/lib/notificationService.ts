@@ -4,7 +4,7 @@ import { collection, addDoc, serverTimestamp, query, where, doc, updateDoc, arra
 export interface NotificationData {
   id?: string;
   recipientId: string; // user.uid hoặc 'ALL'
-  type: 'system' | 'comment' | 'friend_request' | 'chat';
+  type: 'system' | 'comment' | 'friend_request' | 'chat' | 'reward';
   title: string;
   message: string;
   link?: string;
@@ -13,6 +13,11 @@ export interface NotificationData {
   isRead?: boolean; // Dùng cho thông báo cá nhân
   senderId?: string; // ID người gửi (dùng cho kết bạn)
   status?: 'pending' | 'accepted' | 'rejected'; // Trạng thái kết bạn
+  rewardData?: {
+    badgeTitle?: string;
+    badgeImage?: string;
+    content?: string;
+  };
   createdAt?: any;
 }
 
@@ -32,6 +37,36 @@ export const createPersonalNotification = async (recipientId: string, type: 'sys
     await addDoc(collection(db, "notifications"), notification);
   } catch (error) {
     console.error("Lỗi khi tạo thông báo cá nhân:", error);
+  }
+};
+
+// 1.2. Tạo thông báo phần thưởng (Surprise Reward)
+export const createRewardNotification = async (
+  recipientId: string, 
+  title: string, 
+  message: string, 
+  badgeTitle?: string, 
+  badgeImage?: string
+) => {
+  try {
+    const notification: any = {
+      recipientId,
+      type: 'reward',
+      title,
+      message,
+      isRead: false,
+      status: 'pending',
+      rewardData: {
+        badgeTitle: badgeTitle || "",
+        badgeImage: badgeImage || "",
+        content: message
+      },
+      createdAt: serverTimestamp(),
+    };
+    await addDoc(collection(db, "notifications"), notification);
+  } catch (error) {
+    console.error("Lỗi khi tạo phần thưởng:", error);
+    throw error;
   }
 };
 

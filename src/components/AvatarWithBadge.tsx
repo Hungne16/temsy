@@ -20,6 +20,8 @@ interface AvatarWithBadgeProps {
   stampCount?: number;
   size?: "sm" | "md" | "lg" | "xl";
   isLocked?: boolean;
+  customBadgeTitle?: string;
+  customBadgeImage?: string;
 }
 
 export default function AvatarWithBadge({
@@ -28,13 +30,15 @@ export default function AvatarWithBadge({
   title,
   stampCount,
   size = "md",
-  isLocked = false
+  isLocked = false,
+  customBadgeTitle,
+  customBadgeImage
 }: AvatarWithBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   // Compute title if stampCount is provided
-  let computedTitle = title || "Tân binh";
-  if (stampCount !== undefined) {
+  let computedTitle = customBadgeTitle || title || "Tân binh";
+  if (!customBadgeTitle && stampCount !== undefined) {
     if (stampCount >= 50) computedTitle = "Huyền thoại";
     else if (stampCount >= 25) computedTitle = "Nhà lữ hành";
     else if (stampCount >= 10) computedTitle = "Chuyên gia";
@@ -59,7 +63,8 @@ export default function AvatarWithBadge({
     xl: "w-24 h-40 -top-8 -left-8",
   };
 
-  const badgeImg = BADGE_IMAGES[computedTitle] || BADGE_IMAGES["default"];
+  const badgeImg = customBadgeImage || BADGE_IMAGES[computedTitle] || BADGE_IMAGES["default"];
+  const isCustom = !!customBadgeImage;
 
   return (
     <div className="relative inline-block"
@@ -81,8 +86,13 @@ export default function AvatarWithBadge({
           className={`absolute ${badgeSizeClasses[size]} z-10 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isHovered ? 'scale-110' : 'scale-100'}`}
         >
           <div className={`relative w-full h-full drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] ${isLocked ? 'grayscale opacity-70' : ''}`}>
-            {/* Using a placeholder for now, ideally next/image */}
-            <img src={badgeImg} alt={computedTitle} className="w-full h-full object-contain" />
+            {isCustom ? (
+              <div className="w-full h-full rounded-full overflow-hidden border-2 border-white shadow-sm bg-white">
+                <img src={badgeImg} alt={computedTitle} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <img src={badgeImg} alt={computedTitle} className="w-full h-full object-contain" />
+            )}
             
             {/* Lock Overlay */}
             {isLocked && (
