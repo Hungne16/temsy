@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, Calendar, Heart, Image as ImageIcon, Award, ArrowLeft, Lock, Globe, UserPlus, Check } from "lucide-react";
+import { MapPin, Calendar, Heart, Image as ImageIcon, Award, ArrowLeft, Lock, Globe, UserPlus, Check, X } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
 import Link from "next/link";
 import { useEffect, useState, use } from "react";

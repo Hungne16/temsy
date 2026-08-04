@@ -8,7 +8,7 @@ import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AvatarWithBadge from "@/components/AvatarWithBadge";
-import Uploader from "@/components/Uploader";
+import { Uploader } from "@/components/Uploader";
 import { createRewardNotification } from "@/lib/notificationService";
 
 export default function AdminUsersPage() {
@@ -501,8 +501,7 @@ export default function AdminUsersPage() {
                       <label className="font-bold text-pencil text-lg">Ảnh huy hiệu tròn (Tùy chọn)</label>
                       <div className="bg-muted-paper border-2 border-dashed border-pencil/50 rounded-xl p-4 flex flex-col items-center justify-center">
                         <Uploader 
-                          onUpload={(url) => setRewardForm({...rewardForm, badgeImage: url})} 
-                          aspectRatio="1/1"
+                          onImageSelected={(url) => setRewardForm({...rewardForm, badgeImage: url})} 
                         />
                         {rewardForm.badgeImage && (
                           <div className="mt-4 p-2 border-2 border-pencil rounded-xl bg-white flex flex-col items-center gap-2">
