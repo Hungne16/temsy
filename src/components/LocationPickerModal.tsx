@@ -47,7 +47,7 @@ export default function LocationPickerModal({
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=vn&accept-language=vi`);
       const data = await res.json();
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat);

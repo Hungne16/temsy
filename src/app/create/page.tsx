@@ -265,7 +265,7 @@ export default function CreateStampPage() {
             coordinates: { lat: pos.coords.latitude, lng: pos.coords.longitude }
           });
           
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=14&addressdetails=1`)
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=14&addressdetails=1&accept-language=vi`)
             .then(res => res.json())
             .then(data => {
               if (data && data.address) {
@@ -309,7 +309,7 @@ export default function CreateStampPage() {
     }));
     setIsMapPickerOpen(false);
 
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}&zoom=14&addressdetails=1`)
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}&zoom=14&addressdetails=1&accept-language=vi`)
       .then(res => res.json())
       .then(data => {
         if (data && data.address) {
@@ -358,7 +358,7 @@ export default function CreateStampPage() {
       // Nếu có location text mà chưa có toạ độ, thử dùng Nominatim để lấy toạ độ
       if (!finalMetadata.coordinates && finalMetadata.location && finalMetadata.location !== "Đang tải vị trí..." && finalMetadata.location !== "Chưa rõ vị trí") {
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalMetadata.location)}&limit=1`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalMetadata.location)}&limit=1&countrycodes=vn&accept-language=vi`);
           const data = await res.json();
           if (data && data.length > 0) {
             finalMetadata.coordinates = {
