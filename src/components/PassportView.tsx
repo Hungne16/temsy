@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { MapPin, RotateCcw, RotateCw, X, Save, Edit3 } from "lucide-react";
 import { updateStampMetadata } from "@/lib/stampService";
 
@@ -169,7 +168,7 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
               {displayStamps.map(stamp => {
                 const config = stamp.metadata.passportConfig!;
                 const dateObj = stamp.createdAt?.toMillis ? new Date(stamp.createdAt.toMillis()) : new Date();
-                const dateStr = format(dateObj, "dd/MM/yy");
+                const dateStr = dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' });
                 const isSelected = selectedStampId === stamp.id;
 
                 const handlePointerDown = (e: React.PointerEvent) => {

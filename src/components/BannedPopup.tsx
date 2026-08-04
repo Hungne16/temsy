@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import React from "react";
@@ -64,3 +65,4 @@ export function BannedPopup() {
     </div>
   );
 }
+

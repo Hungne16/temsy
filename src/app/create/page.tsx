@@ -354,7 +354,7 @@ export default function CreateStampPage() {
     setIsSaving(true);
     
     try {
-      let finalMetadata = { ...metadata };
+      const finalMetadata = { ...metadata };
       // Nếu có location text mà chưa có toạ độ, thử dùng Nominatim để lấy toạ độ
       if (!finalMetadata.coordinates && finalMetadata.location && finalMetadata.location !== "Đang tải vị trí..." && finalMetadata.location !== "Chưa rõ vị trí") {
         try {

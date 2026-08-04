@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where, or, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, or, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { StampStyle } from "@/components/StampPreview";
 
 export interface StampMetadata {
@@ -152,8 +152,6 @@ export const getMapStamps = async (currentUserId?: string) => {
     return [];
   }
 };
-
-import { doc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
 
 export const getStampById = async (id: string) => {
   const docRef = doc(db, "stamps", id);

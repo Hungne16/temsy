@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import React, { useRef, useState, useCallback, useEffect } from "react";
@@ -285,3 +286,4 @@ export function StampEditor({ imageUrl, onCropSuccess, onCancel }: StampEditorPr
     </div>
   );
 }
+

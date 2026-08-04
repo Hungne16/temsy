@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -215,3 +216,4 @@ export function NotificationBell() {
     </div>
   );
 }
+

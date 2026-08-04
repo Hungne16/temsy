@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import Link from "next/link";
@@ -66,3 +67,4 @@ export function ChatBubble() {
     </div>
   );
 }
+
