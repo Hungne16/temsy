@@ -75,9 +75,9 @@ export function RewardPopup() {
       });
 
       // 2. If accepted and it has a badge, update user profile
-      if (action === 'accepted' && rewardNotif.rewardData?.badgeTitle) {
+      if (action === 'accepted' && (rewardNotif.rewardData?.badgeTitle || rewardNotif.rewardData?.badgeImage)) {
         await updateUserProfile(user.uid, {
-          customBadgeTitle: rewardNotif.rewardData.badgeTitle,
+          customBadgeTitle: rewardNotif.rewardData.badgeTitle || "",
           customBadgeImage: rewardNotif.rewardData.badgeImage || ""
         });
       }
