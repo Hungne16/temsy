@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where, or } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, or, doc, getDoc, updateDoc } from "firebase/firestore";
 import { StampStyle } from "@/components/StampPreview";
 
 export interface StampMetadata {
@@ -10,6 +10,7 @@ export interface StampMetadata {
   coordinates?: { lat: number; lng: number };
   isSecret?: boolean;
   audioData?: string;
+  passportConfig?: { x: number; y: number; rotation: number; };
 }
 
 export const uploadStamp = async (
@@ -38,6 +39,39 @@ export const uploadStamp = async (
   };
 
   const docRef = await addDoc(collection(db, "stamps"), stampDoc);
+  
+  // -- CẬP NHẬT STATS VÀ THÀNH TỰU TỰ ĐỘNG --
+  try {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const currentStats = userData.stats || { stamps: 0, albums: 0, followers: 0, following: 0 };
+      const newStampsCount = (currentStats.stamps || 0) + 1;
+      
+      let newBadge = null;
+      if (newStampsCount === 1) newBadge = "Khởi hành 🌱";
+      else if (newStampsCount === 5) newBadge = "Người sưu tầm 📸";
+      else if (newStampsCount === 20) newBadge = "Chuyên gia tem 🎨";
+      else if (newStampsCount === 50) newBadge = "Bậc thầy Temsy 👑";
+
+      const updates: any = {
+        "stats.stamps": newStampsCount
+      };
+
+      if (newBadge) {
+        updates.title = newBadge;
+        updates.customBadgeTitle = newBadge;
+        updates.customBadgeImage = ""; // Dùng icon mặc định
+        updates.hasUnseenBadge = true;
+      }
+
+      await updateDoc(userRef, updates);
+    }
+  } catch (error) {
+    console.error("Lỗi cập nhật thành tựu:", error);
+  }
+
   return { id: docRef.id, ...stampDoc };
 };
 
@@ -142,7 +176,28 @@ export const getStampById = async (id: string) => {
 
 export const deleteStamp = async (id: string) => {
   const docRef = doc(db, "stamps", id);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return;
+  
+  const uid = snap.data().userId;
   await deleteDoc(docRef);
+
+  // Giảm số lượng tem của user
+  try {
+    if (uid) {
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        const currentStamps = userData.stats?.stamps || 0;
+        await updateDoc(userRef, {
+          "stats.stamps": Math.max(0, currentStamps - 1)
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi khi giảm số lượng tem:", err);
+  }
 };
 
 export const updateStampMetadata = async (id: string, metadata: StampMetadata) => {

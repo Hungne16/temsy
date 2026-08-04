@@ -117,6 +117,16 @@ export default function AdminUsersPage() {
         rewardForm.badgeTitle,
         rewardForm.badgeImage
       );
+
+      if (rewardForm.badgeTitle) {
+        const { updateDoc, doc } = await import("firebase/firestore");
+        await updateDoc(doc(db, "users", rewardForm.uid), {
+          customBadgeTitle: rewardForm.badgeTitle,
+          customBadgeImage: rewardForm.badgeImage || "",
+          hasUnseenBadge: true
+        });
+      }
+
       alert("Đã gửi phần thưởng thành công!");
       setShowRewardModal(false);
       setRewardForm({ uid: "", name: "", title: "", content: "", badgeTitle: "", badgeImage: "" });

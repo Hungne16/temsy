@@ -1,7 +1,8 @@
 "use client";
 
-import { MapPin, Calendar, Heart, Image as ImageIcon, Award, ArrowLeft, Lock, Globe, UserPlus, Check, X } from "lucide-react";
+import { MapPin, Calendar, Heart, Image as ImageIcon, Award, ArrowLeft, Lock, Globe, UserPlus, Check, X, BookOpen, Stamp } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
+import PassportView from "@/components/PassportView";
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { getUserStamps } from "@/lib/stampService";
@@ -24,7 +25,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
   
   // Album states
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view'>('stamps');
+  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view' | 'passport'>('stamps');
   const [viewingAlbum, setViewingAlbum] = useState<Album | null>(null);
 
   // Badges Modal
@@ -248,6 +249,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
           >
             Bộ Sưu Tập
           </button>
+          <button 
+            onClick={() => setActiveTab('passport')}
+            className={`px-6 py-2 font-kalam font-bold text-2xl border-[3px] border-pencil wobbly-border shadow-pencil transition-all ${activeTab === 'passport' ? 'bg-postit text-pencil -rotate-2' : 'bg-white text-pencil hover:bg-muted-paper rotate-1'}`}
+          >
+            Hộ Chiếu Tem
+          </button>
         </div>
 
         {/* User's Stamps or Albums */}
@@ -268,6 +275,16 @@ export default function PublicProfilePage({ params }: { params: Promise<{ id: st
                 </div>
               )}
             </div>
+          </>
+        ) : activeTab === 'passport' ? (
+          <>
+            <div className="mb-6 flex justify-between items-end">
+              <div>
+                <h2 className="text-3xl font-kalam font-bold text-postit-yellow rotate-1">Hộ chiếu của {profile.displayName}</h2>
+                <p className="font-patrick text-pencil/70 font-bold">Lưu giữ hành trình qua những con tem</p>
+              </div>
+            </div>
+            <PassportView stamps={stamps} isOwner={false} />
           </>
         ) : activeTab === 'albums' ? (
           <>

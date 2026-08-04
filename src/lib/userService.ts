@@ -14,6 +14,7 @@ export interface UserProfile {
   friends?: string[];
   customBadgeTitle?: string;
   customBadgeImage?: string;
+  hasUnseenBadge?: boolean;
   isBanned?: boolean;
   banReason?: string;
   banUntil?: number;

@@ -13,11 +13,12 @@ import {
   updateProfile
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
   userProfile: any | null;
+  setUserProfile: React.Dispatch<React.SetStateAction<any | null>>;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (e: string, p: string) => Promise<void>;
@@ -29,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userProfile: null,
+  setUserProfile: () => {},
   loading: true,
   signInWithGoogle: async () => {},
   signInWithEmail: async () => {},
@@ -52,51 +54,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    let unsubProfile: (() => void) | null = null;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Create user document in Firestore if it doesn't exist, and fetch userProfile
+        // Listen to user document in Firestore
         try {
           const userDocRef = doc(db, "users", currentUser.uid);
-          const docSnap = await getDoc(userDocRef);
-          if (!docSnap.exists()) {
-            const newProfile = {
-              uid: currentUser.uid,
-              name: currentUser.displayName,
-              email: currentUser.email,
-              avatar: currentUser.photoURL,
-              joinDate: new Date().toISOString(),
-              stats: { stamps: 0, albums: 0, followers: 0, following: 0 },
-              role: "user"
-            };
-            await setDoc(userDocRef, newProfile);
-            setUserProfile(newProfile);
-          } else {
-            const data = docSnap.data();
-            // Tự động gỡ ban nếu đã hết hạn
-            if (data.isBanned && data.banUntil && Date.now() >= data.banUntil) {
-              await updateDoc(userDocRef, {
-                isBanned: false,
-                banReason: null,
-                banUntil: null
-              });
-              data.isBanned = false;
-              data.banReason = null;
-              data.banUntil = null;
+          
+          unsubProfile = onSnapshot(userDocRef, async (docSnap) => {
+            if (!docSnap.exists()) {
+              const newProfile = {
+                uid: currentUser.uid,
+                name: currentUser.displayName,
+                email: currentUser.email,
+                avatar: currentUser.photoURL,
+                joinDate: new Date().toISOString(),
+                stats: { stamps: 0, albums: 0, followers: 0, following: 0 },
+                role: "user"
+              };
+              await setDoc(userDocRef, newProfile);
+              setUserProfile(newProfile);
+            } else {
+              const data = docSnap.data();
+              // Tự động gỡ ban nếu đã hết hạn
+              if (data.isBanned && data.banUntil && Date.now() >= data.banUntil) {
+                await updateDoc(userDocRef, {
+                  isBanned: false,
+                  banReason: null,
+                  banUntil: null
+                });
+                data.isBanned = false;
+                data.banReason = null;
+                data.banUntil = null;
+              }
+              setUserProfile(data);
             }
-            setUserProfile(data);
-          }
+          });
         } catch (error) {
           console.error("Error creating user profile in Firestore:", error);
         }
       } else {
         setUser(null);
         setUserProfile(null);
+        if (unsubProfile) {
+          unsubProfile();
+          unsubProfile = null;
+        }
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubProfile) unsubProfile();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
@@ -158,7 +170,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userProfile, 
+      setUserProfile,
+      loading, 
+      signInWithGoogle, 
+      signInWithEmail,
+      registerWithEmail,
+      resetPassword,
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

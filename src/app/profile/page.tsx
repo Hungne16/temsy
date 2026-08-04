@@ -1,8 +1,9 @@
 "use client";
 
 import { MOCK_STAMPS, MOCK_ALBUMS } from "@/lib/mockData";
-import { Settings, MapPin, Calendar, Heart, Image as ImageIcon, Award, Camera, X, LogOut, Plus, Trash2, Pen, ArrowLeft, ShieldAlert, MessageSquare, UserPlus, Copy, Check, Users as UsersIcon } from "lucide-react";
+import { Heart, Plus, Save, Trash2, X, Settings, Camera, Pen, RefreshCw, MessageSquare, ShieldAlert, Check, Copy, MapPin, Calendar, ImageIcon, Users as UsersIcon, LogOut, Award, UserPlus, ArrowLeft } from "lucide-react";
 import { StampCard } from "@/components/StampCard";
+import PassportView from "@/components/PassportView";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useRef } from "react";
@@ -26,7 +27,7 @@ export default function ProfilePage() {
   
   // Album states
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view' | 'friends'>('stamps');
+  const [activeTab, setActiveTab] = useState<'stamps' | 'albums' | 'album_view' | 'friends' | 'passport'>('stamps');
   const [viewingAlbum, setViewingAlbum] = useState<Album | null>(null);
   const [isCreatingAlbum, setIsCreatingAlbum] = useState(false);
   const [newAlbumTitle, setNewAlbumTitle] = useState("");
@@ -536,6 +537,12 @@ export default function ProfilePage() {
             Bộ Sưu Tập
           </button>
           <button 
+            onClick={() => setActiveTab('passport')}
+            className={`px-6 py-2 font-kalam font-bold text-2xl border-[3px] border-pencil wobbly-border shadow-pencil transition-all ${activeTab === 'passport' ? 'bg-postit text-pencil -rotate-2' : 'bg-white text-pencil hover:bg-muted-paper rotate-1'}`}
+          >
+            Hộ Chiếu Tem
+          </button>
+          <button 
             onClick={() => setActiveTab('friends')}
             className={`px-6 py-2 font-kalam font-bold text-2xl border-[3px] border-pencil wobbly-border shadow-pencil transition-all ${activeTab === 'friends' ? 'bg-postit text-pencil rotate-2' : 'bg-white text-pencil hover:bg-muted-paper -rotate-1'}`}
           >
@@ -563,6 +570,16 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+          </>
+        ) : activeTab === 'passport' ? (
+          <>
+            <div className="mb-6 flex justify-between items-end">
+              <div>
+                <h2 className="text-3xl font-kalam font-bold text-postit-yellow rotate-1">Hộ chiếu của bạn</h2>
+                <p className="font-patrick text-pencil/70 font-bold">Lưu giữ hành trình qua những con tem</p>
+              </div>
+            </div>
+            <PassportView stamps={stamps} isOwner={true} />
           </>
         ) : activeTab === 'albums' ? (
           <>
