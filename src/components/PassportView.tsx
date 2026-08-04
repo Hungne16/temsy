@@ -1,9 +1,11 @@
+/* eslint-disable */
 "use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { MapPin, RotateCcw, RotateCw, X, Save, Edit3 } from "lucide-react";
+import { MapPin, X, Save, Edit3, ChevronLeft, ChevronRight } from "lucide-react";
 import { updateStampMetadata } from "@/lib/stampService";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PassportViewProps {
   stamps: any[];
@@ -15,6 +17,7 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
   const [isSaving, setIsSaving] = useState(false);
   const [localStamps, setLocalStamps] = useState(stamps);
   const [selectedStampId, setSelectedStampId] = useState<string | null>(null);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   // Group stamps by Province/City
   const groupedStamps = useMemo(() => {
@@ -74,93 +77,142 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
     );
   }
 
+  // Ensure current page is valid
+  const currentProvince = provinces[currentPageIndex] || provinces[0];
+  const provinceStamps = groupedStamps[currentProvince];
+  const placedStamps = provinceStamps.filter(s => s.metadata?.passportConfig);
+  
+  // Auto-placement logic if no config exists yet and not in edit mode
+  const autoPlacedStamps = !isEditMode ? provinceStamps.map((s, idx) => {
+     if (s.metadata?.passportConfig) return s;
+     const rot = (idx * 7) % 16 - 8;
+     const cols = 3;
+     const col = idx % cols;
+     const row = Math.floor(idx / cols);
+     return {
+        ...s,
+        metadata: {
+           ...s.metadata,
+           passportConfig: {
+              x: 20 + (col * 30),
+              y: 20 + (row * 30),
+              rotation: rot
+           }
+        }
+     };
+  }) : placedStamps;
+
+  const displayStamps = isEditMode ? placedStamps : autoPlacedStamps;
+  const unplacedStamps = isEditMode ? provinceStamps.filter(s => !s.metadata?.passportConfig) : [];
+
+  const handleNextPage = () => {
+    if (currentPageIndex < provinces.length - 1) setCurrentPageIndex(prev => prev + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPageIndex > 0) setCurrentPageIndex(prev => prev - 1);
+  };
+
   return (
-    <div className="flex flex-col gap-8 max-w-4xl mx-auto py-4 relative">
-      {/* Edit Controls */}
-      {isOwner && (
-        <div className="flex justify-end mb-2 sticky top-4 z-[100]">
-          {!isEditMode ? (
-            <button 
-              onClick={() => setIsEditMode(true)}
-              className="flex items-center gap-2 px-6 py-3 border-[3px] border-pencil bg-marker-blue text-white wobbly-border shadow-pencil font-bold font-patrick text-xl hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rotate-2"
-            >
-              <Edit3 size={20} />
-              Trang trí
-            </button>
-          ) : (
-            <div className="flex gap-4">
-              <button 
-                onClick={() => {
-                  setLocalStamps(stamps); // reset
-                  setIsEditMode(false);
-                  setSelectedStampId(null);
-                }}
-                className="px-4 py-2 border-[3px] border-pencil bg-white text-pencil wobbly-border shadow-pencil font-bold font-patrick text-lg hover:bg-muted-paper transition-all"
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-6 py-2 border-[3px] border-pencil bg-marker-red text-white wobbly-border shadow-pencil font-bold font-patrick text-xl hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
-              >
-                {isSaving ? "Đang lưu..." : <><Save size={20} /> Lưu Hộ chiếu</>}
-              </button>
-            </div>
-          )}
+    <div className="flex flex-col gap-4 max-w-4xl mx-auto py-4 relative">
+      {/* Top Bar: Edit Controls & Pagination */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-2 sticky top-4 z-[100]">
+        
+        {/* Pagination Navigation */}
+        <div className="flex items-center gap-4 bg-white/90 backdrop-blur border-[3px] border-pencil p-2 rounded-full wobbly-border shadow-pencil">
+          <button 
+            onClick={handlePrevPage} 
+            disabled={currentPageIndex === 0}
+            className="p-2 bg-muted-paper rounded-full disabled:opacity-30 hover:bg-pencil hover:text-white transition-colors border-2 border-pencil"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <span className="font-patrick font-bold text-lg min-w-[120px] text-center">
+            Trang {currentPageIndex + 1} / {provinces.length}
+          </span>
+          <button 
+            onClick={handleNextPage} 
+            disabled={currentPageIndex === provinces.length - 1}
+            className="p-2 bg-muted-paper rounded-full disabled:opacity-30 hover:bg-pencil hover:text-white transition-colors border-2 border-pencil"
+          >
+            <ChevronRight size={24} />
+          </button>
         </div>
-      )}
 
-      {provinces.map((province, index) => {
-        const provinceStamps = groupedStamps[province];
-        const placedStamps = provinceStamps.filter(s => s.metadata?.passportConfig);
-        
-        // Auto-placement logic if no config exists yet and not in edit mode
-        const autoPlacedStamps = !isEditMode ? provinceStamps.map((s, idx) => {
-           if (s.metadata?.passportConfig) return s;
-           // calculate some random grid pos if not placed
-           const rot = (idx * 7) % 16 - 8;
-           const cols = 3;
-           const col = idx % cols;
-           const row = Math.floor(idx / cols);
-           return {
-              ...s,
-              metadata: {
-                 ...s.metadata,
-                 passportConfig: {
-                    x: 20 + (col * 30),
-                    y: 20 + (row * 30),
-                    rotation: rot
-                 }
-              }
-           };
-        }) : placedStamps;
+        {/* Edit Button */}
+        {isOwner && (
+          <div>
+            {!isEditMode ? (
+              <button 
+                onClick={() => setIsEditMode(true)}
+                className="flex items-center gap-2 px-6 py-3 border-[3px] border-pencil bg-marker-blue text-white wobbly-border shadow-pencil font-bold font-patrick text-xl hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rotate-2"
+              >
+                <Edit3 size={20} />
+                Trang trí
+              </button>
+            ) : (
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => {
+                    setLocalStamps(stamps); // reset
+                    setIsEditMode(false);
+                    setSelectedStampId(null);
+                  }}
+                  className="px-4 py-2 border-[3px] border-pencil bg-white text-pencil wobbly-border shadow-pencil font-bold font-patrick text-lg hover:bg-muted-paper transition-all"
+                >
+                  Hủy
+                </button>
+                <button 
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-6 py-2 border-[3px] border-pencil bg-marker-red text-white wobbly-border shadow-pencil font-bold font-patrick text-xl hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                >
+                  {isSaving ? "Đang lưu..." : <><Save size={20} /> Lưu Hộ chiếu</>}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-        const displayStamps = isEditMode ? placedStamps : autoPlacedStamps;
-        const unplacedStamps = isEditMode ? provinceStamps.filter(s => !s.metadata?.passportConfig) : [];
-
-        const pageRotation = index % 2 === 0 ? "rotate-1" : "-rotate-1";
-        
-        return (
-          <div key={province} className="mb-12">
+      {/* Book Container with perspective */}
+      <div className="perspective-[1500px] w-full mt-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentProvince}
+            initial={{ rotateY: -90, opacity: 0, x: -50 }}
+            animate={{ rotateY: 0, opacity: 1, x: 0 }}
+            exit={{ rotateY: 90, opacity: 0, x: 50 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            style={{ transformOrigin: "left center" }}
+            className="w-full"
+          >
+            {/* The Book Page */}
             <div 
-              className={`bg-white border-[3px] border-pencil shadow-pencil wobbly-border p-6 md:p-10 ${pageRotation} relative overflow-hidden`}
+              className={`bg-[#fdfaf6] border-[4px] border-[#3e2723] rounded-r-2xl border-l-[40px] border-l-[#5d4037] shadow-[15px_15px_30px_rgba(0,0,0,0.3),_inset_10px_0_20px_rgba(0,0,0,0.15)] p-6 md:p-10 relative overflow-hidden`}
               style={{
                 backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')",
-                minHeight: '600px'
+                minHeight: '650px'
               }}
               onClick={() => {
                 if (isEditMode) setSelectedStampId(null);
               }}
             >
+              {/* Page Binding details */}
+              <div className="absolute left-[-35px] top-10 bottom-10 w-2 flex flex-col justify-between opacity-50 z-0">
+                 {[...Array(6)].map((_, i) => (
+                    <div key={i} className="w-full h-1 bg-black/60 rounded-full" />
+                 ))}
+              </div>
+
               {/* Passport Page Header */}
-              <div className="flex items-center justify-between border-b-2 border-pencil/30 pb-4 mb-8">
-                <div className="flex items-center gap-2 text-marker-red">
-                  <MapPin size={28} />
-                  <h3 className="font-kalam font-bold text-3xl">{province}</h3>
+              <div className="flex items-center justify-between border-b-[3px] border-dashed border-[#5d4037]/30 pb-4 mb-8">
+                <div className="flex items-center gap-2 text-[#5d4037]">
+                  <MapPin size={32} />
+                  <h3 className="font-kalam font-bold text-4xl">{currentProvince}</h3>
                 </div>
-                <div className="font-patrick font-bold text-pencil/40 text-xl border-2 border-pencil/30 px-3 py-1 rounded-full bg-white/50 backdrop-blur">
-                  Trang {index + 1}
+                <div className="font-patrick font-bold text-[#5d4037]/40 text-xl border-2 border-[#5d4037]/30 px-4 py-1 rounded-full bg-white/30 backdrop-blur">
+                  Khu vực {currentPageIndex + 1}
                 </div>
               </div>
 
@@ -219,75 +271,77 @@ export default function PassportView({ stamps, isOwner = false }: PassportViewPr
                   >
                     {/* Toolbar for selected stamp in edit mode */}
                     {isEditMode && isSelected && (
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex gap-1 bg-white border-[3px] border-pencil p-1 shadow-[2px_2px_0_0_#2d2d2d] z-50">
+                      <div 
+                         className="absolute -top-14 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white border-[3px] border-pencil px-3 py-1 shadow-[4px_4px_0_0_#2d2d2d] z-50 rounded-lg min-w-[200px]"
+                         onPointerDown={(e) => e.stopPropagation()} // stop dragging when clicking toolbar
+                      >
+                        <span className="font-patrick font-bold text-pencil text-sm whitespace-nowrap">Góc xoay:</span>
+                        <input 
+                           type="range" 
+                           min="-180" 
+                           max="180" 
+                           value={config.rotation} 
+                           onChange={(e) => updateConfig(stamp.id, { ...config, rotation: Number(e.target.value) })}
+                           className="w-24 accent-marker-blue cursor-ew-resize"
+                        />
                         <button 
-                          onClick={(e) => { e.stopPropagation(); updateConfig(stamp.id, { ...config, rotation: config.rotation - 15 }); }}
-                          className="p-1 hover:bg-muted-paper"
-                          title="Xoay trái"
-                        >
-                          <RotateCcw size={16} className="text-pencil" />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); updateConfig(stamp.id, { ...config, rotation: config.rotation + 15 }); }}
-                          className="p-1 hover:bg-muted-paper"
-                          title="Xoay phải"
-                        >
-                          <RotateCw size={16} className="text-pencil" />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); updateConfig(stamp.id, undefined); setSelectedStampId(null); }}
-                          className="p-1 hover:bg-red-100"
+                          onClick={() => { updateConfig(stamp.id, undefined); setSelectedStampId(null); }}
+                          className="p-1 hover:bg-red-100 rounded border-2 border-transparent hover:border-marker-red transition-colors ml-auto"
                           title="Cất về khay"
                         >
-                          <X size={16} className="text-marker-red" />
+                          <X size={20} className="text-marker-red" />
                         </button>
                       </div>
                     )}
 
                     {/* Stamp Visuals */}
                     {isEditMode ? (
-                      <div className={`relative ${isSelected ? 'ring-4 ring-marker-blue ring-offset-2 ring-offset-transparent' : ''}`}>
-                         <StampContent stamp={stamp} province={province} dateStr={dateStr} />
+                      <div className={`relative ${isSelected ? 'ring-[6px] ring-marker-blue ring-offset-2 ring-offset-transparent shadow-2xl scale-105 transition-transform' : ''}`}>
+                         <StampContent stamp={stamp} province={currentProvince} dateStr={dateStr} />
                       </div>
                     ) : (
                       <Link href={`/stamp/${stamp.id}`} className="block relative hover:scale-110 transition-transform z-10 hover:z-50">
-                         <StampContent stamp={stamp} province={province} dateStr={dateStr} />
+                         <StampContent stamp={stamp} province={currentProvince} dateStr={dateStr} />
                       </Link>
                     )}
                   </div>
                 );
               })}
             </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-            {/* Inventory Tray (Edit Mode Only) */}
-            {isEditMode && (
-              <div className="mt-4 bg-[#f8f9fa] border-[3px] border-dashed border-pencil p-4 wobbly-border shadow-inner">
-                <h4 className="font-bold font-patrick text-pencil mb-2 flex justify-between items-center text-lg">
-                  <span>Khay tem chưa dán ({unplacedStamps.length})</span>
-                  <span className="text-sm text-pencil/60 hidden sm:block">Nhấn vào tem để dán lên trang</span>
-                </h4>
-                <div className="flex flex-wrap gap-4 min-h-[100px]">
-                  {unplacedStamps.map(stamp => (
-                    <div 
-                      key={stamp.id}
-                      onClick={() => {
-                         updateConfig(stamp.id, { x: 50, y: 50, rotation: 0 });
-                         setSelectedStampId(stamp.id);
-                      }}
-                      className="w-24 cursor-pointer hover:-translate-y-2 transition-transform shadow-md"
-                    >
-                      <img src={stamp.imageUrl} alt="Stamp" className="w-full aspect-[3/4] object-cover border-2 border-pencil bg-white p-1 pointer-events-none" />
-                    </div>
-                  ))}
-                  {unplacedStamps.length === 0 && (
-                    <p className="text-base font-patrick text-pencil/50 italic self-center">Bạn đã dán tất cả tem của khu vực này lên trang Hộ chiếu.</p>
-                  )}
-                </div>
+      {/* Inventory Tray (Edit Mode Only) */}
+      {isEditMode && (
+        <div className="mt-8 bg-[#f8f9fa] border-[3px] border-dashed border-pencil p-6 wobbly-border shadow-inner rounded-xl">
+          <h4 className="font-bold font-patrick text-pencil mb-4 flex justify-between items-center text-xl">
+            <span>Khay tem chưa dán ({unplacedStamps.length})</span>
+            <span className="text-base text-pencil/60 hidden sm:block">Nhấn vào tem để dán lên trang hiện tại</span>
+          </h4>
+          <div className="flex flex-wrap gap-6 min-h-[120px]">
+            {unplacedStamps.map(stamp => (
+              <div 
+                key={stamp.id}
+                onClick={() => {
+                   updateConfig(stamp.id, { x: 50, y: 50, rotation: 0 });
+                   setSelectedStampId(stamp.id);
+                }}
+                className="w-28 cursor-pointer hover:-translate-y-2 transition-transform shadow-lg"
+              >
+                <img src={stamp.imageUrl} alt="Stamp" className="w-full aspect-[3/4] object-cover border-2 border-pencil bg-white p-1 pointer-events-none" />
+              </div>
+            ))}
+            {unplacedStamps.length === 0 && (
+              <div className="w-full flex items-center justify-center p-8">
+                 <p className="text-lg font-patrick text-pencil/50 italic bg-white px-6 py-2 border-2 border-dashed border-pencil/30 rounded-lg">
+                    Bạn đã dán tất cả tem của khu vực này lên trang Hộ chiếu.
+                 </p>
               </div>
             )}
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
