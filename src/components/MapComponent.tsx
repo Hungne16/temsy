@@ -111,7 +111,7 @@ export default function MapComponent() {
 
   // ── Distance-based clustering (Haversine, radius ~300m) ─────────────────
   // Gom mọi tem (kể cả của nhiều người) trong vòng 300m vào 1 cụm
-  const clusterRadius = 300; // metres
+  const clusterRadius = 5; // metres
 
   function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number) {
     const R = 6371000;
