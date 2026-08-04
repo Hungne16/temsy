@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getAllUsers, updateUserTitle, deleteUserProfile, createNewUser } from "@/lib/adminService";
 import { createPersonalNotification } from "@/lib/notificationService";
-import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check, Gift } from "lucide-react";
+import { Search, Edit2, Trash2, UserPlus, X, Save, Key, Shield, Bell, Copy, Check, Gift, Ban, Unlock } from "lucide-react";
 import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -34,6 +34,11 @@ export default function AdminUsersPage() {
   const [rewardLoading, setRewardLoading] = useState(false);
 
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
+
+  // Ban modal
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banForm, setBanForm] = useState({ uid: "", name: "", reason: "", duration: "1_day" });
+  const [banLoading, setBanLoading] = useState(false);
 
   const handleCopyUid = (uid: string) => {
     const shortUid = uid.substring(uid.length - 4);
@@ -120,6 +125,60 @@ export default function AdminUsersPage() {
       alert("Lỗi gửi phần thưởng.");
     } finally {
       setRewardLoading(false);
+    }
+  };
+
+  const handleOpenBanModal = (user: any) => {
+    setBanForm({ uid: user.id, name: user.displayName || user.name, reason: "", duration: "1_day" });
+    setShowBanModal(true);
+  };
+
+  const handleBanUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!banForm.reason) {
+      alert("Vui lòng nhập lý do cấm!");
+      return;
+    }
+    
+    let banUntil = null;
+    const now = Date.now();
+    if (banForm.duration === "1_hour") banUntil = now + 60 * 60 * 1000;
+    else if (banForm.duration === "1_day") banUntil = now + 24 * 60 * 60 * 1000;
+    else if (banForm.duration === "7_days") banUntil = now + 7 * 24 * 60 * 60 * 1000;
+    else if (banForm.duration === "30_days") banUntil = now + 30 * 24 * 60 * 60 * 1000;
+
+    try {
+      setBanLoading(true);
+      const { updateDoc, doc } = await import("firebase/firestore");
+      await updateDoc(doc(db, "users", banForm.uid), {
+        isBanned: true,
+        banReason: banForm.reason,
+        banUntil: banUntil
+      });
+      alert("Đã cấm người dùng thành công!");
+      setShowBanModal(false);
+      setBanForm({ uid: "", name: "", reason: "", duration: "1_day" });
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi cấm người dùng.");
+    } finally {
+      setBanLoading(false);
+    }
+  };
+
+  const handleUnbanUser = async (uid: string, name: string) => {
+    if (!confirm(`Bạn có chắc muốn mở khóa cho ${name}?`)) return;
+    try {
+      const { updateDoc, doc } = await import("firebase/firestore");
+      await updateDoc(doc(db, "users", uid), {
+        isBanned: false,
+        banReason: null,
+        banUntil: null
+      });
+      alert("Đã mở khóa thành công!");
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi mở khóa người dùng.");
     }
   };
 
@@ -270,15 +329,22 @@ export default function AdminUsersPage() {
                       )}
                     </td>
                     <td className="p-4">
-                      {user.role === "admin" ? (
-                        <span className="flex items-center gap-1 text-marker-red font-bold font-patrick text-sm bg-red-50 border border-red-100 px-3 py-1 rounded-full w-max">
-                          <Shield size={14} /> Admin
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-pencil/60 font-bold font-patrick text-sm bg-gray-50 border border-gray-100 px-3 py-1 rounded-full w-max">
-                          Người dùng
-                        </span>
-                      )}
+                      <div className="flex flex-col gap-1 items-start">
+                        {user.role === "admin" ? (
+                          <span className="flex items-center gap-1 text-marker-red font-bold font-patrick text-sm bg-red-50 border border-red-100 px-3 py-1 rounded-full w-max">
+                            <Shield size={14} /> Admin
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-pencil/60 font-bold font-patrick text-sm bg-gray-50 border border-gray-100 px-3 py-1 rounded-full w-max">
+                            Người dùng
+                          </span>
+                        )}
+                        {user.isBanned && (
+                          <span className="flex items-center gap-1 text-red-700 font-bold font-patrick text-sm bg-red-100 border border-red-200 px-3 py-1 rounded-full w-max">
+                            <Ban size={14} /> Đã bị cấm
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
@@ -296,6 +362,23 @@ export default function AdminUsersPage() {
                         >
                           <Gift size={18} />
                         </button>
+                        {user.isBanned ? (
+                          <button 
+                            onClick={() => handleUnbanUser(user.id, user.displayName || user.name)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all"
+                            title="Mở khóa tài khoản"
+                          >
+                            <Unlock size={18} />
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleOpenBanModal(user)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all"
+                            title="Cấm tài khoản"
+                          >
+                            <Ban size={18} />
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleDelete(user.id, user.displayName || user.name)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg border-2 border-transparent text-pencil/40 hover:text-marker-red hover:bg-red-50 hover:border-marker-red/20 transition-all"
@@ -522,6 +605,68 @@ export default function AdminUsersPage() {
                   className="w-full mt-4 bg-marker-red text-white py-4 rounded-xl font-bold font-patrick text-2xl border-[3px] border-pencil shadow-[4px_4px_0px_0px_#2d2d2d] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#2d2d2d] transition-all active:translate-y-2 active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {rewardLoading ? "Đang gửi..." : <><Gift size={24} /> Gửi Phần Thưởng Bất Ngờ</>}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ban Modal */}
+      {showBanModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-md border-[4px] border-pencil rounded-xl shadow-pencil overflow-hidden animate-in fade-in zoom-in duration-300 relative max-h-[90vh] flex flex-col">
+            <button 
+              onClick={() => setShowBanModal(false)}
+              className="absolute top-4 right-4 p-2 text-pencil hover:bg-muted-paper rounded-full transition-colors z-10 bg-white/50"
+            >
+              <X size={24} />
+            </button>
+            
+            <div className="p-6 bg-red-600 text-white border-b-[4px] border-pencil">
+              <h3 className="text-3xl font-kalam font-bold flex items-center gap-3">
+                <Ban className="fill-red-800" size={28} />
+                Cấm tài khoản
+              </h3>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <p className="font-patrick text-pencil/80 mb-4 text-lg">
+                Bạn đang thực hiện cấm tài khoản: <strong>{banForm.name}</strong>
+              </p>
+              <form onSubmit={handleBanUser} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-pencil text-lg">Lý do cấm *</label>
+                  <input 
+                    type="text"
+                    value={banForm.reason}
+                    onChange={(e) => setBanForm({...banForm, reason: e.target.value})}
+                    placeholder="VD: Vi phạm tiêu chuẩn cộng đồng"
+                    className="w-full px-4 py-3 bg-red-50 border-2 border-red-300 rounded-xl font-patrick text-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#2d2d2d] transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-pencil text-lg">Thời hạn cấm</label>
+                  <select 
+                    value={banForm.duration}
+                    onChange={(e) => setBanForm({...banForm, duration: e.target.value})}
+                    className="w-full px-4 py-3 bg-red-50 border-2 border-red-300 rounded-xl font-patrick text-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#2d2d2d] transition-all"
+                  >
+                    <option value="1_hour">1 Giờ</option>
+                    <option value="1_day">1 Ngày</option>
+                    <option value="7_days">7 Ngày</option>
+                    <option value="30_days">30 Ngày</option>
+                    <option value="permanent">Vĩnh viễn</option>
+                  </select>
+                </div>
+                
+                <button 
+                  type="submit"
+                  disabled={banLoading}
+                  className="w-full mt-4 bg-red-600 text-white py-4 rounded-xl font-bold font-patrick text-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_#2d2d2d] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#2d2d2d] transition-all active:translate-y-2 active:shadow-none disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {banLoading ? "Đang xử lý..." : <><Ban size={24} /> Khóa tài khoản</>}
                 </button>
               </form>
             </div>

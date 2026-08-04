@@ -14,6 +14,9 @@ export interface UserProfile {
   friends?: string[];
   customBadgeTitle?: string;
   customBadgeImage?: string;
+  isBanned?: boolean;
+  banReason?: string;
+  banUntil?: number;
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {

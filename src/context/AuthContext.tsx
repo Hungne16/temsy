@@ -13,7 +13,7 @@ import {
   updateProfile
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
@@ -72,7 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await setDoc(userDocRef, newProfile);
             setUserProfile(newProfile);
           } else {
-            setUserProfile(docSnap.data());
+            const data = docSnap.data();
+            // Tự động gỡ ban nếu đã hết hạn
+            if (data.isBanned && data.banUntil && Date.now() >= data.banUntil) {
+              await updateDoc(userDocRef, {
+                isBanned: false,
+                banReason: null,
+                banUntil: null
+              });
+              data.isBanned = false;
+              data.banReason = null;
+              data.banUntil = null;
+            }
+            setUserProfile(data);
           }
         } catch (error) {
           console.error("Error creating user profile in Firestore:", error);
