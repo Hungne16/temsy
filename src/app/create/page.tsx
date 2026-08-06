@@ -374,6 +374,10 @@ export default function CreateStampPage() {
       }
 
       setShowLoadingVideo(true);
+      
+      // Allow browser to render the video overlay before executing heavy image processing
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const dataUrl = await toJpeg(stampRef.current, { cacheBust: true, pixelRatio: 2, quality: 0.85 });
       const { uploadStamp } = await import("@/lib/stampService");
       
@@ -761,7 +765,7 @@ export default function CreateStampPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
           >
             <video 
               src="/ghim_tren_live.mp4" 
