@@ -10,6 +10,7 @@ import LocationPickerModal from "@/components/LocationPickerModal";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { StampMetadata } from "@/lib/stampService";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CAMAN_FILTERS = [
   { id: "normal", name: "Gốc" },
